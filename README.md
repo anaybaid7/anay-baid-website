@@ -1,5 +1,6 @@
 # Hey, I'm Anay Baid 👋
 
+
 I'm a **Computer Science student** at the University of Waterloo, and I'm all about using **technology to solve real-world problems**. From building full-stack apps to optimizing machine learning models, I'm constantly exploring new ways to make systems smarter and more efficient.
 
 ---
