@@ -1,0 +1,23 @@
+# Requires the metrics-server add-on in-cluster to supply the CPU metrics
+# this scales on. Bounds are deliberately small: this is a static nginx
+# site, it will basically never need to scale past a couple of replicas,
+# but the manifest demonstrates the pattern (target utilization, min/max
+# bounds) rather than being tuned for real production traffic.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: portfolio
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: portfolio
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

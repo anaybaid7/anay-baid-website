@@ -1,0 +1,53 @@
+# Deploys the same nginx image built by the root Dockerfile. Included to
+# demonstrate orchestration familiarity, not because Kubernetes is actually
+# the right call for a single static site: for this workload, S3+CloudFront
+# (see infra/) or a plain container host is simpler and cheaper, and that
+# tradeoff is the honest answer if asked "why not just use this". This is
+# what it'd look like if the site were one service inside a larger
+# Kubernetes-based stack instead of standing alone.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio
+  labels:
+    app: portfolio
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: portfolio
+  template:
+    metadata:
+      labels:
+        app: portfolio
+    spec:
+      containers:
+        - name: portfolio
+          image: anay-portfolio:latest # replace with a real registry tag (e.g. ghcr.io/<user>/anay-portfolio:<sha>) at deploy time
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          securityContext:
+            readOnlyRootFilesystem: false # nginx needs to write to /var/cache/nginx and /var/run at start
+            runAsNonRoot: false # the stock nginx:alpine image starts as root then drops privilege internally; a hardened variant (e.g. nginxinc/nginx-unprivileged) would allow true non-root here
+            allowPrivilegeEscalation: false
