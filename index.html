@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2b1f4d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Anay Baid, Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+    <title>Anay Baid</title>
+
+    <!-- Open Graph / Twitter, so a shared link actually renders a real preview card -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Anay Baid, Software Engineer" />
+    <meta property="og:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+    <meta property="og:url" content="https://a2baid.netlify.app" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Anay Baid, Software Engineer" />
+    <meta name="twitter:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+
+    <!-- structured data, lets Google show this as a Person result, not just a generic page -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Anay Baid",
+        "url": "https://a2baid.netlify.app",
+        "jobTitle": "Software Engineer",
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "University of Waterloo"
+        },
+        "sameAs": [
+          "https://github.com/anaybaid7",
+          "https://linkedin.com/in/anaybaid/",
+          "https://devpost.com/anaybaid"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
