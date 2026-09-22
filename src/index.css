@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+:root {
+  /* the screen */
+  --screen-bg: #2b2050;
+  --screen-bg-2: #342763;
+  --ink: #dcd6ee;
+  --ink-bright: #ffffff;
+  --ink-dim: #9088b8;
+  --line: #4d3f85;
+
+  /* the physical machine */
+  --bezel: #e6ded0;
+  --bezel-shadow: #b8ae98;
+  --desk: #0c0a10;
+
+  /* per-tab accent system, matched to the reference */
+  --c-home: #5fd4e8;
+  --c-resume: #f2954f;
+  --c-projects: #f2d94e;
+  --c-hire: #5fd97a;
+
+  --font-main: Verdana, Geneva, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-main {
+  font-family: var(--font-main);
+}
+
+::selection {
+  background: var(--c-projects);
+  color: #2b2050;
+}
+
+.screen-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.screen-scroll::-webkit-scrollbar-track {
+  background: var(--screen-bg);
+}
+.screen-scroll::-webkit-scrollbar-thumb {
+  background: var(--ink-dim);
+  border: 2px solid var(--screen-bg);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+/* respect the OS-level reduced-motion preference: kill decorative
+   animation entirely rather than just slowing it down */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot {
+    animation: none;
+    opacity: 1;
+  }
+  [style*='eq-bar'] {
+    animation: none !important;
+  }
+}
+
+/* View Transitions API — tab switches get a quick native cross-fade instead
+   of an instant cut. Kept short and understated (CRT screens refresh fast,
+   they don't do slow AI-slop fade choreography). Skipped entirely in JS when
+   prefers-reduced-motion is set, and browsers without the API just render
+   the DOM change instantly with none of this. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.15s;
+  animation-timing-function: ease-out;
+}
+
+/* Command palette (cmdk) — styled to match the terminal/monitor aesthetic
+   rather than left as a generic rounded-corner floating card. */
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 5, 10, 0.72);
+  z-index: 100;
+}
+.cmdk-content {
+  position: fixed;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 92vw);
+  z-index: 101;
+}
+.cmdk-root {
+  background: var(--screen-bg);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  font-family: var(--font-main);
+}
+.cmdk-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--screen-bg-2);
+}
+.cmdk-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink-bright);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+}
+.cmdk-input::placeholder {
+  color: var(--ink-dim);
+}
+.cmdk-esc {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink-dim);
+}
+.cmdk-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+.cmdk-group [cmdk-group-heading] {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+  padding: 0.5rem 0.6rem 0.3rem;
+  text-transform: uppercase;
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.cmdk-item[data-selected='true'] {
+  background: var(--screen-bg-2);
+  color: var(--ink-bright);
+}
+.cmdk-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+.cmdk-empty {
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
