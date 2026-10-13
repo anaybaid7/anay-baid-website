@@ -1,132 +1,107 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from './App'
+import { experience, projects, profile } from './data'
+
+const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']
 
 beforeEach(() => {
-  localStorage.clear()
+  history.replaceState(null, '', '/')
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 })
 
-describe('App — tab navigation', () => {
-  it('renders all four tabs with correct ARIA roles', () => {
+describe('App', () => {
+  it('shows the name and every section', () => {
     render(<App />)
-    const tablist = screen.getByRole('tablist', { name: /portfolio sections/i })
-    const tabs = within(tablist).getAllByRole('tab')
-    expect(tabs).toHaveLength(4)
-    expect(tabs.map((t) => t.textContent)).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('HOME'),
-        expect.stringContaining('RESUME'),
-        expect.stringContaining('PROJECTS'),
-        expect.stringContaining('HIRE ME'),
-      ]),
-    )
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Anay Baid')
+    for (const name of SECTIONS) {
+      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument()
+    }
   })
 
-  it('starts on the Home tab and marks it selected', () => {
+  it('lists every project', () => {
     render(<App />)
-    const homeTab = screen.getByRole('tab', { name: /home/i })
-    expect(homeTab).toHaveAttribute('aria-selected', 'true')
+    for (const p of projects) expect(screen.getAllByText(p.title).length).toBeGreaterThan(0)
   })
 
-  it('clicking a tab switches the visible panel and updates aria-selected', async () => {
-    const user = userEvent.setup()
+  it('shows the current job first and switches when another is picked', () => {
     render(<App />)
-
-    const resumeTab = screen.getByRole('tab', { name: /resume/i })
-    await user.click(resumeTab)
-
-    expect(resumeTab).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tabpanel')).toHaveTextContent(/download pdf/i)
+    const detail = document.getElementById('exp-detail')!
+    expect(detail).toHaveTextContent(experience[0].bullets[0])
+    const job = (name: RegExp) => screen.getAllByRole('button', { name }).find((b) => b.classList.contains('job'))!
+    fireEvent.click(job(/cineplex/i))
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[3].bullets[0])
+    const bar = screen.getAllByRole('button', { name: /iotum/i }).find((b) => b.classList.contains('tl-bar'))!
+    fireEvent.click(bar)
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
   })
 
-  it('ArrowRight moves selection to the next tab and wraps around', async () => {
-    const user = userEvent.setup()
+  it('arrow keys move through the jobs', () => {
     render(<App />)
-
-    const homeTab = screen.getByRole('tab', { name: /home/i })
-    homeTab.focus()
-
-    await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: /resume/i })).toHaveAttribute('aria-selected', 'true')
-
-    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
-    // three more rights from resume: projects -> hire -> home (wraps)
-    expect(screen.getByRole('tab', { name: /home/i })).toHaveAttribute('aria-selected', 'true')
+    const first = screen.getAllByRole('button', { name: /purolator/i }).find((b) => b.classList.contains('job'))!
+    first.focus()
+    fireEvent.keyDown(first, { key: 'ArrowDown' })
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' })
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' })
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[3].bullets[0])
   })
 
-  it('End key jumps to the last tab', async () => {
-    const user = userEvent.setup()
+  it('links the live Battleship game and its code', () => {
     render(<App />)
-    const homeTab = screen.getByRole('tab', { name: /home/i })
-    homeTab.focus()
-    await user.keyboard('{End}')
-    expect(screen.getByRole('tab', { name: /hire me/i })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: 'Play it' })).toHaveAttribute('href', 'https://purolator-battleship.onrender.com')
+    const code = screen.getAllByRole('link', { name: 'Code' }).map((a) => a.getAttribute('href'))
+    expect(code).toContain('https://github.com/anaybaid7/battleship-purolator')
   })
 
-  it('persists the active tab to localStorage and restores it on remount', async () => {
-    const user = userEvent.setup()
-    const { unmount } = render(<App />)
-
-    await user.click(screen.getByRole('tab', { name: /projects/i }))
-    expect(localStorage.getItem('anay-portfolio:last-tab')).toBe('projects')
-
-    unmount()
+  it('switches between light and dark', () => {
+    document.documentElement.dataset.theme = 'light'
     render(<App />)
-    expect(screen.getByRole('tab', { name: /projects/i })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to dark mode' }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(localStorage.getItem('theme')).toBe('dark')
   })
 
-  it('the "SEE PROJECTS" button on Home navigates to the Projects tab', async () => {
-    const user = userEvent.setup()
+  it('shows where a skill was used and jumps to that job', () => {
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /see projects/i }))
-    expect(screen.getByRole('tab', { name: /projects/i })).toHaveAttribute('aria-selected', 'true')
-  })
-})
-
-describe('App — command palette', () => {
-  it('is closed by default', () => {
-    render(<App />)
-    expect(screen.queryByPlaceholderText(/type a command/i)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Docker' }))
+    expect(screen.getByText(/shows up in/)).toBeInTheDocument()
+    const link = screen.getAllByRole('button', { name: 'Nationwide Appraisals' }).find((b) => b.closest('.evidence'))!
+    fireEvent.click(link)
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[2].bullets[0])
   })
 
-  it('opens on Cmd+K and closes on Escape', async () => {
-    const user = userEvent.setup()
+  it('opens a job from a link like #job-iotum', () => {
+    history.replaceState(null, '', '#job-iotum')
     render(<App />)
-
-    await user.keyboard('{Meta>}k{/Meta}')
-    expect(screen.getByPlaceholderText(/type a command/i)).toBeInTheDocument()
-
-    await user.keyboard('{Escape}')
-    expect(screen.queryByPlaceholderText(/type a command/i)).not.toBeInTheDocument()
+    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
+    history.replaceState(null, '', '/')
   })
 
-  it('opens via the visible COMMANDS button in the status bar', async () => {
-    const user = userEvent.setup()
+  it('answers the recruiter basics up front', () => {
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /open command palette/i }))
-    expect(screen.getByPlaceholderText(/type a command/i)).toBeInTheDocument()
+    const glance = document.querySelector('.glance')!
+    expect(glance).toHaveTextContent('April 2027')
+    expect(glance).toHaveTextContent(`${experience.length} co-op terms`)
+    expect(glance).toHaveTextContent('2 wins')
   })
 
-  it('navigating via the palette switches tabs and closes the palette', async () => {
-    const user = userEvent.setup()
+  it('makes result numbers stand out in bullets', () => {
     render(<App />)
-
-    await user.keyboard('{Meta>}k{/Meta}')
-    await user.click(screen.getByText(/go to resume/i))
-
-    expect(screen.getByRole('tab', { name: /resume/i })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.queryByPlaceholderText(/type a command/i)).not.toBeInTheDocument()
+    const nums = [...document.querySelectorAll('#exp-detail .num')].map((n) => n.textContent)
+    expect(nums).toContain('40%')
   })
 
-  it('filters commands as you type', async () => {
-    const user = userEvent.setup()
+  it('copies the email address', async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
     render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: `Copy ${profile.email}` }))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(profile.email)
+    await waitFor(() => expect(screen.getByText(/copied .* to your clipboard/i)).toBeInTheDocument())
+  })
 
-    await user.keyboard('{Meta>}k{/Meta}')
-    await user.type(screen.getByPlaceholderText(/type a command/i), 'linkedin')
-
-    expect(screen.getByText(/open linkedin/i)).toBeInTheDocument()
-    expect(screen.queryByText(/go to resume/i)).not.toBeInTheDocument()
+  it('falls back to a GitHub link when the API is unreachable', async () => {
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/couldn't load this from github/i)).toBeInTheDocument())
   })
 })

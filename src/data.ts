@@ -22,7 +22,7 @@ export const profile = {
   // description as it can be real work. Add a repo's exact name here to
   // pin it; leave the array empty to fall back to "3 most recently
   // updated public repos".
-  pinnedRepos: ['starrez-logger-prod'] as string[],
+  pinnedRepos: ['battleship-purolator', 'starrez-logger-prod'] as string[],
   intro: [
     "I'm a fourth-year Computer Science student at Waterloo, currently on co-op at Purolator working on internal forecasting tools and network optimization.",
     "Most of what I build starts the same way. Something at work or school is manual, slow, or annoying, and I end up automating it. That's how the StarRez extension happened, and most of what I've shipped on co-op since.",
@@ -119,6 +119,8 @@ export interface ProjectEntry {
   bullets: string[]
   tech: Tech[]
   link?: string
+  code?: string
+  image?: { src: string; alt: string; caption: string }
 }
 
 export const projects: ProjectEntry[] = [
@@ -135,6 +137,21 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['JavaScript', 'Chrome MV3', 'DOM APIs', 'Workflow Automation'],
     link: 'https://github.com/anaybaid7/starrez-logger-prod',
+  },
+  {
+    title: 'Battleship for Purolator',
+    status: 'Live',
+    period: "Let's Connect, Summer 2026",
+    description:
+      "Two-player Battleship with Purolator delivery vehicles instead of boats. I built it for our intern event and the team still runs it for events after my term.",
+    bullets: [
+      "Node, Express and Socket.IO server that keeps every room in memory, with a reconnect window so a dropped connection doesn't end the game.",
+      'Invite links that drop a friend straight into your room, open rooms anyone can join from the lobby, and board sizes from 6x6 to 15x15 that both players have to agree on.',
+      'Drag and drop fleet placement that works on phones, and a password-locked reset that wakes the free Render server and clears every game.',
+    ],
+    tech: ['Node.js', 'Express', 'Socket.IO', 'Render'],
+    link: 'https://purolator-battleship.onrender.com',
+    code: 'https://github.com/anaybaid7/battleship-purolator',
   },
   {
     title: 'CI/CD Build Automation Tool',
@@ -163,16 +180,6 @@ export const projects: ProjectEntry[] = [
       'Compressed textures and audio to keep the WebGL bundle under load-time targets.',
     ],
     tech: ['Unity', 'WebGL', 'C#', 'Wix'],
-  },
-  {
-    title: 'Driver Battle League',
-    status: 'Shipped',
-    period: "Let's Connect Summer 2026 Intern Event",
-    description: 'A multiplayer Battleship game built for a Purolator intern event, deployed on Render.',
-    bullets: [
-      'Built a Socket.io backend with reconnect handling for live multiplayer state sync.',
-    ],
-    tech: ['Node.js', 'Socket.io', 'Render'],
   },
   {
     title: 'Client-Side Routing System',

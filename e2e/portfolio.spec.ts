@@ -1,122 +1,60 @@
 import { test, expect } from '@playwright/test'
 
-// Real end-to-end tests: a real Chromium browser driving the actual built
-// output through vite preview, not a simulated jsdom environment. These
-// catch things the unit tests structurally can't — a real file download, a
-// real service worker registering, a real page navigation.
-
-test('loads the site and shows all four tabs', async ({ page }) => {
+test('loads with every section', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('tab')).toHaveCount(4)
-  await expect(page.getByRole('tab', { name: /home/i })).toHaveAttribute('aria-selected', 'true')
-})
-
-test('clicking through every tab renders that tab\'s content', async ({ page }) => {
-  await page.goto('/')
-
-  await page.getByRole('tab', { name: /resume/i }).click()
-  await expect(page.getByRole('tabpanel')).toContainText(/download pdf/i)
-
-  await page.getByRole('tab', { name: /projects/i }).click()
-  await expect(page.getByRole('tabpanel')).toContainText(/starrez/i)
-
-  await page.getByRole('tab', { name: /hire me/i }).click()
-  await expect(page.getByRole('tabpanel')).toContainText(/looking to hire/i)
-})
-
-test('downloading the resume PDF produces a real file', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('tab', { name: /resume/i }).click()
-
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: /download pdf/i }).click(),
-  ])
-
-  expect(download.suggestedFilename()).toBe('Anay_Baid_Resume.pdf')
-  const path = await download.path()
-  expect(path).toBeTruthy()
-})
-
-test('the tech filter on the Resume page actually filters', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('tab', { name: /resume/i }).click()
-
-  const panel = page.getByRole('tabpanel')
-  await expect(panel).toContainText(/cineplex/i)
-
-  // "Unity" only appears on a project, never in any experience entry, so
-  // filtering the resume page by it should hide every experience card.
-  const unityButtons = page.getByRole('button', { name: 'Unity' })
-  if (await unityButtons.count()) {
-    await unityButtons.click()
-    await expect(panel).toContainText(/no roles match/i)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  for (const name of ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']) {
+    await expect(page.getByRole('heading', { level: 2, name })).toBeVisible()
   }
 })
 
-test('command palette opens with Ctrl+K and navigates via keyboard', async ({ page }) => {
+test('the resume button downloads the real PDF', async ({ page }) => {
   await page.goto('/')
-
-  await page.keyboard.press('Control+k')
-  const input = page.getByPlaceholder(/type a command/i)
-  await expect(input).toBeVisible()
-
-  await input.fill('projects')
-  await page.getByText(/go to projects/i).click()
-
-  await expect(page.getByRole('tab', { name: /projects/i })).toHaveAttribute('aria-selected', 'true')
-  await expect(input).not.toBeVisible()
-})
-
-test('command palette can trigger the resume download directly', async ({ page }) => {
-  await page.goto('/')
-
-  await page.keyboard.press('Control+k')
-  await page.getByPlaceholder(/type a command/i).fill('download')
-
+  await page.getByRole('button', { name: 'Resume', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Resume' })).toBeVisible()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByText(/download resume pdf/i).click(),
+    page.getByRole('button', { name: 'Download PDF' }).click(),
   ])
-
   expect(download.suggestedFilename()).toBe('Anay_Baid_Resume.pdf')
 })
 
-test('the site registers a service worker (PWA)', async ({ page }) => {
+
+test('no horizontal scrolling on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 })
   await page.goto('/')
-  const hasSW = await page.evaluate(async () => {
-    if (!('serviceWorker' in navigator)) return false
-    // give the auto-registration a moment to complete
-    await new Promise((r) => setTimeout(r, 1500))
-    const regs = await navigator.serviceWorker.getRegistrations()
-    return regs.length > 0
-  })
-  expect(hasSW).toBe(true)
+  const width = await page.evaluate(() => document.documentElement.scrollWidth)
+  expect(width).toBeLessThanOrEqual(375)
 })
 
-test('the web app manifest is present and installable-shaped', async ({ page }) => {
-  const res = await page.goto('/manifest.webmanifest')
-  expect(res?.ok()).toBe(true)
-  const manifest = await res!.json()
-  expect(manifest.name).toMatch(/anay baid/i)
-  expect(manifest.icons.length).toBeGreaterThan(0)
+test('the service worker registers', async ({ page }) => {
+  await page.goto('/')
+  const registered = await page.evaluate(async () => {
+    const reg = await navigator.serviceWorker.ready
+    return Boolean(reg.active)
+  })
+  expect(registered).toBe(true)
 })
 
-test('no console errors on initial load', async ({ page }) => {
-  const errors: string[] = []
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text())
-  })
-  page.on('pageerror', (err) => errors.push(err.message))
-
+test('the theme switch flips to dark and remembers it', async ({ page }) => {
   await page.goto('/')
-  await page.waitForTimeout(500)
+  await page.getByRole('button', { name: /switch to dark mode/i }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
 
-  // The GitHub API call is expected to fail in network-restricted CI/sandbox
-  // environments (see README) — that's a documented environment limitation,
-  // not an app bug. Confirm the *only* console errors are resource-load
-  // failures (which is what a blocked fetch surfaces as), rather than
-  // broadly ignoring every error string.
-  const unexpected = errors.filter((e) => !/failed to load resource|api\.github\.com|CORS/i.test(e))
-  expect(unexpected).toEqual([])
+test('the search menu finds a project and opens it', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('Control+k')
+  await page.getByRole('combobox').fill('pashu')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('#project-pashu')).toHaveAttribute('open', '')
+  await expect(page).toHaveURL(/#project-pashu$/)
+})
+
+test('a skill shows where it was used', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Docker', exact: true }).click()
+  await expect(page.locator('.evidence')).toContainText('Purolator')
 })

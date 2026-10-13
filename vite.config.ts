@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -13,11 +16,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Anay Baid, Portfolio',
+        name: 'Anay Baid',
         short_name: 'Anay Baid',
-        description: 'Portfolio for Anay Baid, a Waterloo CS co-op software engineer.',
-        theme_color: '#2b1f4d',
-        background_color: '#2b2050',
+        description: 'Anay Baid, Computer Science at Waterloo.',
+        theme_color: '#fbfbfa',
+        background_color: '#fbfbfa',
         display: 'standalone',
         start_url: './',
         scope: './',

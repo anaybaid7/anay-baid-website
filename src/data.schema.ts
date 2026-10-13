@@ -35,6 +35,10 @@ const projectSchema = z.object({
   bullets: z.array(z.string().min(1)).min(1, 'needs at least one bullet'),
   tech: z.array(z.string().min(1)).min(1, 'needs at least one tech tag'),
   link: urlString.optional(),
+  code: urlString.optional(),
+  image: z
+    .object({ src: localAssetPath, alt: z.string().min(1), caption: z.string().min(1) })
+    .optional(),
 })
 
 const profileSchema = z.object({

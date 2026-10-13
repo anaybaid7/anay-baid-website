@@ -37,7 +37,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     )
     expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText('SIGNAL LOST')).toBeInTheDocument()
+    expect(screen.getByText('Something broke on this page')).toBeInTheDocument()
     expect(screen.queryByText('safe content')).not.toBeInTheDocument()
   })
 
@@ -61,13 +61,13 @@ describe('ErrorBoundary', () => {
         <Toggle />
       </ErrorBoundary>,
     )
-    expect(screen.getByText('SIGNAL LOST')).toBeInTheDocument()
+    expect(screen.getByText('Something broke on this page')).toBeInTheDocument()
 
     // Fix the underlying condition, then click reset. The boundary clears
     // its own error state, and since the next render no longer throws, the
     // real children come back instead of another fallback.
     shouldThrow = false
-    fireEvent.click(screen.getByText('TRY AGAIN'))
+    fireEvent.click(screen.getByText('Try again'))
     rerender(
       <ErrorBoundary>
         <Toggle />

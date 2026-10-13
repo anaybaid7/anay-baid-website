@@ -5,23 +5,34 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/pwa-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2b1f4d" />
+    <meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16171b" media="(prefers-color-scheme: dark)" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="description" content="Anay Baid, Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
     <title>Anay Baid</title>
+    <script>
+      // pick the theme before first paint so there's no flash
+      try {
+        var t = localStorage.getItem('theme')
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
 
-    <!-- Open Graph / Twitter, so a shared link actually renders a real preview card -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Anay Baid, Software Engineer" />
     <meta property="og:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
     <meta property="og:url" content="https://a2baid.netlify.app" />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://a2baid.netlify.app/og.png" />
+    <meta property="og:image" content="https://a2baid.netlify.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:title" content="Anay Baid, Software Engineer" />
     <meta name="twitter:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
 
-    <!-- structured data, lets Google show this as a Person result, not just a generic page -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
