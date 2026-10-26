@@ -1,5 +1,5 @@
-/* Only what the event page adds. Type, colours, cards, the header and the
-   footer come from index.css. */
+/* Only what the event page adds. Type, colours, the header and the footer
+   come from index.css. */
 
 .ev-home {
   text-decoration: none;
@@ -7,7 +7,6 @@
 
 .ev-hero {
   padding-top: 40px;
-  max-width: 900px;
 }
 .ev-logo {
   display: block;
@@ -15,125 +14,66 @@
   border-radius: 10px;
 }
 .ev-hero h1 {
-  margin: 0 0 30px;
+  margin: 0 0 28px;
   font-size: clamp(48px, 8.4vw, 120px);
   line-height: 0.9;
   font-weight: 800;
   font-stretch: 125%;
   letter-spacing: -0.035em;
 }
-.ev-hero .sub {
-  color: var(--ink-3);
-  font-size: 15px;
+.ev-hero .lede {
+  max-width: 860px;
 }
 
-.ev-intro {
-  max-width: 760px;
-  margin: -8px 0 32px;
-  color: var(--ink-2);
-}
-
-/* the weekly cycle, left to right */
+/* the weekly cycle, as one row of steps */
 .ev-flow {
   list-style: none;
-  margin: 0;
+  margin: 44px 0 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 0;
+  counter-reset: step;
 }
 .ev-flow li {
-  position: relative;
-  padding: 20px 18px 22px;
-  background: var(--card);
-  border-radius: 10px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--ink-2);
+  align-items: center;
+  font-weight: 650;
+  font-size: 15.5px;
+}
+.ev-flow li::before {
+  counter-increment: step;
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font-size: 13px;
 }
 .ev-flow li:not(:last-child)::after {
   content: '';
-  position: absolute;
-  right: -10px;
-  top: 30px;
-  border: 6px solid transparent;
-  border-left: 7px solid var(--line);
-  z-index: 1;
-}
-.ev-flow b {
-  color: var(--ink);
-  font-size: 16px;
-  font-stretch: 110%;
-}
-.ev-step {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--cobalt);
+  width: 18px;
+  height: 2px;
+  margin: 0 10px;
+  background: var(--line);
 }
 
-.ev-compare {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 40px;
-}
-.ev-compare > div {
-  padding: 28px 32px;
-  background: var(--card);
-  border-radius: 10px;
-}
-.ev-compare .ev-now {
-  background: var(--cobalt);
-  color: var(--on-cobalt);
-}
-.ev-compare h3 {
-  margin: 0 0 14px;
-  font-size: 20px;
-  font-stretch: 115%;
-}
-.ev-compare .dashes {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.45;
-}
-.ev-now .dashes li {
-  color: var(--on-cobalt);
-}
-.ev-now .dashes li::before {
-  background: var(--on-cobalt);
+.ev-intro {
+  margin: -12px 0 28px;
+  color: var(--ink-2);
 }
 
-/* screenshots, two to a row */
 .ev-gallery {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px 24px;
+  gap: 32px 24px;
 }
 .ev-figure {
   margin: 0;
-}
-/* the tool's screenshots: one per row, big enough to read from the back of a room */
-.ev-wide {
-  grid-template-columns: 1fr;
-  gap: 56px;
-}
-.ev-wide .ev-figure {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
-  gap: 28px;
-  align-items: start;
-}
-.ev-wide .ev-figure figcaption {
-  margin-top: 6px;
-  font-size: 16.5px;
-}
-.ev-wide .ev-figure figcaption b {
-  font-size: 22px;
-  font-stretch: 112%;
-  margin-bottom: 6px;
 }
 .ev-shot {
   display: block;
@@ -149,63 +89,22 @@
   display: block;
   width: 100%;
   height: auto;
-  transition: transform 0.25s ease;
-}
-.ev-shot:hover img {
-  transform: scale(1.015);
 }
 .ev-figure figcaption {
   margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 15.5px;
   color: var(--ink-2);
 }
 .ev-figure figcaption b {
   color: var(--ink);
-  font-size: 17px;
-}
-.ev-figure-text {
-  padding: 24px 28px;
-  background: var(--card);
-  border-radius: 10px;
-}
-.ev-figure-text figcaption {
-  margin: 0;
 }
 
-.ev-more {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 14px;
-}
-.ev-more li {
-  padding: 20px 24px;
-  background: var(--card);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 15.5px;
-  line-height: 1.45;
-  color: var(--ink-2);
-}
-.ev-more b {
-  color: var(--ink);
-  font-size: 17px;
-}
-.ev-more a {
-  align-self: flex-start;
-  margin-top: 4px;
-  font-weight: 600;
-  color: var(--cobalt);
+.ev-note {
+  margin: 56px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
 }
 
-/* full-size screenshot */
 .ev-viewer {
   width: min(96vw, 1600px);
   max-width: none;
@@ -214,7 +113,6 @@
   border: 0;
   border-radius: 10px;
   background: var(--card);
-  color: var(--ink);
   cursor: zoom-out;
 }
 .ev-viewer::backdrop {
@@ -225,44 +123,18 @@
   width: 100%;
   height: auto;
 }
-.ev-viewer p {
-  margin: 0;
-  padding: 14px 20px;
-  font-size: 15px;
-  color: var(--ink-2);
-}
-.ev-viewer b {
-  color: var(--ink);
-}
-.ev-viewer-close {
-  float: right;
-  color: var(--ink-3);
-}
 
 @media (max-width: 920px) {
-  .ev-flow {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .ev-flow li:nth-child(3)::after {
-    display: none;
-  }
-  .ev-compare,
-  .ev-gallery,
-  .ev-wide .ev-figure {
+  .ev-gallery {
     grid-template-columns: 1fr;
-  }
-  .ev-wide {
-    gap: 40px;
   }
 }
 @media (max-width: 620px) {
   .ev-flow {
-    grid-template-columns: 1fr 1fr;
+    flex-direction: column;
+    align-items: flex-start;
   }
   .ev-flow li::after {
     display: none;
-  }
-  .ev-compare > div {
-    padding: 22px 22px;
   }
 }

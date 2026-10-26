@@ -4,16 +4,12 @@ import EventPage from './EventPage'
 import { dashboard, tool } from './content'
 
 describe('EventPage', () => {
-  it('shows every section', () => {
+  it('shows the tool and the dashboard with their screenshots', () => {
     render(<EventPage />)
     expect(screen.getByRole('heading', { level: 1, name: /forecasting the network/i })).toBeInTheDocument()
-    for (const h of ['What the team does', tool.name, dashboard.name, 'Also this term', 'Presented']) {
-      expect(screen.getByRole('heading', { level: 2, name: h })).toBeInTheDocument()
+    for (const part of [tool, dashboard]) {
+      expect(screen.getByRole('heading', { level: 2, name: part.name })).toBeInTheDocument()
+      for (const s of part.shots) expect(screen.getByRole('button', { name: `Open ${s.title} full size` })).toBeInTheDocument()
     }
-  })
-
-  it('has a screenshot for each part of the tool', () => {
-    render(<EventPage />)
-    for (const s of tool.shots) expect(screen.getByRole('button', { name: `Open ${s.title} full size` })).toBeInTheDocument()
   })
 })
