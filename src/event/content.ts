@@ -45,7 +45,7 @@ export const slides: Slide[] = [
     title: 'Forecasting parcel volume for every terminal',
     line: 'Our team works out how many parcels each terminal should expect in the coming weeks, so operations can plan around it.',
     notes: [
-      'We cover 136 terminals across 7 divisions, for both pickup and delivery.',
+      'We cover every terminal in the country, for both pickup and delivery.',
       'Operations uses our numbers to decide how many couriers and trucks to send out and how long to keep the docks open.',
       "If we come in low, parcels get left behind, and if we come in high, we end up paying for capacity we didn't need.",
     ],
@@ -70,7 +70,7 @@ export const slides: Slide[] = [
     spots: [
       { x: 0.017, y: 0.21, w: 0.585, h: 0.125, title: 'Year so far', text: 'These are the totals people look at first, the forecast for the rest of the year and how it compares with last year.' },
       { x: 0.514, y: 0.42, w: 0.222, h: 0.35, title: 'Summer', text: 'Volume usually drops off in July and August and picks back up in September.' },
-      { x: 0.743, y: 0.38, w: 0.23, h: 0.4, title: 'Peak season', text: 'Late November into December is the busiest stretch of the year, about a third above a normal week, so a lot of planning goes into getting these weeks right.' },
+      { x: 0.743, y: 0.38, w: 0.23, h: 0.4, title: 'Peak season', text: 'Late November into December is the busiest stretch of the year, well above a normal week, so a lot of planning goes into getting these weeks right.' },
     ],
   },
   {
@@ -98,7 +98,7 @@ export const slides: Slide[] = [
     spots: [
       { x: 0.17, y: 0.36, w: 0.65, h: 0.24, title: 'A typical week', text: 'Monday to Friday each get roughly 20% of the week, and Sunday gets almost nothing.' },
       { x: 0.78, y: 0.38, w: 0.2, h: 0.27, title: 'Changing a day', text: 'In this example Saturday is raised to 6%, and the other days come down slightly so the weekly total stays the same.' },
-      { x: 0.55, y: 0.64, w: 0.43, h: 0.26, title: 'Effect on volume', text: "Before saving you can see what the change does in actual pieces, about 17,500 more on Saturday across Quebec's 24 terminals." },
+      { x: 0.55, y: 0.64, w: 0.43, h: 0.26, title: 'Effect on volume', text: 'Before saving you can see what the change does in actual pieces, about 20,000 more on Saturday across Quebec.' },
     ],
   },
   {
@@ -124,7 +124,7 @@ export const slides: Slide[] = [
     ],
     spots: [
       { x: 0, y: 0.16, w: 0.69, h: 0.44, title: 'Daily volume', text: 'Each wave is one week, higher midweek and low on weekends. The red line is actual and the black line is the forecast.' },
-      { x: 0.69, y: 0.02, w: 0.31, h: 0.5, title: 'Weekly accuracy', text: 'This shows how far off the forecast was for each week. Here every week is within 4%.' },
+      { x: 0.69, y: 0.02, w: 0.31, h: 0.5, title: 'Weekly accuracy', text: 'This shows how far off the forecast was for each week. Here every week is within about 3%.' },
       { x: 0, y: 0.61, w: 0.31, h: 0.39, title: 'Commodity mix', text: 'Conveyable, non-conveyable, mail and dangerous goods are all handled differently at the hub, so it helps to see the breakdown.' },
     ],
   },
@@ -136,9 +136,9 @@ export const slides: Slide[] = [
       'This page lets you pick any two weeks at a hub and see the difference by type of parcel.',
     ],
     spots: [
-      { x: 0.64, y: 0, w: 0.36, h: 0.15, title: 'Choosing the weeks', text: 'You choose the hub and the two weeks. This one is Richmond.' },
-      { x: 0.57, y: 0.15, w: 0.43, h: 0.34, title: 'Totals', text: 'Average daily volume went down about 2.5% between the two weeks.' },
-      { x: 0, y: 0.5, w: 0.47, h: 0.5, title: 'By category', text: 'Mail and Con had the biggest drops, while NonCon went up a bit.' },
+      { x: 0.64, y: 0, w: 0.36, h: 0.15, title: 'Choosing the weeks', text: 'You choose the hub and the two weeks you want to compare.' },
+      { x: 0.57, y: 0.15, w: 0.43, h: 0.34, title: 'Totals', text: 'Average daily volume went up about 1.3% between the two weeks.' },
+      { x: 0, y: 0.5, w: 0.47, h: 0.5, title: 'By category', text: 'Con and Mail went up the most, while NonCon and Other went down a little.' },
     ],
   },
   {
