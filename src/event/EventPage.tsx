@@ -317,7 +317,7 @@ export default function EventPage() {
         </div>
 
         <p className="ev-note">
-          {deck.mockNote} Click a number on a screenshot to zoom in, Esc zooms out. Arrow keys move between slides, space steps through each slide, F goes full screen.
+          {deck.mockNote} Click a numbered part of a screenshot to zoom in and press Esc to zoom back out. Use the arrow keys to move between slides and F for full screen.
         </p>
       </main>
 
