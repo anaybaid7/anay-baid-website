@@ -1,15 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import EventPage from './EventPage'
-import { dashboard, tool } from './content'
+import { slides } from './content'
 
 describe('EventPage', () => {
-  it('shows the tool and the dashboard with their screenshots', () => {
+  it('shows the notes on the first click and moves on with the second', () => {
+    const { container } = render(<EventPage />)
+    const slide = () => container.querySelector('.deck-slide') as HTMLElement
+    expect(screen.getByRole('heading', { level: 1, name: slides[0].title })).toBeInTheDocument()
+    fireEvent.click(slide())
+    expect(slide()).toHaveAccessibleName('Next slide')
+    fireEvent.click(slide())
+    expect(screen.getByRole('heading', { level: 1, name: slides[1].title })).toBeInTheDocument()
+  })
+
+  it('has a dot for every slide', () => {
     render(<EventPage />)
-    expect(screen.getByRole('heading', { level: 1, name: /forecasting the network/i })).toBeInTheDocument()
-    for (const part of [tool, dashboard]) {
-      expect(screen.getByRole('heading', { level: 2, name: part.name })).toBeInTheDocument()
-      for (const s of part.shots) expect(screen.getByRole('button', { name: `Open ${s.title} full size` })).toBeInTheDocument()
-    }
+    expect(screen.getAllByRole('tab')).toHaveLength(slides.length)
   })
 })
