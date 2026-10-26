@@ -18,4 +18,15 @@ describe('EventPage', () => {
     render(<EventPage />)
     expect(screen.getAllByRole('tab')).toHaveLength(slides.length)
   })
+
+  it('zooms into a part of a screenshot and back out', () => {
+    const n = slides.findIndex((s) => s.spots?.length)
+    window.location.hash = `#${n + 1}`
+    const { container } = render(<EventPage />)
+    fireEvent.click(screen.getByRole('button', { name: `Zoom in, ${slides[n].spots![0].title}` }))
+    expect(container.querySelector('.deck-callout')).toHaveTextContent(slides[n].spots![0].text)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(container.querySelector('.deck-callout')).toBeNull()
+    window.location.hash = ''
+  })
 })
