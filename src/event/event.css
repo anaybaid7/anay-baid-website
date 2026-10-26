@@ -1,0 +1,140 @@
+/* Only what the event page adds. Type, colours, the header and the footer
+   come from index.css. */
+
+.ev-home {
+  text-decoration: none;
+}
+
+.ev-hero {
+  padding-top: 40px;
+}
+.ev-logo {
+  display: block;
+  margin-bottom: 26px;
+  border-radius: 10px;
+}
+.ev-hero h1 {
+  margin: 0 0 28px;
+  font-size: clamp(48px, 8.4vw, 120px);
+  line-height: 0.9;
+  font-weight: 800;
+  font-stretch: 125%;
+  letter-spacing: -0.035em;
+}
+.ev-hero .lede {
+  max-width: 860px;
+}
+
+/* the weekly cycle, as one row of steps */
+.ev-flow {
+  list-style: none;
+  margin: 44px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 0;
+  counter-reset: step;
+}
+.ev-flow li {
+  display: flex;
+  align-items: center;
+  font-weight: 650;
+  font-size: 15.5px;
+}
+.ev-flow li::before {
+  counter-increment: step;
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font-size: 13px;
+}
+.ev-flow li:not(:last-child)::after {
+  content: '';
+  width: 18px;
+  height: 2px;
+  margin: 0 10px;
+  background: var(--line);
+}
+
+.ev-intro {
+  margin: -12px 0 28px;
+  color: var(--ink-2);
+}
+
+.ev-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px 24px;
+}
+.ev-figure {
+  margin: 0;
+}
+.ev-shot {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card);
+  cursor: zoom-in;
+}
+.ev-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ev-figure figcaption {
+  margin-top: 12px;
+  font-size: 15.5px;
+  color: var(--ink-2);
+}
+.ev-figure figcaption b {
+  color: var(--ink);
+}
+
+.ev-note {
+  margin: 56px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.ev-viewer {
+  width: min(96vw, 1600px);
+  max-width: none;
+  max-height: 94vh;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--card);
+  cursor: zoom-out;
+}
+.ev-viewer::backdrop {
+  background: rgb(6 16 46 / 0.78);
+}
+.ev-viewer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 920px) {
+  .ev-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .ev-flow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ev-flow li::after {
+    display: none;
+  }
+}
