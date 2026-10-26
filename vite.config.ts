@@ -1,8 +1,25 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// The event page lives in its own folder, so the PWA plugin's relative
+// manifest and service worker tags would point inside it and 404. That page
+// doesn't need offline support, so they come off it.
+const eventPageWithoutPwa: Plugin = {
+  name: 'event-page-without-pwa',
+  enforce: 'post',
+  transformIndexHtml: {
+    order: 'post',
+    handler: (html, ctx) =>
+      ctx.path.includes('purolator-intern-event')
+        ? html
+            .replace(/<link rel="manifest"[^>]*>/, '')
+            .replace(/<script id="vite-plugin-pwa:register-sw"[^>]*><\/script>/, '')
+        : html,
+  },
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -37,11 +54,22 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,pdf}'],
         // Never cache the live GitHub API calls — that data should always be
         // fresh, or explicitly fail, not silently serve a stale snapshot.
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/purolator-intern-event/],
+        // the event page's screenshots load when that page is opened
+        globIgnores: ['**/event-shots/**'],
       },
     }),
+    eventPageWithoutPwa,
   ],
   base: './',
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        event: 'purolator-intern-event/index.html',
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
