@@ -26,9 +26,9 @@ export type Spot = {
   text: string
 }
 
-// What opens under a step or a point. Numbers in these are mock data.
-export type SketchItem = {
-  type: 'box' | 'button' | 'input' | 'select' | 'text' | 'line' | 'mark'
+// One piece of a wireframe. Positions are in the wireframe's own units.
+export type WireItem = {
+  type: 'box' | 'button' | 'input' | 'select' | 'text' | 'line' | 'mark' | 'bar'
   x: number
   y: number
   w?: number
@@ -38,14 +38,17 @@ export type SketchItem = {
   faint?: boolean
   size?: 'lg'
   align?: 'end'
+  // a placeholder chart drawn inside a box
+  chart?: 'line' | 'bars' | 'donut' | 'rows'
 }
 
+// What opens under a step or a point. Numbers in these are mock data.
 export type Visual =
-  | { kind: 'table'; columns: string[]; rows: (string | number)[][]; highlight?: number[]; caption?: string }
+  | { kind: 'table'; columns: string[]; rows: (string | number)[][]; bars?: number; caption?: string }
   | { kind: 'lines'; alt: string; labels: string[]; series: { name: string; tone: 'muted' | 'accent'; values: number[] }[]; marks?: { at: number; text: string }[] }
   | { kind: 'flow'; alt: string; inputs: string[]; center: string; outputs: string[] }
-  | { kind: 'bars'; alt: string; labels: string[]; values: number[]; unit?: string; accent?: number[] }
-  | { kind: 'sketch'; alt: string; w: number; h: number; items: SketchItem[] }
+  | { kind: 'bars'; alt: string; labels: string[]; values: number[]; unit?: string; accent?: number[]; total?: number }
+  | { kind: 'wireframe'; alt: string; w: number; h: number; items: WireItem[] }
   | { kind: 'image'; src: string; alt: string }
 
 // A step on the weekly cycle slide. Click it to open its title, text and visual.
@@ -104,6 +107,7 @@ export const slides: Slide[] = [
             ['Fri', 17935, 5874, 7120],
             ['Sat', 380, 61, 154],
           ],
+          bars: 1,
           caption: 'One terminal, one week. Mock numbers.',
         },
       },
@@ -142,7 +146,7 @@ export const slides: Slide[] = [
         title: 'Adding what the model can\'t know',
         text: 'Pick the weeks, type the change and a reason. Every change is saved with who made it.',
         visual: {
-          kind: 'sketch',
+          kind: 'wireframe',
           alt: 'Wireframe of the weeks table with four weeks selected and raised by 5%',
           w: 640,
           h: 330,
@@ -188,7 +192,7 @@ export const slides: Slide[] = [
       {
         label: 'It gets split into days',
         title: 'Splitting the week',
-        text: "Each terminal's week is split by the share each day usually gets, taken from recent weeks with no holidays.",
+        text: "Each terminal's week is split by the share each day usually gets, taken from recent weeks with no holidays. Here a week of 98,400 pieces.",
         visual: {
           kind: 'bars',
           alt: 'Share of the week by day',
@@ -196,6 +200,7 @@ export const slides: Slide[] = [
           values: [0.3, 20.1, 21.0, 20.4, 19.6, 18.4, 0.2],
           unit: '%',
           accent: [1, 2, 3, 4, 5],
+          total: 98400,
         },
       },
       {
@@ -317,13 +322,42 @@ export const slides: Slide[] = [
       {
         label: 'The Hub Reporting dashboard in Power BI',
         title: 'Hub Reporting',
-        text: 'Hub volume and the forecast in one report, with a page for any two weeks side by side.',
+        text: 'Two pages. One puts each hub\'s volume next to the forecast, the other compares any two weeks by type of parcel.',
         visual: {
-          kind: 'flow',
-          alt: 'Hub volume and forecast going into the Power BI report and its two pages',
-          inputs: ['Hub actual volume', 'Hub forecast'],
-          center: 'Power BI report',
-          outputs: ['Overview, actual against forecast', 'Two weeks compared, by parcel type'],
+          kind: 'wireframe',
+          alt: 'Wireframe of the two report pages',
+          w: 640,
+          h: 360,
+          items: [
+            { type: 'text', x: 4, y: 16, label: 'Overview', strong: true },
+            { type: 'box', x: 4, y: 26, w: 308, h: 330 },
+            { type: 'select', x: 16, y: 40, w: 52, h: 24 },
+            { type: 'select', x: 74, y: 40, w: 52, h: 24 },
+            { type: 'select', x: 132, y: 40, w: 52, h: 24 },
+            { type: 'select', x: 190, y: 40, w: 52, h: 24 },
+            { type: 'select', x: 248, y: 40, w: 52, h: 24 },
+            { type: 'box', x: 16, y: 76, w: 200, h: 120, chart: 'line' },
+            { type: 'box', x: 224, y: 76, w: 76, h: 268, chart: 'rows' },
+            { type: 'box', x: 16, y: 206, w: 96, h: 138, chart: 'donut' },
+            { type: 'box', x: 120, y: 206, w: 96, h: 138, chart: 'bars' },
+            { type: 'text', x: 328, y: 16, label: 'Two weeks compared', strong: true },
+            { type: 'box', x: 328, y: 26, w: 308, h: 330 },
+            { type: 'select', x: 340, y: 40, w: 64, h: 24 },
+            { type: 'select', x: 410, y: 40, w: 64, h: 24 },
+            { type: 'select', x: 480, y: 40, w: 64, h: 24 },
+            { type: 'select', x: 550, y: 40, w: 64, h: 24 },
+            { type: 'box', x: 340, y: 76, w: 284, h: 92, chart: 'rows' },
+            { type: 'box', x: 340, y: 176, w: 65, h: 40 },
+            { type: 'bar', x: 350, y: 193, w: 30, h: 7 },
+            { type: 'box', x: 413, y: 176, w: 65, h: 40 },
+            { type: 'bar', x: 423, y: 193, w: 37, h: 7 },
+            { type: 'box', x: 486, y: 176, w: 65, h: 40 },
+            { type: 'bar', x: 496, y: 193, w: 44, h: 7 },
+            { type: 'box', x: 559, y: 176, w: 65, h: 40 },
+            { type: 'bar', x: 569, y: 193, w: 31, h: 7 },
+            { type: 'box', x: 340, y: 226, w: 138, h: 118, chart: 'bars' },
+            { type: 'box', x: 486, y: 226, w: 138, h: 118, chart: 'bars' },
+          ],
         },
       },
       {
