@@ -17,9 +17,12 @@ const norm = (t: string) =>
 // does a tech tag on a job or project count as using this skill?
 // "AWS" counts for "AWS S3", "React.js" counts for "React"
 export function uses(skill: string, tech: string) {
-  const s = norm(skill)
+  const s = norm(skill).replace(/ apis$/, '')
   const t = norm(tech)
-  return t === s || t.startsWith(s + ' ') || t.startsWith(s + '/')
+  if (t === s || t.startsWith(s + ' ') || t.startsWith(s + '/') || t.endsWith(' ' + s)) return true
+  // "ECS/EKS" counts for "ECS/Fargate": share a part that's more than a couple of letters
+  const parts = (x: string) => x.split(/[/ ]/).filter((p) => p.length > 2)
+  return parts(s).some((p) => parts(t).includes(p)) && s.includes('/')
 }
 
 export type Evidence =

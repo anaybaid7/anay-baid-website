@@ -1,8 +1,68 @@
 /// <reference types="vitest/config" />
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { createServer, type Plugin, type ViteDevServer } from 'vite'
+
+interface Formats {
+  plainText(): string
+  jsonResume(): unknown
+  vcard(): string
+  personLd(): unknown
+}
+
+// load src/resumeFormats.ts through Vite, the same way the app sees it
+async function loadFormats(server?: ViteDevServer): Promise<Formats> {
+  if (server) return (await server.ssrLoadModule('/src/resumeFormats.ts')) as unknown as Formats
+  const tmp = await createServer({ configFile: false, appType: 'custom', logLevel: 'silent', server: { middlewareMode: true, hmr: false } })
+  try {
+    return (await tmp.ssrLoadModule('/src/resumeFormats.ts')) as unknown as Formats
+  } finally {
+    await tmp.close()
+  }
+}
+
+// one data file, every format: the build writes the resume as plain text and
+// JSON Resume, a contact card, and the search engine data in the page head,
+// all from src/data.ts. The dev server serves the same files.
+function publishResume(): Plugin {
+  const files = (f: Formats): Record<string, [string, string]> => ({
+    'resume.txt': ['text/plain; charset=utf-8', f.plainText()],
+    'resume.json': ['application/json', JSON.stringify(f.jsonResume(), null, 2) + '\n'],
+    'anay-baid.vcf': ['text/vcard', f.vcard()],
+  })
+  const ld = (f: Formats) => `<script type="application/ld+json">${JSON.stringify(f.personLd())}</script>`
+  let built: Formats | undefined
+  return {
+    name: 'publish-resume',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const name = (req.url ?? '').replace(/^\//, '').split('?')[0]
+        if (!['resume.txt', 'resume.json', 'anay-baid.vcf'].includes(name)) return next()
+        const [type, body] = files(await loadFormats(server))[name]
+        res.setHeader('Content-Type', type)
+        res.end(body)
+      })
+    },
+    async buildStart() {
+      if (process.env.VITEST) return
+      built = await loadFormats()
+    },
+    generateBundle() {
+      if (!built) return
+      for (const [fileName, [, source]] of Object.entries(files(built))) this.emitFile({ type: 'asset', fileName, source })
+    },
+    async transformIndexHtml(html, ctx) {
+      const f = ctx.server ? await loadFormats(ctx.server) : built
+      if (!f) return html
+      return html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, ld(f))
+    },
+  }
+}
 
 // The event page lives in its own folder, so the PWA plugin's relative
 // manifest and service worker tags would point inside it and 404. That page
@@ -21,12 +81,38 @@ const eventPageWithoutPwa: Plugin = {
   },
 }
 
+// counts the tests in the repo at build time, so the "About this site"
+// section never goes out of date
+function countTests(dir: string, pattern: RegExp): number {
+  let n = 0
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) n += countTests(path, pattern)
+    else if (pattern.test(entry.name)) n += (readFileSync(path, 'utf8').match(/^\s*(?:it|test)\(/gm) ?? []).length
+  }
+  return n
+}
+
+function commit() {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return ''
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    __SITE_STATS__: JSON.stringify({
+      unit: countTests('src', /\.test\.tsx?$/),
+      e2e: countTests('e2e', /\.spec\.ts$/),
+      commit: commit(),
+    }),
   },
   plugins: [
+    publishResume(),
     react(),
     tailwindcss(),
     VitePWA({
@@ -51,12 +137,13 @@ export default defineConfig({
         // Precache the app shell + static assets so the site opens instantly
         // and works offline after the first visit — a real service worker,
         // not just a manifest for show.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,pdf}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,pdf}'],
+        // the full-size photo is only used for the share image, not the page
+        // the event page's screenshots load when that page is opened
+        globIgnores: ['**/avatar.png', '**/og.png', '**/logos/*.png', '**/event-shots/**'],
         // Never cache the live GitHub API calls — that data should always be
         // fresh, or explicitly fail, not silently serve a stale snapshot.
         navigateFallbackDenylist: [/^\/api\//, /^\/purolator-intern-event/],
-        // the event page's screenshots load when that page is opened
-        globIgnores: ['**/event-shots/**'],
       },
     }),
     eventPageWithoutPwa,

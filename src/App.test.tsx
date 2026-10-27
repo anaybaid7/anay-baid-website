@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from './App'
+import { __resetForTests, setSettings } from './settings'
 import { experience, projects, profile } from './data'
 
 const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']
 
 beforeEach(() => {
   history.replaceState(null, '', '/')
+  localStorage.clear()
+  __resetForTests()
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 })
 
@@ -24,27 +27,35 @@ describe('App', () => {
     for (const p of projects) expect(screen.getAllByText(p.title).length).toBeGreaterThan(0)
   })
 
-  it('shows the current job first and switches when another is picked', () => {
+  it('shows every job in full, newest first', () => {
     render(<App />)
-    const detail = document.getElementById('exp-detail')!
-    expect(detail).toHaveTextContent(experience[0].bullets[0])
-    const job = (name: RegExp) => screen.getAllByRole('button', { name }).find((b) => b.classList.contains('job'))!
-    fireEvent.click(job(/cineplex/i))
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[3].bullets[0])
-    const bar = screen.getAllByRole('button', { name: /iotum/i }).find((b) => b.classList.contains('tl-bar'))!
-    fireEvent.click(bar)
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
+    const roles = document.querySelectorAll('[id^="job-"]')
+    expect(roles).toHaveLength(experience.length)
+    experience.forEach((e, i) => {
+      expect(roles[i]).toHaveTextContent(e.role)
+      for (const b of e.bullets) expect(roles[i].textContent).toContain(b.slice(0, 30))
+    })
   })
 
-  it('arrow keys move through the jobs', () => {
+  it('picking a term on the timeline marks that job', () => {
     render(<App />)
-    const first = screen.getAllByRole('button', { name: /purolator/i }).find((b) => b.classList.contains('job'))!
-    first.focus()
-    fireEvent.keyDown(first, { key: 'ArrowDown' })
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
-    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' })
-    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' })
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[3].bullets[0])
+    const bar = screen.getAllByRole('button', { name: /iotum/i }).find((b) => b.classList.contains('tl-bar'))!
+    fireEvent.click(bar)
+    expect(document.getElementById('job-iotum')).toHaveClass('on')
+    expect(location.hash).toBe('#job-iotum')
+  })
+
+  it('shows every job and project with its headline result', () => {
+    render(<App />)
+    const rows = document.querySelectorAll('[id^="project-"]')
+    expect(rows).toHaveLength(projects.length)
+    projects.forEach((p, i) => {
+      if (p.highlight) expect(rows[i].querySelector('.entry-result b')).toHaveTextContent(p.highlight.value)
+    })
+    const jobs = document.querySelectorAll('[id^="job-"]')
+    experience.forEach((e, i) => {
+      if (e.highlight) expect(jobs[i].querySelector('.entry-result b')).toHaveTextContent(e.highlight.value)
+    })
   })
 
   it('links the live Battleship game and its code', () => {
@@ -55,26 +66,32 @@ describe('App', () => {
   })
 
   it('switches between light and dark', () => {
-    document.documentElement.dataset.theme = 'light'
+    setSettings({ theme: 'light' })
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Switch to dark mode' }))
+    fireEvent.click(screen.getByRole('button', { name: /dark mode/i }))
     expect(document.documentElement.dataset.theme).toBe('dark')
-    expect(localStorage.getItem('theme')).toBe('dark')
+    expect(JSON.parse(localStorage.getItem('prefs')!).theme).toBe('dark')
   })
 
-  it('shows where a skill was used and jumps to that job', () => {
+  it('measures skills from the work instead of rating them', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Docker' }))
-    expect(screen.getByText(/shows up in/)).toBeInTheDocument()
-    const link = screen.getAllByRole('button', { name: 'Nationwide Appraisals' }).find((b) => b.closest('.evidence'))!
-    fireEvent.click(link)
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[2].bullets[0])
+    const table = document.querySelector('.skill-table')!
+    const python = Array.from(table.querySelectorAll('tbody tr')).find((r) => r.querySelector('th')?.textContent === 'Python')!
+    expect(python.querySelector('.col-where')).toHaveTextContent('Purolator')
+    expect(Number(python.querySelector('.col-months')!.textContent)).toBeGreaterThan(0)
+    // sorting by name puts the rows in alphabetical order
+    fireEvent.click(screen.getByRole('button', { name: /^Skill/ }))
+    const names = Array.from(table.querySelectorAll('tbody th')).map((th) => th.textContent!)
+    expect(names).toEqual([...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())))
+    // group buttons narrow it down
+    fireEvent.click(screen.getByRole('button', { name: 'Backend' }))
+    expect(table.querySelectorAll('tbody tr').length).toBeLessThan(names.length)
   })
 
-  it('opens a job from a link like #job-iotum', () => {
+  it('opens a job from a link like #job-iotum', async () => {
     history.replaceState(null, '', '#job-iotum')
     render(<App />)
-    expect(document.getElementById('exp-detail')).toHaveTextContent(experience[1].bullets[0])
+    await waitFor(() => expect(document.getElementById('job-iotum')).toHaveClass('on'))
     history.replaceState(null, '', '/')
   })
 
@@ -82,20 +99,14 @@ describe('App', () => {
     render(<App />)
     const glance = document.querySelector('.glance')!
     expect(glance).toHaveTextContent('April 2027')
-    expect(glance).toHaveTextContent(`${experience.length} co-op terms`)
+    expect(glance).toHaveTextContent(`${experience.length} terms`)
     expect(glance).toHaveTextContent('2 wins')
-  })
-
-  it('makes result numbers stand out in bullets', () => {
-    render(<App />)
-    const nums = [...document.querySelectorAll('#exp-detail .num')].map((n) => n.textContent)
-    expect(nums).toContain('40%')
   })
 
   it('copies the email address', async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: `Copy ${profile.email}` }))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy address' }))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(profile.email)
     await waitFor(() => expect(screen.getByText(/copied .* to your clipboard/i)).toBeInTheDocument())
   })
@@ -103,5 +114,101 @@ describe('App', () => {
   it('falls back to a GitHub link when the API is unreachable', async () => {
     render(<App />)
     await waitFor(() => expect(screen.getByText(/couldn't load this from github/i)).toBeInTheDocument())
+  })
+
+  it('settings change the page and survive a reload', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('radio', { name: /skim/i, hidden: true }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Larger', hidden: true }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Green', hidden: true }))
+    const root = document.documentElement.dataset
+    expect([root.view, root.size, root.accent]).toEqual(['skim', 'l', 'green'])
+    __resetForTests()
+    expect(document.documentElement.dataset.view).toBe('skim')
+  })
+
+  it('takes settings from the URL', () => {
+    history.replaceState(null, '', '/?view=skim&accent=red&size=nonsense')
+    __resetForTests()
+    render(<App />)
+    expect(document.documentElement.dataset.view).toBe('skim')
+    expect(document.documentElement.dataset.accent).toBe('red')
+    expect(document.documentElement.dataset.size).toBe('m')
+  })
+
+  it('filters the page to one skill and puts it in the URL', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Terraform' }))
+    expect(document.querySelector('.filterbar')).toHaveTextContent('Showing work with Terraform')
+    expect(document.getElementById('job-purolator')).not.toHaveClass('dim')
+    expect(document.getElementById('job-iotum')).toHaveClass('dim')
+    expect(screen.getAllByRole('button', { name: /iotum/i }).find((b) => b.classList.contains('tl-bar'))).toHaveClass('dim')
+    expect(new URL(location.href).searchParams.get('stack')).toBe('Terraform')
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filter' }))
+    expect(document.getElementById('job-iotum')).not.toHaveClass('dim')
+  })
+
+  it('opens a filtered view from a shared link', () => {
+    history.replaceState(null, '', '/?stack=Selenium')
+    render(<App />)
+    expect(document.getElementById('job-iotum')).not.toHaveClass('dim')
+    expect(document.getElementById('job-purolator')).toHaveClass('dim')
+  })
+
+  it('checks a pasted job posting against the page', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Paste the job posting' }))
+    fireEvent.change(screen.getByLabelText('Job posting'), {
+      target: { value: 'You have 2+ years with Python and AWS, experience with k8s, and know your way around Kafka.' },
+    })
+    const out = document.querySelector('.match-list')!
+    expect(out).toHaveTextContent('Python')
+    expect(out).toHaveTextContent('AWS')
+    expect(out).toHaveTextContent('Kubernetes')
+    expect(out).toHaveTextContent('Kafka')
+    fireEvent.click(screen.getByRole('button', { name: /show only/i }))
+    expect(new URL(location.href).searchParams.get('stack')).toContain('Python')
+  })
+
+  it('single-key shortcuts work and stay out of the way while typing', () => {
+    render(<App />)
+    fireEvent.keyDown(document.body, { key: 's' })
+    expect(document.documentElement.dataset.view).toBe('skim')
+    fireEvent.keyDown(document.body, { key: 's' })
+    expect(document.documentElement.dataset.view).toBe('full')
+    fireEvent.keyDown(document.body, { key: '?' })
+    expect(screen.getByRole('heading', { name: 'Keyboard shortcuts', hidden: true })).toBeInTheDocument()
+  })
+
+  it("shows how a project is built, one step at a time", () => {
+    render(<App />)
+    const insight = document.getElementById('project-insightvault')!
+    const steps = insight.querySelectorAll<HTMLButtonElement>('.node')
+    expect(steps.length).toBe(projects[0].how!.steps.length)
+    fireEvent.click(steps[2])
+    expect(insight.querySelector('.flow-note')).toHaveTextContent(projects[0].how!.steps[2].note)
+    expect(steps[2]).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('opens the live game inside the page on request only', () => {
+    render(<App />)
+    expect(document.querySelector('.preview iframe')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Try it here' }))
+    expect(document.querySelector('.preview iframe')).toHaveAttribute('src', 'https://purolator-battleship.onrender.com')
+  })
+
+  it('names a job on the timeline when you point at it', () => {
+    render(<App />)
+    const bar = screen.getAllByRole('button', { name: /cineplex/i }).find((b) => b.classList.contains('tl-bar'))!
+    fireEvent.mouseEnter(bar)
+    expect(document.querySelector('.tl-sum')).toHaveTextContent('Cineplex Entertainment, Data Engineer')
+  })
+
+  it('reports real test counts in About this site', () => {
+    render(<App />)
+    const about = screen.getByRole('heading', { name: 'About this site' }).closest('section')!
+    expect(about).toHaveTextContent(`${__SITE_STATS__.unit} unit tests`)
+    expect(__SITE_STATS__.unit).toBeGreaterThan(60)
+    expect(__SITE_STATS__.e2e).toBeGreaterThan(5)
   })
 })
