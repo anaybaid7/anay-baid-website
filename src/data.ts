@@ -51,13 +51,6 @@ export const skillLabels = {
   devops: 'Cloud & infra',
 }
 
-// how a piece of work fits together, drawn as a row of steps you can click
-// through. Only what's on the resume or in the code, nothing filled in.
-export interface HowItWorks {
-  steps: { label: string; note: string }[]
-  base?: string
-}
-
 export interface ExperienceEntry {
   role: string
   org: string
@@ -68,7 +61,6 @@ export interface ExperienceEntry {
   tech: Tech[]
   // one number from the bullets above, shown in the list so it scans fast
   highlight?: { value: string; label: string }
-  how?: HowItWorks
 }
 
 export const experience: ExperienceEntry[] = [
@@ -85,16 +77,6 @@ export const experience: ExperienceEntry[] = [
       "Wrote constraint-aware allocation algorithms in Python that keep network volume targets, flag capacity bottlenecks, and support a projected 10-15% throughput gain.",
     ],
     tech: ['Python', 'PowerShell', 'Flask', 'REST', 'Airflow', 'SQL', 'Docker', 'AWS S3', 'SageMaker', 'ECS/Fargate', 'Terraform'],
-    how: {
-      steps: [
-        { label: 'Airflow', note: 'DAGs schedule and run each step of the pipeline.' },
-        { label: 'ETL jobs', note: 'Python and PowerShell jobs over 100K+ forecast records, with state, validation and reconciliation in SQL.' },
-        { label: 'S3, Parquet', note: 'Forecast artifacts are written to S3 as Parquet.' },
-        { label: 'SageMaker', note: 'Managed inference for the forecasting models.' },
-        { label: 'Flask on ECS', note: 'REST APIs for the planning tools, containerized with Docker and deployed through ECR to ECS on Fargate.' },
-      ],
-      base: 'Provisioned with Terraform, with IAM scoped per workload, private networking, Secrets Manager and KMS',
-    },
     highlight: { value: '10-20×', label: 'faster planning turnaround' },
   },
   {
@@ -151,7 +133,6 @@ export interface ProjectEntry {
   link?: string
   code?: string
   highlight?: { value: string; label: string }
-  how?: HowItWorks
   image?: { src: string; alt: string; caption: string }
 }
 
@@ -168,15 +149,6 @@ export const projects: ProjectEntry[] = [
       "React and TypeScript review dashboard tested with Vitest and Playwright, deployed to AWS ECS Fargate, RDS and CloudFront with Terraform.",
     ],
     tech: ['Java', 'Spring Boot', 'React', 'TypeScript', 'AWS', 'Terraform', 'Python', 'Playwright'],
-    how: {
-      steps: [
-        { label: 'Training', note: 'Python pipeline with pandas and scikit-learn trains a logistic regression model, evaluated on a time-based holdout of 35K+ transactions.' },
-        { label: 'Weights', note: 'The trained weights are exported so the API can score without an ML runtime.' },
-        { label: 'Spring Boot API', note: 'Java API that combines the rule engine with the model. Its inference matches training within 1e-6.' },
-        { label: 'Dashboard', note: 'React and TypeScript app for reviewing alerts, tested with Vitest and Playwright.' },
-      ],
-      base: 'Deployed on AWS ECS Fargate, RDS and CloudFront with Terraform',
-    },
     highlight: { value: '92.9%', label: 'precision, 94.1% recall on a 35K+ transaction holdout' },
     link: 'https://github.com/anaybaid7/insight-vault',
   },
@@ -192,14 +164,6 @@ export const projects: ProjectEntry[] = [
       "Built on a modular workflow engine in JavaScript, so new front desk tasks can be added without changing the rest.",
     ],
     tech: ['JavaScript', 'DOM Injection', 'Workflow Automation'],
-    how: {
-      steps: [
-        { label: 'StarRez page', note: 'The housing system front desk staff already work in.' },
-        { label: 'Extension', note: 'Reads the data it needs from the page.' },
-        { label: 'Workflow engine', note: 'Modular JavaScript, so a new front desk task can be added without changing the rest.' },
-        { label: 'Logs', note: 'Filled in from the extracted data, reducing manual logging by 80%.' },
-      ],
-    },
     highlight: { value: '100+', label: 'users, 80% less manual logging' },
     link: 'https://github.com/anaybaid7/starrez-logger-prod',
   },
@@ -215,14 +179,6 @@ export const projects: ProjectEntry[] = [
       'Drag and drop fleet placement that works on phones, and a password-locked reset that wakes the free Render server and clears every game.',
     ],
     tech: ['Node.js', 'Express', 'Socket.IO', 'Render'],
-    how: {
-      steps: [
-        { label: 'Browser', note: 'Drag and drop fleet placement that works with a mouse or on a phone. Invite links open straight into a room.' },
-        { label: 'Socket.IO', note: 'Moves, turns and lobby updates in real time, with a reconnect window if a connection drops.' },
-        { label: 'Node, Express', note: 'Rooms, turns, rankings and the lobby, all kept in memory.' },
-        { label: 'Render', note: 'Free plan. It sleeps when idle, and a password-locked reset wakes it and clears every game.' },
-      ],
-    },
     highlight: { value: 'Live', label: 'on Render, with invite links and a lobby' },
     link: 'https://purolator-battleship.onrender.com',
     code: 'https://github.com/anaybaid7/battleship-purolator',
@@ -239,14 +195,6 @@ export const projects: ProjectEntry[] = [
       "Checks the target environment before a build starts and emails the result over secure SMTP when it finishes.",
     ],
     tech: ['Python', 'GitHub Actions API', 'SMTP', 'REST'],
-    how: {
-      steps: [
-        { label: 'Python tool', note: 'Picks the environment and the builds to run.' },
-        { label: 'Checks', note: 'Validates the target environment before anything starts.' },
-        { label: 'GitHub API', note: 'Triggers only the targeted builds.' },
-        { label: 'SMTP', note: 'Emails the result over secure SMTP.' },
-      ],
-    },
     highlight: { value: 'Won', label: 'Best Use of GitHub at uOttaHack 5' },
     link: 'https://devpost.com/software/github-build-trigger-application',
   },

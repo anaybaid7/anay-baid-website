@@ -42,7 +42,6 @@ CI runs all of these on every push.
 - Keyboard shortcuts, J and K to step through jobs and projects, S for skim, T for theme, ? for the full list.
 - Theme, layout and filter changes crossfade using the View Transitions API where the browser has it.
 - A copy-link button beside every job and project title.
-- "How it's built" under the bigger jobs and projects, a row of steps showing how the pieces connect. Hover or click a step to read what it does. The steps live in the `how` field in `data.ts`.
 - "Try it here" on Battleship opens the live game in a frame on the page. It only loads when someone asks for it.
 - Pointing at a term on the timeline names the job and dates above it.
 - A thin reading progress bar at the top, done in CSS with a scroll-driven animation (no JavaScript), and left out in browsers without support.
@@ -52,6 +51,18 @@ CI runs all of these on every push.
 - One data file, every format. At build time a small Vite plugin (`publishResume` in `vite.config.ts`) writes `resume.txt`, `resume.json` (JSON Resume) and `anay-baid.vcf` next to the page, and puts schema.org data in the page head, all from `src/resumeFormats.ts`. The dev server serves the same files. `curl https://a2baid.netlify.app/resume.txt` prints the resume in a terminal.
 - Settings also cover type width (Archivo's variable width axis, from narrow to wide), high contrast (also turned on by the system's "more contrast" setting), which section leads, and which sections show. Two presets set several at once ("Quick scan" and "Everything"). The share link carries all of it, for example `/?view=skim&lead=projects&hide=github,colophon`, and "Print this view" prints the page as set up.
 - A page map down the right edge on wide screens, one line per section and per job or project. The one you're reading is marked, hovering names it, and clicking jumps there.
+- Every job and project opens into a drawer (the "Open details" button on each row, or from search). It loads on first open, so the page itself stays light. It has an overview plus whichever of these fit:
+  - **How it works**, an architecture diagram drawn in SVG from data. Hover or tab through the boxes and the connected lines light up, with a note on each part. **Play the flow** walks every connection in order with a dot travelling along each line, or step through with the arrows. With reduced motion on, the dot is left out.
+  - **Screens**, the forecast tool's mock screenshots from the event page with numbered call-outs, or a wireframe for InsightVault and the StarRez extension.
+  - **Numbers**, the resume figures as before and after bars, score rings and figures.
+  - **Try it**, a hands-on version of the idea behind the work, on made-up data and labelled that way (`src/components/demos/`):
+    - Purolator, a capacity-aware allocation. Split a week's volume across four terminals by share, drag the capacities, and watch overflow move to terminals with room or get flagged as a bottleneck. The algorithm is in `allocate.ts` with its own tests.
+    - InsightVault, a transaction scorer with a few rules and a logistic score side by side, the threshold adjustable, and each feature's contribution shown.
+    - Cineplex, a schema and row-count check between an Azure and an on-prem copy of a table.
+    - The CI/CD tool, a targeted build run. Pick what changed and the environment, and only those builds trigger.
+    - StarRez, the same log entry typed by hand or filled from the page.
+    - Battleship, a one-player board with the real game's five vehicles.
+  Previous and next move through every entry, ←/→ work too, Esc closes it, and the URL keeps what's open (`/?open=project-insightvault&tab=how`). The content is in `src/details.ts`, and a test checks that every line joins two real boxes and that no group box surrounds a box that isn't in it.
 - A grid of my public GitHub activity for the last 13 weeks, plus my most recently pushed repos, both pulled live from GitHub.
 - A light and dark switch that remembers your choice.
 - A search menu (Cmd/Ctrl+K or "/") that jumps to any job or project, copies my email, opens the resume, and so on.

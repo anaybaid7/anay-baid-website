@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { profile, experience, projects, education, skills, skillLabels } from './data'
 import { downloadResume } from './downloadResume'
 import GithubActivity from './components/GithubActivity'
@@ -15,9 +15,13 @@ import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
 import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
-import HowItWorks from './components/HowItWorks'
+import { ENTRIES } from './entries'
+import { tabsFor, type Tab } from './details'
 import LivePreview from './components/LivePreview'
 import Minimap from './components/Minimap'
+
+// the drawer and its demos load the first time someone opens one
+const DetailDrawer = lazy(() => import('./components/DetailDrawer'))
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
 const shortOrg = (org: string) => org.replace(/ (Inc|LP|Global Holdings Inc)$/, '')
@@ -152,6 +156,19 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
+const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', numbers: 'numbers', try: 'demo' }
+
+// the button on each row that opens its drawer, named after what's inside
+function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
+  const extra = tabsFor(id).slice(1).map((t) => OPEN_LABEL[t])
+  if (extra.length === 0) return null
+  return (
+    <button type="button" className="open-detail" onClick={() => onOpen(id)}>
+      Open details <span className="open-what">{listFormat(extra)}</span> <span aria-hidden="true">→</span>
+    </button>
+  )
+}
+
 function Result({ h }: { h?: { value: string; label: string } }) {
   if (!h) return null
   return (
@@ -245,7 +262,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter }: { active: number; onPick: (i: number) => void; filter: string[] }) {
+function Experience({ active, onPick, filter, onOpen }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: (id: string) => void }) {
   return (
     <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
@@ -272,7 +289,7 @@ function Experience({ active, onPick, filter }: { active: number; onPick: (i: nu
                 <Result h={e.highlight} />
                 <Bullets items={e.bullets} />
                 <p className="stack">{e.tech.join(', ')}</p>
-                {e.how && <HowItWorks how={e.how} name={shortOrg(e.org)} />}
+                <OpenDetail id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
               </div>
             </li>
           ))}
@@ -444,6 +461,30 @@ export default function App() {
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [detail, setDetail] = useState<{ id: string; tab: Tab } | null>(() => {
+    const q = new URLSearchParams(location.search)
+    const id = q.get('open')
+    // tab=play was the old name for the demo tab, so older links still land on it
+    const tab = q.get('tab') === 'play' ? 'try' : (q.get('tab') as Tab)
+    return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview' } : null
+  })
+
+  // which drawer is open lives in the URL, so it can be shared or reloaded
+  const showDetail = useCallback((next: { id: string; tab: Tab } | null) => {
+    setDetail(next)
+    const url = new URL(location.href)
+    if (next) {
+      url.searchParams.set('open', next.id)
+      if (next.tab === 'overview') url.searchParams.delete('tab')
+      else url.searchParams.set('tab', next.tab)
+    } else {
+      url.searchParams.delete('open')
+      url.searchParams.delete('tab')
+    }
+    history.replaceState(null, '', url)
+    if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
+  }, [])
+  const openDetail = useCallback((id: string) => showDetail({ id, tab: tabsFor(id)[1] ?? 'overview' }), [showDetail])
   const [filter, setFilter] = useState<string[]>(() =>
     (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
   )
@@ -523,8 +564,8 @@ export default function App() {
   const commands = useMemo<Command[]>(() => {
     const copy = () => navigator.clipboard?.writeText(profile.email).catch(() => {})
     return [
-      ...experience.map((e, i) => ({ group: 'Jobs', label: `${shortOrg(e.org)}, ${e.role}`, keywords: e.tech.join(' '), run: () => openJob(i) })),
-      ...projects.map((p) => ({ group: 'Projects', label: p.title, keywords: `${p.period} ${p.tech.join(' ')}`, run: () => openProject(slug(p.title)) })),
+      ...experience.map((e) => ({ group: 'Jobs', label: `${shortOrg(e.org)}, ${e.role}`, keywords: e.tech.join(' '), run: () => showDetail({ id: `job-${slug(shortOrg(e.org))}`, tab: 'overview' }) })),
+      ...projects.map((p) => ({ group: 'Projects', label: p.title, keywords: `${p.period} ${p.tech.join(' ')}`, run: () => showDetail({ id: `project-${slug(p.title)}`, tab: 'overview' }) })),
       { group: 'Get in touch', label: 'Email Anay', keywords: 'contact mail', run: () => (location.href = `mailto:${profile.email}`) },
       { group: 'Get in touch', label: 'Copy email address', keywords: 'clipboard contact', run: copy },
       { group: 'Get in touch', label: 'Read the resume', keywords: 'cv pdf', run: showResume },
@@ -546,7 +587,7 @@ export default function App() {
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
       { group: 'Hiring', label: 'Plain text resume', keywords: 'txt ats copy paste', run: () => window.open(FILES.text, '_blank', 'noopener') },
     ]
-  }, [openJob, openProject, showResume, applyFilter])
+  }, [showDetail, showResume, applyFilter])
   return (
     <>
       <div className="progress" aria-hidden="true" />
@@ -619,7 +660,7 @@ export default function App() {
           </div>
         )}
 
-        <Experience active={activeJob} onPick={openJob} filter={filter} />
+        <Experience active={activeJob} onPick={openJob} filter={filter} onOpen={openDetail} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">Projects</h2>
@@ -638,7 +679,7 @@ export default function App() {
                     <p className="entry-desc">{p.description}</p>
                     <Bullets items={p.bullets} />
                     <p className="stack">{p.tech.join(', ')}</p>
-                    {p.how && <HowItWorks how={p.how} name={p.title} />}
+                    <OpenDetail id={`project-${slug(p.title)}`} onOpen={openDetail} />
                     <ProjectLinks p={p} onPreview={() => setPreview(p.link ?? null)} />
                   </div>
                 </li>
@@ -765,6 +806,11 @@ export default function App() {
       <CommandMenu commands={commands} open={menuOpen} onOpenChange={setMenuOpen} />
       <ResumeViewer open={resumeOpen} onClose={() => setResumeOpen(false)} />
       <SettingsPanel />
+      {detail && (
+        <Suspense fallback={null}>
+          <DetailDrawer open={detail} onChange={showDetail} />
+        </Suspense>
+      )}
       <Matcher open={matcherOpen} onOpenChange={setMatcherOpen} onFilter={applyFilter} />
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
       <LivePreview

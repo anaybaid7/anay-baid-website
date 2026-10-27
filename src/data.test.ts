@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
+import { ENTRIES } from './entries'
+import { DETAILS } from './details'
 import { experience, projects, allTech, education, profile, skills } from './data'
 
 // Vitest always runs from the project root, so this resolves the same way
@@ -103,12 +105,57 @@ describe('headline numbers', () => {
   })
 })
 
-describe('how it works diagrams', () => {
-  it('have at least two steps, each with a note', () => {
-    for (const e of [...experience, ...projects]) {
-      if (!e.how) continue
-      expect(e.how.steps.length).toBeGreaterThanOrEqual(2)
-      for (const step of e.how.steps) expect(step.note.length).toBeGreaterThan(10)
+describe('drawer details', () => {
+  it('belong to real entries, and every edge joins two real boxes', () => {
+    const ids = new Set(ENTRIES.map((e) => e.id))
+    for (const [id, d] of Object.entries(DETAILS)) {
+      expect(ids.has(id), id).toBe(true)
+      const nodes = new Set(d.arch.nodes.map((n) => n.id))
+      for (const e of d.arch.edges) {
+        expect(nodes.has(e.from), `${id} ${e.from}`).toBe(true)
+        expect(nodes.has(e.to), `${id} ${e.to}`).toBe(true)
+      }
+      for (const g of d.arch.groups ?? []) for (const n of g.nodes) expect(nodes.has(n), `${id} group ${n}`).toBe(true)
     }
+  })
+
+  it('never put two boxes in the same spot', () => {
+    for (const [id, d] of Object.entries(DETAILS)) {
+      const spots = d.arch.nodes.map((n) => `${n.col},${n.row}`)
+      expect(new Set(spots).size, id).toBe(spots.length)
+    }
+  })
+
+  it("never draw a group box around a box that isn't in the group", () => {
+    for (const [id, d] of Object.entries(DETAILS)) {
+      for (const g of d.arch.groups ?? []) {
+        const members = d.arch.nodes.filter((n) => g.nodes.includes(n.id))
+        const [c0, c1] = [Math.min(...members.map((n) => n.col)), Math.max(...members.map((n) => n.col))]
+        const [r0, r1] = [Math.min(...members.map((n) => n.row)), Math.max(...members.map((n) => n.row))]
+        for (const n of d.arch.nodes) {
+          if (g.nodes.includes(n.id)) continue
+          const inside = n.col >= c0 && n.col <= c1 && n.row >= r0 && n.row <= r1
+          expect(inside, `${id}: ${n.id} sits inside "${g.label}"`).toBe(false)
+        }
+      }
+    }
+  })
+
+  it('keep metric bars between 0 and 100', () => {
+    for (const d of Object.values(DETAILS)) {
+      for (const m of d.metrics ?? []) {
+        if (m.kind === 'less') {
+          for (const v of [m.after].flat()) {
+            expect(v).toBeGreaterThan(0)
+            expect(v).toBeLessThan(100)
+          }
+        }
+        if (m.kind === 'score') expect(m.value).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+
+  it('give every job a drawer', () => {
+    for (const e of ENTRIES.filter((x) => x.kind === 'job')) expect(DETAILS[e.id], e.id).toBeDefined()
   })
 })

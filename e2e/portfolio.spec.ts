@@ -49,8 +49,8 @@ test('the search menu finds a project and opens it', async ({ page }) => {
   await page.keyboard.press('Control+k')
   await page.getByRole('combobox').fill('pashu')
   await page.keyboard.press('Enter')
-  await expect(page.locator('#project-pashu')).toBeInViewport()
-  await expect(page).toHaveURL(/#project-pashu$/)
+  await expect(page.locator('dialog.drawer #drawer-title')).toHaveText('Pashu (Animal Welfare Game)')
+  await expect(page).toHaveURL(/open=project-pashu/)
 })
 
 test('settings open as a popover, apply, and stick after a reload', async ({ page }) => {
@@ -89,14 +89,6 @@ test('the contact card downloads', async ({ page }) => {
   expect(download.suggestedFilename()).toBe('anay-baid.vcf')
 })
 
-test("a project's build steps open and explain each step", async ({ page }) => {
-  await page.goto('/')
-  const card = page.locator('#project-insightvault')
-  await card.getByText("How it's built").click()
-  await card.getByRole('button', { name: 'Spring Boot API' }).click()
-  await expect(card.locator('.flow-note')).toContainText('rule engine')
-})
-
 test('the build publishes the resume as plain text and JSON Resume', async ({ request }) => {
   const txt = await request.get('/resume.txt')
   expect(txt.ok()).toBe(true)
@@ -130,4 +122,34 @@ test('the page map jumps to a project', async ({ page }) => {
   await mark.click()
   await expect(page).toHaveURL(/#project-pashu$/)
   await expect(page.locator('#project-pashu')).toBeInViewport()
+})
+
+test('a job opens into a drawer with a working diagram, and Esc closes it', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('#job-purolator .open-detail').click()
+  const drawer = page.locator('dialog.drawer')
+  await expect(drawer).toBeVisible()
+  await expect(page).toHaveURL(/open=job-purolator/)
+  await drawer.locator('.arch-node[data-node="sm"]').click()
+  await expect(drawer.locator('.arch-note')).toContainText('SageMaker')
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(page).not.toHaveURL(/open=/)
+})
+
+test('the mini Battleship board takes shots', async ({ page }) => {
+  await page.goto('/?open=project-battleship-for-purolator&tab=play')
+  await page.getByRole('button', { name: 'D4', exact: true }).click()
+  await expect(page.locator('.bs-count')).toContainText('1 shot,')
+})
+
+test('a flow plays through and a demo responds', async ({ page }) => {
+  await page.goto('/?open=project-insightvault&tab=how')
+  const drawer = page.locator('dialog.drawer')
+  await drawer.getByRole('button', { name: 'Next step' }).click()
+  await expect(drawer.locator('.arch-count')).toHaveText(/Step 1 of/)
+  await drawer.getByRole('tab', { name: 'Try it' }).click()
+  await drawer.getByLabel(/Different country/).check()
+  await drawer.getByLabel(/New merchant/).check()
+  await expect(drawer.locator('.verdict')).toContainText('Alert')
 })
