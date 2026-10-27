@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from './App'
 import { __resetForTests, setSettings } from './settings'
+import { DETAILS } from './details'
 import { experience, projects, profile } from './data'
 
 const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']
@@ -12,6 +13,13 @@ beforeEach(() => {
   __resetForTests()
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 })
+
+const findDrawer = () =>
+  waitFor(() => {
+    const d = document.querySelector('dialog.drawer')
+    if (!d?.querySelector('#drawer-title')) throw new Error('drawer not loaded yet')
+    return d
+  })
 
 describe('App', () => {
   it('shows the name and every section', () => {
@@ -73,19 +81,13 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('prefs')!).theme).toBe('dark')
   })
 
-  it('measures skills from the work instead of rating them', () => {
+  it('lists skills by group and filters the page when one is clicked', () => {
     render(<App />)
-    const table = document.querySelector('.skill-table')!
-    const python = Array.from(table.querySelectorAll('tbody tr')).find((r) => r.querySelector('th')?.textContent === 'Python')!
-    expect(python.querySelector('.col-where')).toHaveTextContent('Purolator')
-    expect(Number(python.querySelector('.col-months')!.textContent)).toBeGreaterThan(0)
-    // sorting by name puts the rows in alphabetical order
-    fireEvent.click(screen.getByRole('button', { name: /^Skill/ }))
-    const names = Array.from(table.querySelectorAll('tbody th')).map((th) => th.textContent!)
-    expect(names).toEqual([...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())))
-    // group buttons narrow it down
-    fireEvent.click(screen.getByRole('button', { name: 'Backend' }))
-    expect(table.querySelectorAll('tbody tr').length).toBeLessThan(names.length)
+    const list = document.querySelector('.skill-list')!
+    expect(list).toHaveTextContent('Languages & frameworks')
+    fireEvent.click(screen.getByRole('button', { name: 'Terraform' }))
+    expect(document.getElementById('job-iotum')).toHaveClass('dim')
+    expect(document.getElementById('job-purolator')).not.toHaveClass('dim')
   })
 
   it('opens a job from a link like #job-iotum', async () => {
@@ -180,14 +182,42 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Keyboard shortcuts', hidden: true })).toBeInTheDocument()
   })
 
-  it("shows how a project is built, one step at a time", () => {
+  it('opens a drawer for a project, with tabs, and keeps it in the URL', async () => {
     render(<App />)
-    const insight = document.getElementById('project-insightvault')!
-    const steps = insight.querySelectorAll<HTMLButtonElement>('.node')
-    expect(steps.length).toBe(projects[0].how!.steps.length)
-    fireEvent.click(steps[2])
-    expect(insight.querySelector('.flow-note')).toHaveTextContent(projects[0].how!.steps[2].note)
-    expect(steps[2]).toHaveAttribute('aria-pressed', 'true')
+    const row = document.getElementById('project-insightvault')!
+    fireEvent.click(row.querySelector('.open-detail')!)
+    const drawer = await findDrawer()
+    expect(drawer).toHaveTextContent('InsightVault')
+    expect(new URL(location.href).searchParams.get('open')).toBe('project-insightvault')
+    expect(new URL(location.href).searchParams.get('tab')).toBe('how')
+    const nodes = drawer.querySelectorAll('.arch-node')
+    expect(nodes.length).toBe(DETAILS['project-insightvault'].arch.nodes.length)
+    fireEvent.click(nodes[3])
+    expect(drawer.querySelector('.arch-note')).toHaveTextContent(DETAILS['project-insightvault'].arch.nodes[3].note)
+    fireEvent.click(screen.getByRole('tab', { name: 'Try it', hidden: true }))
+    expect(drawer.querySelector('.scorer')).not.toBeNull()
+    expect(new URL(location.href).searchParams.get('tab')).toBe('try')
+  })
+
+  it('moves between entries inside the drawer', async () => {
+    history.replaceState(null, '', '/?open=job-purolator')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer).toHaveTextContent('Software & Network Optimization Engineer')
+    fireEvent.click(drawer.querySelector('.drawer-foot button')!)
+    expect(drawer.querySelector('#drawer-title')).toHaveTextContent('Iotum')
+    expect(new URL(location.href).searchParams.get('open')).toBe('job-iotum')
+  })
+
+  it('shows the forecast tool screens with call-outs', async () => {
+    history.replaceState(null, '', '/?open=job-purolator&tab=screens')
+    render(<App />)
+    const drawer = await findDrawer()
+    const spots = drawer.querySelectorAll('.spot')
+    expect(spots.length).toBeGreaterThan(1)
+    fireEvent.click(spots[1])
+    expect(spots[1]).toHaveAttribute('aria-pressed', 'true')
+    expect(drawer).toHaveTextContent('Mock data')
   })
 
   it('opens the live game inside the page on request only', () => {
@@ -202,14 +232,6 @@ describe('App', () => {
     const bar = screen.getAllByRole('button', { name: /cineplex/i }).find((b) => b.classList.contains('tl-bar'))!
     fireEvent.mouseEnter(bar)
     expect(document.querySelector('.tl-sum')).toHaveTextContent('Cineplex Entertainment, Data Engineer')
-  })
-
-  it('reports real test counts in About this site', () => {
-    render(<App />)
-    const about = screen.getByRole('heading', { name: 'About this site' }).closest('section')!
-    expect(about).toHaveTextContent(`${__SITE_STATS__.unit} unit tests`)
-    expect(__SITE_STATS__.unit).toBeGreaterThan(60)
-    expect(__SITE_STATS__.e2e).toBeGreaterThan(5)
   })
 
   it('presets, section order and hidden sections all apply and go in the share link', () => {
@@ -233,5 +255,46 @@ describe('App', () => {
     expect(root.hide).toBe('skills github')
     expect(root.width).toBe('wide')
     expect(root.lead).toBe('projects')
+  })
+
+  it('plays a project flow one connection at a time', async () => {
+    history.replaceState(null, '', '/?open=project-battleship-for-purolator&tab=how')
+    render(<App />)
+    const drawer = await findDrawer()
+    const next = screen.getByRole('button', { name: 'Next step', hidden: true })
+    fireEvent.click(next)
+    expect(drawer.querySelector('.arch-count')).toHaveTextContent('Step 1 of')
+    expect(drawer.querySelector('.arch-hop')).toHaveTextContent('Player 1 → Socket.IO')
+    fireEvent.click(next)
+    expect(drawer.querySelector('.arch-hop')).toHaveTextContent('Player 2 → Socket.IO')
+    expect(drawer.querySelectorAll('.arch-edge.live')).toHaveLength(1)
+  })
+
+  it('has a working demo for each project that lists one', async () => {
+    history.replaceState(null, '', '/?open=job-purolator&tab=try')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.alloc')).not.toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Overview', hidden: true }))
+    fireEvent.click(drawer.querySelector('.drawer-foot button:last-child')!)
+    expect(drawer.querySelector('#drawer-title')).toHaveTextContent('Iotum')
+  })
+
+  it('shows the code behind a demo', async () => {
+    history.replaceState(null, '', '/?open=job-purolator&tab=code')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.code figcaption')).toHaveTextContent('allocate.ts')
+    expect(drawer.querySelector('.code pre')).toHaveTextContent('export function allocate')
+  })
+
+  it('opens a terminal that drives the page', async () => {
+    render(<App />)
+    fireEvent.keyDown(document.body, { key: '`' })
+    const input = await screen.findByRole('textbox', { name: 'Command', hidden: true })
+    fireEvent.change(input, { target: { value: 'filter terraform' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(document.querySelector('.term-screen')).toHaveTextContent('showing work with Terraform')
+    expect(document.getElementById('job-iotum')).toHaveClass('dim')
   })
 })

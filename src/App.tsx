@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { profile, experience, projects, education, skills, skillLabels } from './data'
 import { downloadResume } from './downloadResume'
 import GithubActivity from './components/GithubActivity'
@@ -9,15 +9,20 @@ import { slug, uses, whereUsed } from './evidence'
 import CommandMenu, { type Command } from './components/CommandMenu'
 import ResumeViewer from './components/ResumeViewer'
 import { openResume } from './resume'
-import { skillStats, sortStats, type SortKey } from './skillStats'
 import SettingsPanel from './components/SettingsPanel'
 import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
 import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
-import HowItWorks from './components/HowItWorks'
+import { ENTRIES } from './entries'
+import { tabsFor, type Tab } from './details'
 import LivePreview from './components/LivePreview'
 import Minimap from './components/Minimap'
+import type { Action as TermAction } from './terminal'
+
+// the drawer and its demos load the first time someone opens one
+const DetailDrawer = lazy(() => import('./components/DetailDrawer'))
+const Terminal = lazy(() => import('./components/Terminal'))
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
 const shortOrg = (org: string) => org.replace(/ (Inc|LP|Global Holdings Inc)$/, '')
@@ -152,6 +157,19 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
+const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', try: 'demo', code: 'code' }
+
+// the button on each row that opens its drawer, named after what's inside
+function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
+  const extra = tabsFor(id).slice(1).map((t) => OPEN_LABEL[t])
+  if (extra.length === 0) return null
+  return (
+    <button type="button" className="open-detail" onClick={() => onOpen(id)}>
+      Open details <span className="open-what">{listFormat(extra)}</span> <span aria-hidden="true">→</span>
+    </button>
+  )
+}
+
 function Result({ h }: { h?: { value: string; label: string } }) {
   if (!h) return null
   return (
@@ -245,7 +263,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter }: { active: number; onPick: (i: number) => void; filter: string[] }) {
+function Experience({ active, onPick, filter, onOpen }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: (id: string) => void }) {
   return (
     <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
@@ -272,7 +290,7 @@ function Experience({ active, onPick, filter }: { active: number; onPick: (i: nu
                 <Result h={e.highlight} />
                 <Bullets items={e.bullets} />
                 <p className="stack">{e.tech.join(', ')}</p>
-                {e.how && <HowItWorks how={e.how} name={shortOrg(e.org)} />}
+                <OpenDetail id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
               </div>
             </li>
           ))}
@@ -347,89 +365,32 @@ function Glance({ onCheck }: { onCheck: () => void }) {
   )
 }
 
-const SKILL_ROWS = skillStats()
-const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'skill', label: 'Skill' },
-  { key: 'months', label: 'Months in roles using it' },
-  { key: 'projects', label: 'Projects' },
-  { key: 'lastUsed', label: 'Last used' },
-]
-
-// skills measured from the work on this page, never self-rated
+// Skills as on the resume, grouped. Click one to show only the work that used it.
 function Skills({ onFilter }: { onFilter: (skills: string[]) => void }) {
-  const [group, setGroup] = useState<string>('All')
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'months', dir: -1 })
-  const groupNames = ['All', ...Object.values(skillLabels)]
-  const inGroup = SKILL_ROWS.filter((r) => group === 'All' || r.group === group)
-  const shown = sortStats(inGroup.filter((r) => r.months > 0 || r.projects.length > 0), sort.key, sort.dir)
-  const untagged = inGroup.filter((r) => r.months === 0 && r.projects.length === 0).map((r) => r.skill)
-
-  const sortBy = (key: SortKey) =>
-    setSort((cur) => ({ key, dir: cur.key === key ? (cur.dir === 1 ? -1 : 1) : key === 'skill' ? 1 : -1 }))
-
   return (
     <section className="section" aria-labelledby="skills" data-part="skills">
       <h2 id="skills">Skills</h2>
       <div className="section-body">
-        <p className="skills-hint">
-          Worked out from the jobs and projects on this page, not rated by me. Pick a skill to show only the work that
-          used it.
-        </p>
-        <div className="skill-groups" role="group" aria-label="Skill group">
-          {groupNames.map((g) => (
-            <button key={g} type="button" aria-pressed={group === g} onClick={() => setGroup(g)}>
-              {g}
-            </button>
-          ))}
-        </div>
-        <table className="skill-table">
-          <thead>
-            <tr>
-              {SORTS.map(({ key, label }) => (
-                <th
-                  key={key}
-                  scope="col"
-                  className={`col-${key}`}
-                  aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
-                >
-                  <button type="button" onClick={() => sortBy(key)}>
-                    {label}
-                    <span aria-hidden="true">{sort.key === key ? (sort.dir === 1 ? '\u00a0\u2191' : '\u00a0\u2193') : ''}</span>
-                  </button>
-                </th>
-              ))}
-              <th scope="col" className="col-where">Where</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((r) => (
-              <tr key={r.skill}>
-                <th scope="row" className="col-skill">
-                  <button type="button" onClick={() => onFilter([r.skill])} title={`Show only work with ${r.skill}`}>
-                    {r.skill}
-                  </button>
-                </th>
-                <td className="col-months">{r.months > 0 ? r.months : <span className="none">none</span>}</td>
-                <td className="col-projects">{r.projects.length || <span className="none">none</span>}</td>
-                <td className="col-lastUsed">{r.current ? 'Now' : r.lastUsed !== null ? monthLabel(r.lastUsed) : <span className="none">unknown</span>}</td>
-                <td className="col-where">{listFormat([...r.jobs, ...r.projects])}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <dl className="print-skills">
+        <p className="skills-hint">Click a skill to see the work that used it.</p>
+        <dl className="skill-list">
           {(Object.keys(skills) as (keyof typeof skills)[]).map((k) => (
             <div key={k}>
               <dt>{skillLabels[k]}</dt>
-              <dd>{skills[k].join(', ')}</dd>
+              <dd>
+                {skills[k].map((sk) => {
+                  const used = whereUsed(sk).length > 0
+                  return used ? (
+                    <button key={sk} type="button" onClick={() => onFilter([sk])}>
+                      {sk}
+                    </button>
+                  ) : (
+                    <span key={sk}>{sk}</span>
+                  )
+                })}
+              </dd>
             </div>
           ))}
         </dl>
-        {untagged.length > 0 && (
-          <p className="skills-rest">
-            Also on my resume, not tagged on any work here yet: {listFormat(untagged)}.
-          </p>
-        )}
       </div>
     </section>
   )
@@ -443,7 +404,32 @@ export default function App() {
   const [resumeOpen, setResumeOpen] = useState(false)
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
+  const [termOpen, setTermOpen] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [detail, setDetail] = useState<{ id: string; tab: Tab } | null>(() => {
+    const q = new URLSearchParams(location.search)
+    const id = q.get('open')
+    // tab=play was the old name for the demo tab, so older links still land on it
+    const tab = q.get('tab') === 'play' ? 'try' : (q.get('tab') as Tab)
+    return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview' } : null
+  })
+
+  // which drawer is open lives in the URL, so it can be shared or reloaded
+  const showDetail = useCallback((next: { id: string; tab: Tab } | null) => {
+    setDetail(next)
+    const url = new URL(location.href)
+    if (next) {
+      url.searchParams.set('open', next.id)
+      if (next.tab === 'overview') url.searchParams.delete('tab')
+      else url.searchParams.set('tab', next.tab)
+    } else {
+      url.searchParams.delete('open')
+      url.searchParams.delete('tab')
+    }
+    history.replaceState(null, '', url)
+    if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
+  }, [])
+  const openDetail = useCallback((id: string) => showDetail({ id, tab: tabsFor(id)[1] ?? 'overview' }), [showDetail])
   const [filter, setFilter] = useState<string[]>(() =>
     (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
   )
@@ -479,6 +465,7 @@ export default function App() {
         case 's': setSettings({ view: settings.view === 'skim' ? 'full' : 'skim' }); break
         case 't': setSettings({ theme: resolvedTheme(settings) === 'dark' ? 'light' : 'dark' }); break
         case 'm': setMatcherOpen(true); break
+        case '`': setTermOpen(true); break
         case ',': (document.getElementById('settings') as (HTMLElement & { togglePopover?: () => void }) | null)?.togglePopover?.(); break
         case '?': setKeysOpen(true); break
         case 'Escape': if (filter.length) applyFilter([]); return
@@ -520,11 +507,23 @@ export default function App() {
     return () => window.removeEventListener('hashchange', apply)
   }, [openJob, openProject])
 
+  // what terminal commands do to the page
+  const onTermAction = (a: TermAction) => {
+    if (a.kind === 'open') {
+      const tabs = tabsFor(a.id)
+      showDetail({ id: a.id, tab: a.tab && tabs.includes(a.tab as Tab) ? (a.tab as Tab) : (tabs[1] ?? 'overview') })
+    }
+    if (a.kind === 'filter') applyFilter(a.skills)
+    if (a.kind === 'theme') setSettings({ theme: a.value })
+    if (a.kind === 'view') setSettings({ view: a.value })
+    if (a.kind === 'resume') showResume()
+  }
+
   const commands = useMemo<Command[]>(() => {
     const copy = () => navigator.clipboard?.writeText(profile.email).catch(() => {})
     return [
-      ...experience.map((e, i) => ({ group: 'Jobs', label: `${shortOrg(e.org)}, ${e.role}`, keywords: e.tech.join(' '), run: () => openJob(i) })),
-      ...projects.map((p) => ({ group: 'Projects', label: p.title, keywords: `${p.period} ${p.tech.join(' ')}`, run: () => openProject(slug(p.title)) })),
+      ...experience.map((e) => ({ group: 'Jobs', label: `${shortOrg(e.org)}, ${e.role}`, keywords: e.tech.join(' '), run: () => showDetail({ id: `job-${slug(shortOrg(e.org))}`, tab: 'overview' }) })),
+      ...projects.map((p) => ({ group: 'Projects', label: p.title, keywords: `${p.period} ${p.tech.join(' ')}`, run: () => showDetail({ id: `project-${slug(p.title)}`, tab: 'overview' }) })),
       { group: 'Get in touch', label: 'Email Anay', keywords: 'contact mail', run: () => (location.href = `mailto:${profile.email}`) },
       { group: 'Get in touch', label: 'Copy email address', keywords: 'clipboard contact', run: copy },
       { group: 'Get in touch', label: 'Read the resume', keywords: 'cv pdf', run: showResume },
@@ -540,13 +539,14 @@ export default function App() {
       { group: 'Page', label: 'Settings', keywords: 'preferences text size accent motion', run: () => (document.getElementById('settings') as (HTMLElement & { showPopover?: () => void }) | null)?.showPopover?.() },
       { group: 'Page', label: 'Print this view', keywords: 'pdf one page tailored', run: () => window.print() },
       { group: 'Page', label: 'Keyboard shortcuts', keywords: 'keys help', run: () => setKeysOpen(true) },
+      { group: 'Page', label: 'Open the terminal', keywords: 'shell cli command line', run: () => setTermOpen(true) },
       { group: 'Hiring', label: 'Check against a job posting', keywords: 'match requirements jd', run: () => setMatcherOpen(true) },
       ...stackFilterCommands(applyFilter),
       { group: 'Hiring', label: 'Save contact card', keywords: 'vcard vcf contacts', run: downloadVcard },
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
       { group: 'Hiring', label: 'Plain text resume', keywords: 'txt ats copy paste', run: () => window.open(FILES.text, '_blank', 'noopener') },
     ]
-  }, [openJob, openProject, showResume, applyFilter])
+  }, [showDetail, showResume, applyFilter])
   return (
     <>
       <div className="progress" aria-hidden="true" />
@@ -584,12 +584,13 @@ export default function App() {
             />
             <div className="hero-copy">
               <p className="lede">
-                I work on backend and data tooling. Right now I'm on co-op with Purolator's Network Engineering team,
-                working on forecasting and planning tools.
+                I build backend services and data pipelines. Right now I'm on co-op with Purolator's Network
+                Engineering team, working on the forecasting pipeline and planning tools and the AWS infrastructure
+                they run on.
               </p>
               <p className="sub">
-                Fourth-year Computer Science at Waterloo, graduating in April 2027. Four co-op terms so far, in backend,
-                test automation, DevOps and data engineering.
+                Fourth-year Computer Science at Waterloo, graduating in April 2027, with co-op terms across backend
+                development, test automation, DevOps and data engineering.
               </p>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>
@@ -619,7 +620,7 @@ export default function App() {
           </div>
         )}
 
-        <Experience active={activeJob} onPick={openJob} filter={filter} />
+        <Experience active={activeJob} onPick={openJob} filter={filter} onOpen={openDetail} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">Projects</h2>
@@ -638,7 +639,7 @@ export default function App() {
                     <p className="entry-desc">{p.description}</p>
                     <Bullets items={p.bullets} />
                     <p className="stack">{p.tech.join(', ')}</p>
-                    {p.how && <HowItWorks how={p.how} name={p.title} />}
+                    <OpenDetail id={`project-${slug(p.title)}`} onOpen={openDetail} />
                     <ProjectLinks p={p} onPreview={() => setPreview(p.link ?? null)} />
                   </div>
                 </li>
@@ -683,40 +684,20 @@ export default function App() {
             <dl className="facts colophon">
               <div>
                 <dt>Built with</dt>
-                <dd>React 19, TypeScript and Vite, plain CSS, and the Archivo typeface served from this site</dd>
-              </div>
-              <div>
-                <dt>Tested with</dt>
-                <dd>
-                  {__SITE_STATS__.unit} unit tests in Vitest and Testing Library, {__SITE_STATS__.e2e} browser tests in
-                  Playwright, run in CI on every push
-                </dd>
+                <dd>React, TypeScript, Vite and plain CSS</dd>
               </div>
               <div>
                 <dt>Content</dt>
-                <dd>Every job, project and skill comes from one typed data file, checked against a Zod schema while I edit it</dd>
-              </div>
-              <div>
-                <dt>Formats</dt>
-                <dd>
-                  The same data file is built into a <a href={FILES.text}>plain text resume</a>,{' '}
-                  <a href={FILES.json}>JSON Resume</a>, a <a href={FILES.vcard} download>contact card</a> and search engine
-                  data. Try <code>curl {profile.links.site.replace('https://', '')}/{FILES.text}</code>
-                </dd>
+                <dd>Everything on the page comes from one data file, which also builds the <a href={FILES.text}>plain text resume</a> and <a href={FILES.json}>JSON Resume</a></dd>
               </div>
               <div>
                 <dt>Privacy</dt>
-                <dd>No analytics and no cookies. Settings stay in your browser, and the job posting checker runs locally</dd>
-              </div>
-              <div>
-                <dt>Offline</dt>
-                <dd>A service worker caches the site after the first visit</dd>
+                <dd>No tracking and no cookies. Settings stay in your browser</dd>
               </div>
               <div>
                 <dt>Source</dt>
                 <dd>
                   <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">github.com/anaybaid7/anay-baid-website</a>
-                  {__SITE_STATS__.commit && <>, built {updated} from {__SITE_STATS__.commit}</>}
                 </dd>
               </div>
             </dl>
@@ -765,8 +746,18 @@ export default function App() {
       <CommandMenu commands={commands} open={menuOpen} onOpenChange={setMenuOpen} />
       <ResumeViewer open={resumeOpen} onClose={() => setResumeOpen(false)} />
       <SettingsPanel />
+      {detail && (
+        <Suspense fallback={null}>
+          <DetailDrawer open={detail} onChange={showDetail} />
+        </Suspense>
+      )}
       <Matcher open={matcherOpen} onOpenChange={setMatcherOpen} onFilter={applyFilter} />
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
+      {termOpen && (
+        <Suspense fallback={null}>
+          <Terminal open={termOpen} onOpenChange={setTermOpen} onAction={onTermAction} />
+        </Suspense>
+      )}
       <LivePreview
         url={preview ?? ''}
         title="Battleship for Purolator"

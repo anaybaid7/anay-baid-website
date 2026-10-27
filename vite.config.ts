@@ -3,9 +3,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { execSync } from 'node:child_process'
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { createServer, type Plugin, type ViteDevServer } from 'vite'
 
 interface Formats {
@@ -81,35 +78,10 @@ const eventPageWithoutPwa: Plugin = {
   },
 }
 
-// counts the tests in the repo at build time, so the "About this site"
-// section never goes out of date
-function countTests(dir: string, pattern: RegExp): number {
-  let n = 0
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) n += countTests(path, pattern)
-    else if (pattern.test(entry.name)) n += (readFileSync(path, 'utf8').match(/^\s*(?:it|test)\(/gm) ?? []).length
-  }
-  return n
-}
-
-function commit() {
-  try {
-    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
-  } catch {
-    return ''
-  }
-}
-
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
-    __SITE_STATS__: JSON.stringify({
-      unit: countTests('src', /\.test\.tsx?$/),
-      e2e: countTests('e2e', /\.spec\.ts$/),
-      commit: commit(),
-    }),
   },
   plugins: [
     publishResume(),

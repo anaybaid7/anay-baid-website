@@ -51,13 +51,6 @@ export const skillLabels = {
   devops: 'Cloud & infra',
 }
 
-// how a piece of work fits together, drawn as a row of steps you can click
-// through. Only what's on the resume or in the code, nothing filled in.
-export interface HowItWorks {
-  steps: { label: string; note: string }[]
-  base?: string
-}
-
 export interface ExperienceEntry {
   role: string
   org: string
@@ -68,7 +61,6 @@ export interface ExperienceEntry {
   tech: Tech[]
   // one number from the bullets above, shown in the list so it scans fast
   highlight?: { value: string; label: string }
-  how?: HowItWorks
 }
 
 export const experience: ExperienceEntry[] = [
@@ -79,22 +71,12 @@ export const experience: ExperienceEntry[] = [
     logo: '/logos/purolator.webp',
     period: 'May 2026 to December 2026',
     bullets: [
-      "Backend work on the team's planning tools, Python and PowerShell ETL jobs, Airflow DAGs and Flask REST APIs over 100K+ forecast records, with state, validation and reconciliation in SQL. Cut planning turnaround 10-20× and diagnostics time by 40%.",
-      "Containerized the forecasting workloads with Docker, with forecast outputs in S3 as Parquet, inference on SageMaker, and deployment through ECR to ECS on Fargate.",
-      "Provisioned the Airflow, S3, SageMaker and ECS setup in Terraform, with IAM scoped per workload, private networking, Secrets Manager and KMS.",
-      "Wrote constraint-aware allocation algorithms in Python that keep network volume targets, flag capacity bottlenecks, and support a projected 10-15% throughput gain.",
+      "Built and maintain the backend for the team's planning tools, with Python and PowerShell ETL jobs orchestrated as Airflow DAGs, Flask REST APIs on top, and SQL-backed state for validation and reconciliation.",
+      "Containerized the forecasting workloads with Docker, storing forecast artifacts in S3 as Parquet, running inference on SageMaker, and deploying the services through ECR to ECS on Fargate.",
+      "Provisioned the whole stack in Terraform, with IAM roles scoped per workload, private networking, and secrets and encryption handled through Secrets Manager and KMS.",
+      "Wrote constraint-aware allocation algorithms in Python that hold network volume targets while respecting terminal capacity, which surfaces capacity bottlenecks early in planning.",
     ],
     tech: ['Python', 'PowerShell', 'Flask', 'REST', 'Airflow', 'SQL', 'Docker', 'AWS S3', 'SageMaker', 'ECS/Fargate', 'Terraform'],
-    how: {
-      steps: [
-        { label: 'Airflow', note: 'DAGs schedule and run each step of the pipeline.' },
-        { label: 'ETL jobs', note: 'Python and PowerShell jobs over 100K+ forecast records, with state, validation and reconciliation in SQL.' },
-        { label: 'S3, Parquet', note: 'Forecast artifacts are written to S3 as Parquet.' },
-        { label: 'SageMaker', note: 'Managed inference for the forecasting models.' },
-        { label: 'Flask on ECS', note: 'REST APIs for the planning tools, containerized with Docker and deployed through ECR to ECS on Fargate.' },
-      ],
-      base: 'Provisioned with Terraform, with IAM scoped per workload, private networking, Secrets Manager and KMS',
-    },
     highlight: { value: '10-20×', label: 'faster planning turnaround' },
   },
   {
@@ -104,9 +86,9 @@ export const experience: ExperienceEntry[] = [
     logo: '/logos/iotum.webp',
     period: 'May 2025 to August 2025',
     bullets: [
-      "Built full-stack React reference apps showing how to integrate the SDK, which helped cut client implementation time by 30%.",
-      "Built test automation in JavaScript with Selenium and Mocha, increasing code coverage by 85% and speeding up CI/CD releases.",
-      "Fixed user-facing latency issues, improving stability under high concurrency for 10,000+ users.",
+      "Built full-stack React reference applications that show an SDK integration end to end, giving client teams a working baseline that shortened their implementation time.",
+      "Developed a browser test automation framework in JavaScript with Selenium and Mocha and wired it into the CI/CD pipeline, which made release cycles faster.",
+      "Diagnosed and fixed user-facing latency issues, improving stability under high concurrency.",
     ],
     tech: ['React', 'JavaScript', 'Selenium', 'Mocha', 'CI/CD'],
     highlight: { value: '85%', label: 'increase in code coverage' },
@@ -118,8 +100,8 @@ export const experience: ExperienceEntry[] = [
     logo: '/logos/nationwide-appraisals.webp',
     period: 'September 2024 to December 2024',
     bullets: [
-      "Containerized legacy services with Docker and tuned TCP/IP and Layer 3 network configuration for more consistent deployments.",
-      "Automated cloud and device setup across AWS, Azure and Intune MDM, using SQL checks, encrypted SSH tunnels and Java/Android tooling, reducing manual setup by 40%.",
+      "Containerized legacy services with Docker and tuned TCP/IP and Layer 3 network configuration, so deployments behaved the same across environments.",
+      "Automated cloud and endpoint provisioning across AWS, Azure and Intune MDM, using SQL-based validation, encrypted SSH tunneling and Java/Android tooling.",
     ],
     tech: ['Docker', 'TCP/IP', 'AWS', 'Azure', 'Intune MDM', 'SQL', 'SSH', 'Java', 'Android'],
     highlight: { value: '40%', label: 'less manual setup' },
@@ -131,9 +113,9 @@ export const experience: ExperienceEntry[] = [
     logo: '/logos/cineplex.webp',
     period: 'January 2024 to April 2024',
     bullets: [
-      "Worked on real-time ETL pipelines for the Cineplex homepage dashboard, with automated validation scripts for box office reporting.",
-      "Improved machine learning models for showtime scheduling, raising prediction accuracy by 15% through model evaluation and input data cleaning.",
-      "Wrote Python validation pipelines using SQL schema comparison and JUnit/Selenium tests to reconcile 10TB+ of Azure and on-prem data, finding and resolving 200+ anomalies.",
+      "Built real-time ETL pipelines feeding the Cineplex homepage dashboard, with automated data validation keeping box office reporting reliable.",
+      "Improved the machine learning models behind showtime scheduling through cleaner input data and better model evaluation.",
+      "Built Python data validation pipelines using SQL schema comparison and JUnit/Selenium test automation to reconcile Azure and on-prem data and resolve the anomalies they surfaced.",
     ],
     tech: ['Python', 'SQL', 'Azure', 'ETL', 'JUnit', 'Selenium'],
     highlight: { value: '10TB+', label: 'of data reconciled' },
@@ -151,7 +133,6 @@ export interface ProjectEntry {
   link?: string
   code?: string
   highlight?: { value: string; label: string }
-  how?: HowItWorks
   image?: { src: string; alt: string; caption: string }
 }
 
@@ -161,23 +142,14 @@ export const projects: ProjectEntry[] = [
     status: 'Shipped',
     period: 'August 2026',
     description:
-      "A fraud-alert triage tool for financial transactions, combining an auditable rule engine with a trained model, plus a dashboard for reviewing alerts.",
+      "A fraud-alert triage service for financial transactions that pairs an auditable rule engine with a trained classifier, plus a dashboard for reviewing alerts.",
     bullets: [
-      "Java/Spring Boot API combining a rule engine with a logistic regression model, at 92.9% precision and 94.1% recall on a time-based holdout of 35K+ transactions.",
-      "Python training pipeline (pandas, scikit-learn) that exports model weights to a dependency-free Java inference layer, matching training within 1e-6.",
-      "React and TypeScript review dashboard tested with Vitest and Playwright, deployed to AWS ECS Fargate, RDS and CloudFront with Terraform.",
+      "Spring Boot REST API that scores each transaction with a rule engine and a logistic regression model together, so every alert traces back to the rules and features behind it.",
+      "Python training pipeline with pandas and scikit-learn, evaluated on a time-based split, that exports the model weights to a dependency-free Java inference layer to keep training and serving in parity.",
+      "React and TypeScript dashboard for reviewing alerts, deployed on AWS ECS Fargate, RDS and CloudFront with Terraform.",
     ],
     tech: ['Java', 'Spring Boot', 'React', 'TypeScript', 'AWS', 'Terraform', 'Python', 'Playwright'],
-    how: {
-      steps: [
-        { label: 'Training', note: 'Python pipeline with pandas and scikit-learn trains a logistic regression model, evaluated on a time-based holdout of 35K+ transactions.' },
-        { label: 'Weights', note: 'The trained weights are exported so the API can score without an ML runtime.' },
-        { label: 'Spring Boot API', note: 'Java API that combines the rule engine with the model. Its inference matches training within 1e-6.' },
-        { label: 'Dashboard', note: 'React and TypeScript app for reviewing alerts, tested with Vitest and Playwright.' },
-      ],
-      base: 'Deployed on AWS ECS Fargate, RDS and CloudFront with Terraform',
-    },
-    highlight: { value: '92.9%', label: 'precision, 94.1% recall on a 35K+ transaction holdout' },
+    highlight: { value: '92.9%', label: 'precision on held-out transactions' },
     link: 'https://github.com/anaybaid7/insight-vault',
   },
   {
@@ -186,21 +158,13 @@ export const projects: ProjectEntry[] = [
     status: 'Shipped',
     period: 'February 2026',
     description:
-      "A browser extension that automates logging for UWaterloo Campus Housing front desk staff. Deployed to 100+ users and approved by University IST.",
+      "A Chrome extension (Manifest V3) that automates logging for UWaterloo Campus Housing front desk staff.",
     bullets: [
-      "Extracts data from StarRez pages and fills in the logs, reducing manual logging by 80%.",
-      "Built on a modular workflow engine in JavaScript, so new front desk tasks can be added without changing the rest.",
+      "Content script parses the StarRez page DOM to extract record data and populates the log entry automatically.",
+      "Built around a modular workflow engine in JavaScript where each front desk task is a self-contained module, which kept the campus-wide rollout and new tasks simple.",
     ],
     tech: ['JavaScript', 'DOM Injection', 'Workflow Automation'],
-    how: {
-      steps: [
-        { label: 'StarRez page', note: 'The housing system front desk staff already work in.' },
-        { label: 'Extension', note: 'Reads the data it needs from the page.' },
-        { label: 'Workflow engine', note: 'Modular JavaScript, so a new front desk task can be added without changing the rest.' },
-        { label: 'Logs', note: 'Filled in from the extracted data, reducing manual logging by 80%.' },
-      ],
-    },
-    highlight: { value: '100+', label: 'users, 80% less manual logging' },
+    highlight: { value: '80%', label: 'less manual logging' },
     link: 'https://github.com/anaybaid7/starrez-logger-prod',
   },
   {
@@ -210,19 +174,11 @@ export const projects: ProjectEntry[] = [
     description:
       "Two-player Battleship with Purolator delivery vehicles instead of boats, built for our summer intern event.",
     bullets: [
-      "Node, Express and Socket.IO server that keeps every room in memory, with a reconnect window so a dropped connection doesn't end the game.",
-      'Invite links that drop a friend straight into your room, open rooms anyone can join from the lobby, and board sizes from 6x6 to 15x15 that both players have to agree on.',
-      'Drag and drop fleet placement that works on phones, and a password-locked reset that wakes the free Render server and clears every game.',
+      "Node and Express server with Socket.IO for real-time play, holding room state in memory with a reconnect window so a dropped connection doesn't end the game.",
+      "Invite links route straight into a room, the lobby lists open rooms, and both players negotiate the board size before placement.",
+      "Touch-friendly drag and drop fleet placement, plus a password-protected reset endpoint that wakes the Render instance and clears all game state.",
     ],
     tech: ['Node.js', 'Express', 'Socket.IO', 'Render'],
-    how: {
-      steps: [
-        { label: 'Browser', note: 'Drag and drop fleet placement that works with a mouse or on a phone. Invite links open straight into a room.' },
-        { label: 'Socket.IO', note: 'Moves, turns and lobby updates in real time, with a reconnect window if a connection drops.' },
-        { label: 'Node, Express', note: 'Rooms, turns, rankings and the lobby, all kept in memory.' },
-        { label: 'Render', note: 'Free plan. It sleeps when idle, and a password-locked reset wakes it and clears every game.' },
-      ],
-    },
     highlight: { value: 'Live', label: 'on Render, with invite links and a lobby' },
     link: 'https://purolator-battleship.onrender.com',
     code: 'https://github.com/anaybaid7/battleship-purolator',
@@ -233,20 +189,12 @@ export const projects: ProjectEntry[] = [
     status: 'Shipped',
     period: 'uOttaHack 5, March 2023',
     description:
-      "A small Python tool for running builds across several environments from one place, built over the uOttaHack 5 weekend.",
+      "A Python tool that triggers targeted builds across environments through the GitHub Actions API, built at uOttaHack 5.",
     bullets: [
-      "Python tool that uses the GitHub API to trigger targeted builds for each environment.",
-      "Checks the target environment before a build starts and emails the result over secure SMTP when it finishes.",
+      "Dispatches only the affected workflows through the GitHub Actions API instead of rebuilding the whole pipeline.",
+      "Validates the target environment before dispatch and reports results over SMTP with TLS.",
     ],
     tech: ['Python', 'GitHub Actions API', 'SMTP', 'REST'],
-    how: {
-      steps: [
-        { label: 'Python tool', note: 'Picks the environment and the builds to run.' },
-        { label: 'Checks', note: 'Validates the target environment before anything starts.' },
-        { label: 'GitHub API', note: 'Triggers only the targeted builds.' },
-        { label: 'SMTP', note: 'Emails the result over secure SMTP.' },
-      ],
-    },
     highlight: { value: 'Won', label: 'Best Use of GitHub at uOttaHack 5' },
     link: 'https://devpost.com/software/github-build-trigger-application',
   },
@@ -257,11 +205,11 @@ export const projects: ProjectEntry[] = [
     period: 'HackWestern 9',
     highlight: { value: 'Won', label: 'Best Gaming Hack at HackWestern 9' },
     description:
-      "A browser game about animal welfare, built by a team of 3 over the HackWestern 9 weekend.",
+      "A browser-based Unity game about animal welfare, built by a team of three at HackWestern 9.",
     bullets: [
       "Wrote the core gameplay loop in C#, with a finite-state machine driving NPC behavior and event-driven scoring.",
-      "Embedded the Unity WebGL build in a Wix site so the judges could play it in a browser on any device.",
-      "Compressed textures and audio to keep the WebGL build loading quickly.",
+      "Shipped a Unity WebGL build embedded in a Wix site so judges could play it in any browser.",
+      "Compressed textures and audio to keep the WebGL bundle small and load times short.",
     ],
     tech: ['Unity', 'WebGL', 'C#', 'Wix'],
   },
@@ -271,10 +219,10 @@ export const projects: ProjectEntry[] = [
     period: 'Hack The North',
     highlight: { value: 'Real-time', label: 'updates over WebSockets, fewer page reloads' },
     description:
-      "A full-stack React app built at Hack The North, focused on fast navigation and live updates.",
+      "A full-stack React app built at Hack The North, focused on client-side navigation and real-time state.",
     bullets: [
-      "Client-side routing with React Router so pages switch without a full reload, plus form validation with React Hook Form.",
-      "Live updates pushed over WebSockets, with Redux keeping state in sync across the app.",
+      "Client-side routing with React Router to avoid full page reloads, with form validation through React Hook Form.",
+      "Real-time updates over WebSockets, with Redux managing shared state across the app.",
     ],
     tech: ['React', 'React Router', 'Redux', 'WebSockets'],
   },
