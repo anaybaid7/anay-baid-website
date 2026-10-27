@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ME, type PointerEvent as PE } from 'react'
 import ThemeToggle from '../components/ThemeToggle.tsx'
 import { profile } from '../data'
-import { deck, slides, type Slide, type Spot } from './content'
-import { canadaPath, mapSize, terminals } from './map'
+import { deck, slides, type Point, type Slide, type Spot, type Step } from './content'
+import { canadaPath, divisions, mapSize, terminals } from './map'
+import VisualView from './visuals'
 
 // Which slide the address points at: /purolator-intern-event#3 opens slide 3.
 const fromHash = () => {
@@ -181,14 +182,45 @@ function Shot({ slide, spot, setSpot }: ShotProps) {
 }
 
 // The opening slide: every terminal on a map, filling in west to east.
+// Pick a division to light up its terminals.
+const perDivision = divisions.map((_, d) => terminals.filter((t) => t[2] === d).length)
+
 function TerminalMap() {
+  const [pick, setPick] = useState<number | null>(null)
+  // only a dot or a division button picks; a click anywhere else moves the slide on
+  const toggle = (e: ME, d: number) => {
+    e.stopPropagation()
+    setPick((cur) => (cur === d ? null : d))
+  }
   return (
-    <svg className="deck-map" viewBox={`0 0 ${mapSize.w} ${mapSize.h}`} role="img" aria-label={`Map of Canada with ${terminals.length} terminals`}>
-      <path className="deck-map-land" d={canadaPath} />
-      {terminals.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="4.6" style={{ animationDelay: `${200 + i * 7}ms` }} />
-      ))}
-    </svg>
+    <div className="deck-mapwrap">
+      <svg
+        className={`deck-map${pick === null ? '' : ' picking'}`}
+        viewBox={`0 0 ${mapSize.w} ${mapSize.h}`}
+        role="img"
+        aria-label={pick === null ? `Map of Canada with ${terminals.length} terminals` : `${divisions[pick]}, ${perDivision[pick]} terminals`}
+      >
+        <path className="deck-map-land" d={canadaPath} />
+        {terminals.map(([x, y, d], i) => (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r="4.6"
+            className={pick === d ? 'in' : ''}
+            style={{ animationDelay: `${200 + i * 7}ms` }}
+            onClick={(e) => toggle(e, d)}
+          />
+        ))}
+      </svg>
+      <div className="deck-divs" role="group" aria-label="Divisions">
+        {divisions.map((name, d) => (
+          <button key={name} type="button" aria-pressed={pick === d} onClick={(e) => toggle(e, d)}>
+            {name} <span>{perDivision[d]}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -201,17 +233,63 @@ function Work({ thumbs }: { thumbs: string[] }) {
   )
 }
 
+// The weekly cycle. Each step opens its own picture under the line.
+function Steps({ steps, spot, setSpot }: { steps: Step[]; spot: number | null; setSpot: (i: number | null) => void }) {
+  const open = spot === null ? null : steps[spot]
+  return (
+    <div className={`deck-cycle${open ? ' has-open' : ''}`}>
+      <ol className="deck-steps">
+        {steps.map((st, i) => (
+          <li key={st.label} className={i === spot ? 'on' : ''}>
+            <button
+              type="button"
+              aria-expanded={i === spot}
+              onClick={(e) => { e.stopPropagation(); setSpot(i === spot ? null : i) }}
+            >
+              <span className="step-num">{i + 1}</span>
+              <span className="step-label">{st.label}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      {open && spot !== null && (
+        <div className="step-detail" key={spot} onClick={(e) => e.stopPropagation()}>
+          <div className="step-copy">
+            <p className="step-of">Step {spot + 1} of {steps.length}</p>
+            <h2>{open.title}</h2>
+            <p>{open.text}</p>
+          </div>
+          <div className="step-visual">
+            <VisualView v={open.visual} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// What opens next to a point on the list.
+function PointDetail({ point }: { point: Point }) {
+  return (
+    <div className="point-detail" onClick={(e) => e.stopPropagation()}>
+      <div className="point-visual">
+        <VisualView v={point.visual} />
+      </div>
+      <div className="step-copy">
+        <h2>{point.title}</h2>
+        <p>{point.text}</p>
+      </div>
+    </div>
+  )
+}
+
 function Visual({ slide, spot, setSpot }: ShotProps) {
   if (slide.image) return <Shot slide={slide} spot={spot} setSpot={setSpot} key={slide.image} />
   return (
     <div className="deck-visual">
-      {slide.steps && (
-        <ol className="deck-steps">
-          {slide.steps.map((s) => <li key={s}><span>{s}</span></li>)}
-        </ol>
-      )}
+      {slide.steps && <Steps steps={slide.steps} spot={spot} setSpot={setSpot} />}
       {slide.visual === 'map' && <TerminalMap />}
-      {slide.thumbs && <Work thumbs={slide.thumbs} />}
+      {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
   )
 }
@@ -223,7 +301,9 @@ export default function EventPage() {
   const stage = useRef<HTMLDivElement>(null)
   const slide = slides[at]
   const last = slides.length - 1
-  const spots = slide.spots ?? []
+  // the parts a click steps through: zoom spots on a screenshot, or steps
+  // the parts a click steps through: zoom spots, steps, or points
+  const spots = slide.spots ?? slide.steps ?? slide.points ?? []
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(last, i))
@@ -308,7 +388,17 @@ export default function EventPage() {
                 {slide.line && <p className="deck-line">{slide.line}</p>}
                 {slide.points && (
                   <ul className="deck-points">
-                    {slide.points.map((p) => <li key={p}>{p}</li>)}
+                    {slide.points.map((p, i) => (
+                      <li key={p.label} className={i === spot ? 'on' : ''}>
+                        <button
+                          type="button"
+                          aria-expanded={i === spot}
+                          onClick={(e) => { e.stopPropagation(); setSpot(i === spot ? null : i) }}
+                        >
+                          {p.label}
+                        </button>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>

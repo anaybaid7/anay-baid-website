@@ -91,8 +91,74 @@
   line-height: 1.35;
 }
 .deck-points li {
-  padding: 14px 0;
   border-top: 1px solid var(--line);
+}
+.deck-points button {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.deck-points button::after {
+  content: '+';
+  color: var(--ink-3);
+  font-weight: 500;
+  transition: transform 0.2s ease;
+}
+.deck-points button:hover,
+.deck-points li.on button {
+  color: var(--cobalt);
+}
+.deck-points li.on button::after {
+  transform: rotate(45deg);
+  color: var(--cobalt);
+}
+
+/* what opens next to a point */
+.point-detail {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 18px;
+  width: 100%;
+  height: min(560px, calc(var(--stage) - 40px));
+  padding: 24px 26px;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(11 31 68 / 0.06), 0 8px 30px rgb(11 31 68 / 0.08);
+  animation: step-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: default;
+}
+.point-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+/* pictures scale to fit the panel both ways */
+.point-visual > .vz-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.step-visual .vz-svg {
+  width: 100%;
+  height: 100%;
+}
+.point-visual .vz-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgb(11 31 68 / 0.14);
 }
 .deck-points li:last-child {
   border-bottom: 1px solid var(--line);
@@ -308,9 +374,15 @@
 
 
 /* opening slide: every terminal on the map */
+.deck-mapwrap {
+  width: 100%;
+  display: grid;
+  gap: 14px;
+  cursor: default;
+}
 .deck-map {
   width: 100%;
-  max-height: calc(var(--stage) - 20px);
+  max-height: calc(var(--stage) - 90px);
 }
 .deck-map-land {
   fill: var(--card);
@@ -325,12 +397,67 @@
   transform-origin: center;
   animation: dot-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+.deck-map circle {
+  cursor: pointer;
+  transition: opacity 0.2s ease, r 0.2s ease, fill 0.2s ease;
+}
+.deck-map.picking circle {
+  opacity: 0.18;
+}
+.deck-map.picking circle.in {
+  opacity: 1;
+  r: 6.5;
+}
+.deck-divs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.deck-divs button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.deck-divs button span {
+  margin-left: 4px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.deck-divs button:hover {
+  border-color: var(--cobalt);
+}
+.deck-divs button[aria-pressed='true'] {
+  background: var(--cobalt);
+  border-color: var(--cobalt);
+  color: var(--on-cobalt);
+}
+.deck-divs button[aria-pressed='true'] span {
+  color: var(--on-cobalt);
+  opacity: 0.8;
+}
 @keyframes dot-in {
   from { opacity: 0; transform: scale(0.3); }
   to { opacity: 1; transform: none; }
 }
 
-/* the weekly cycle, one step after another along a line */
+/* the weekly cycle: steps along a line, each one opens its own picture */
+.deck-cycle {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr;
+  align-content: center;
+  gap: 26px;
+}
+.deck-cycle.has-open {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+}
 .deck-steps {
   list-style: none;
   margin: 0;
@@ -338,8 +465,8 @@
   width: 100%;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  counter-reset: step;
   position: relative;
+  align-self: center;
 }
 .deck-steps::before {
   content: '';
@@ -350,20 +477,19 @@
   height: 2px;
   background: var(--line);
 }
-.deck-steps li {
+.deck-steps button {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 18px;
-  padding: 0 10px;
+  gap: 14px;
+  width: 100%;
+  padding: 0 8px 6px;
+  border: 0;
+  background: none;
   text-align: center;
-  font-size: clamp(16px, 1.35vw, 20px);
-  font-weight: 620;
-  line-height: 1.3;
+  cursor: pointer;
 }
-.deck-steps li::before {
-  counter-increment: step;
-  content: counter(step);
+.step-num {
   display: grid;
   place-items: center;
   width: 46px;
@@ -374,9 +500,203 @@
   color: var(--cobalt);
   font-size: 17px;
   font-weight: 700;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.deck-steps span {
-  max-width: 13ch;
+.step-label {
+  max-width: 14ch;
+  font-size: clamp(15px, 1.3vw, 19px);
+  font-weight: 620;
+  line-height: 1.3;
+}
+.deck-steps button:hover .step-num {
+  transform: scale(1.06);
+}
+.deck-steps li.on .step-num {
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+}
+.deck-steps li.on .step-label {
+  color: var(--cobalt);
+}
+.has-open .step-label {
+  font-size: 15px;
+}
+.has-open .deck-steps li:not(.on) .step-label {
+  color: var(--ink-2);
+}
+
+.step-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  gap: 40px;
+  align-items: center;
+  min-height: 0;
+  padding: 26px 30px;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(11 31 68 / 0.06), 0 8px 30px rgb(11 31 68 / 0.08);
+  animation: step-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: default;
+}
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+.step-of {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--cobalt);
+}
+.step-copy h2 {
+  margin: 0;
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: 1.1;
+  font-weight: 760;
+  font-stretch: 112%;
+  letter-spacing: -0.015em;
+}
+.step-copy p:last-child {
+  margin: 14px 0 0;
+  font-size: clamp(16px, 1.3vw, 19px);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.step-visual {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  height: 100%;
+}
+
+/* the pictures themselves */
+.vz-svg {
+  width: 100%;
+  max-height: 100%;
+  overflow: visible;
+}
+.vz-grid { stroke: var(--line); stroke-width: 1; }
+.vz-axis { fill: var(--ink-3); font-size: 13px; }
+.vz-line { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.vz-line.muted { stroke: var(--ink-3); stroke-dasharray: 5 5; stroke-width: 2.4; }
+.vz-line.accent { stroke: var(--cobalt); }
+.vz-legend text { fill: var(--ink-2); font-size: 13px; }
+.vz-mark circle { fill: var(--card); stroke: var(--ink-2); stroke-width: 2; }
+.vz-mark text { fill: var(--ink); font-size: 13.5px; font-weight: 600; paint-order: stroke; stroke: var(--card); stroke-width: 5px; stroke-linejoin: round; }
+.vz-node rect { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+.vz-node text { fill: var(--ink); font-size: 14.5px; font-weight: 600; }
+.vz-node.strong rect { fill: var(--cobalt); stroke: var(--cobalt); }
+.vz-node.strong text { fill: var(--on-cobalt); font-size: 16px; }
+.vz-edge {
+  fill: none;
+  stroke: var(--cobalt);
+  stroke-width: 1.8;
+  stroke-dasharray: 6 6;
+  opacity: 0.7;
+  animation: vz-flow 1.2s linear infinite;
+}
+@keyframes vz-flow {
+  to { stroke-dashoffset: -12; }
+}
+.vz-bar rect { fill: var(--line); }
+.vz-bar.accent rect { fill: var(--cobalt); }
+.vz-val { fill: var(--ink); font-size: 14px; font-weight: 650; }
+.vz-table-wrap {
+  width: 100%;
+}
+.vz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.vz-table th,
+.vz-table td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.vz-table thead th {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.vz-table th:first-child {
+  text-align: left;
+}
+.vz-table tbody th {
+  font-weight: 650;
+}
+.vz-caption {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.vz-fix { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 2 4; }
+.vz-axis.strong { fill: var(--ink-2); font-weight: 600; }
+
+/* lines draw in, bars grow and table rows arrive when a step opens */
+.vz-line:not(.still) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: vz-draw 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+.vz-line.muted:not(.still) {
+  stroke-dasharray: 0.012 0.012;
+  stroke-dashoffset: 0;
+  animation: vz-fade 0.5s ease-out both;
+}
+@keyframes vz-draw { to { stroke-dashoffset: 0; } }
+@keyframes vz-fade { from { opacity: 0; } }
+.vz-mark { animation: vz-fade 0.3s ease-out 0.8s both; }
+.vz-bar rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: vz-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes vz-grow { from { transform: scaleY(0); } }
+.vz-table tbody tr { animation: vz-fade 0.3s ease-out both; }
+.vz-barcell { white-space: nowrap; }
+.vz-track {
+  display: inline-block;
+  width: 72px;
+  height: 6px;
+  margin-right: 12px;
+  border-radius: 3px;
+  background: var(--line);
+  vertical-align: middle;
+  overflow: hidden;
+}
+.vz-track i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--cobalt);
+}
+
+/* wireframes: plain boxes in the page's own type */
+.vz-wire text { fill: var(--ink-2); font-size: 15px; }
+.vz-wire .wf.text.strong, .vz-wire text.title { fill: var(--ink); font-weight: 650; }
+.vz-wire .wf.text.lg { font-size: 20px; }
+.vz-wire .wf.text.faint { fill: var(--ink-3); }
+.vz-wire g.wf rect { fill: var(--card); stroke: var(--ink-3); stroke-width: 1.3; }
+.vz-wire g.wf.box > rect { fill: none; stroke: var(--line); stroke-width: 1.6; }
+.vz-wire g.wf.button.strong rect { fill: var(--cobalt); stroke: var(--cobalt); }
+.vz-wire g.wf.button.strong text { fill: var(--on-cobalt); font-weight: 650; }
+.vz-wire g.wf.input text { fill: var(--ink); }
+.wf-chev { fill: none; stroke: var(--ink-3); stroke-width: 1.6; }
+.wf-rule { stroke: var(--line); stroke-width: 1.5; }
+.wf-mark { fill: var(--cobalt); opacity: 0.12; }
+.wf-fill { fill: var(--line); }
+.wf-fill.accent { fill: var(--cobalt); opacity: 0.55; }
+.wf-ink { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linejoin: round; }
+.wf-ink.accent { stroke: var(--cobalt); }
+.wf-ink.thick { stroke-width: 9; }
+.vz-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(11 31 68 / 0.16);
 }
 
 /* closing slide: the app and the dashboard, stacked like windows */
@@ -612,7 +932,7 @@
   }
   .deck-steps {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 10px;
     padding: 8px 0;
   }
   .deck-steps::before {
@@ -623,15 +943,26 @@
     width: 2px;
     height: auto;
   }
-  .deck-steps li {
+  .deck-steps button {
     grid-template-columns: 46px 1fr;
     justify-items: start;
     align-items: center;
     text-align: left;
     padding: 0;
   }
-  .deck-steps span {
+  .step-label,
+  .has-open .step-label {
     max-width: none;
+    font-size: 17px;
+  }
+  .step-detail {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px;
+  }
+  .point-detail {
+    height: auto;
+    padding: 18px;
   }
   .deck-bar {
     flex-wrap: wrap;
@@ -655,8 +986,19 @@
   .deck-layer,
   .deck-focus,
   .deck-callout,
-  .deck-map circle {
+  .deck-map circle,
+  .step-detail,
+  .point-detail,
+  .vz-edge,
+  .vz-line,
+  .vz-mark,
+  .vz-bar rect,
+  .vz-table tbody tr {
     animation: none;
     transition: none;
+  }
+  .vz-line.accent:not(.still) {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
   }
 }

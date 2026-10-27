@@ -29,4 +29,18 @@ describe('EventPage', () => {
     expect(container.querySelector('.deck-callout')).toBeNull()
     window.location.hash = ''
   })
+
+  it('opens a step and a point with their own picture', () => {
+    for (const key of ['steps', 'points'] as const) {
+      const n = slides.findIndex((s) => s[key]?.length)
+      window.location.hash = `#${n + 1}`
+      const { container, unmount } = render(<EventPage />)
+      const item = slides[n][key]![1]
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(item.label.slice(0, 12)) }))
+      expect(container).toHaveTextContent(item.title)
+      expect(container.querySelector('.vz-svg, .vz-table, .vz-img')).not.toBeNull()
+      unmount()
+    }
+    window.location.hash = ''
+  })
 })
