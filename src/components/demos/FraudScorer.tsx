@@ -1,9 +1,5 @@
 import { useState } from 'react'
-
-// Made-up weights. The point is the shape: a few readable rules plus a
-// logistic score you can explain feature by feature.
-const BIAS = -4.2
-const W = { amount: 0.0011, night: 1.1, newMerchant: 1.4, abroad: 1.9, burst: 0.4 }
+import { decide, score as scoreTxn } from './score'
 
 export default function FraudScorer() {
   const [amount, setAmount] = useState(180)
@@ -13,22 +9,16 @@ export default function FraudScorer() {
   const [burst, setBurst] = useState(1)
   const [threshold, setThreshold] = useState(0.5)
 
-  const night = hour < 6 ? 1 : 0
+  const t = { amount, hour, newMerchant, abroad, lastHour: burst }
+  const { probability: score, parts: p, fired: rules } = scoreTxn(t)
   const parts = [
-    { label: `Amount $${amount.toLocaleString('en-CA')}`, v: W.amount * amount },
-    { label: 'Between midnight and 6am', v: W.night * night },
-    { label: 'New merchant for this card', v: W.newMerchant * (newMerchant ? 1 : 0) },
-    { label: 'Different country from the card', v: W.abroad * (abroad ? 1 : 0) },
-    { label: `${burst} ${burst === 1 ? 'transaction' : 'transactions'} in the last hour`, v: W.burst * burst },
+    { label: `Amount $${amount.toLocaleString('en-CA')}`, v: p.amount },
+    { label: 'Between midnight and 6am', v: p.night },
+    { label: 'New merchant for this card', v: p.newMerchant },
+    { label: 'Different country from the card', v: p.abroad },
+    { label: `${burst} ${burst === 1 ? 'transaction' : 'transactions'} in the last hour`, v: p.lastHour },
   ]
-  const z = BIAS + parts.reduce((s, p) => s + p.v, 0)
-  const score = 1 / (1 + Math.exp(-z))
-  const rules = [
-    amount >= 2500 && 'Amount over $2,500',
-    abroad && newMerchant && 'Abroad at a new merchant',
-    burst >= 6 && 'Six or more transactions in an hour',
-  ].filter(Boolean) as string[]
-  const alert = score >= threshold || rules.length > 0
+  const alert = decide(score, rules, threshold)
   const maxPart = Math.max(...parts.map((p) => p.v), 1)
 
   return (

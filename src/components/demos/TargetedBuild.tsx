@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { planBuild } from './planBuild'
 
 const SERVICES = ['api', 'web', 'worker', 'docs']
 const ENVS = ['dev', 'staging', 'prod'] as const
@@ -13,22 +14,7 @@ export default function TargetedBuild() {
 
   useEffect(() => () => window.clearInterval(timer.current), [])
 
-  const script = () => {
-    const skip = SERVICES.filter((s) => !changed.includes(s))
-    return [
-      `$ build-trigger --env ${env}`,
-      `checking ${env} ... ok`,
-      `changed since last build: ${changed.length ? changed.map((c) => `${c}/`).join(' ') : 'nothing'}`,
-      ...(changed.length
-        ? [
-            `triggering ${changed.length} of ${SERVICES.length} builds through the GitHub API`,
-            ...changed.map((c) => `  POST /actions/workflows/${c}.yml/dispatches  204`),
-          ]
-        : ['nothing to build']),
-      ...(skip.length ? [`skipped ${skip.join(', ')}, no changes`] : []),
-      `emailed the result over SMTP (TLS)`,
-    ]
-  }
+  const script = () => planBuild(SERVICES, changed, env)
 
   const run = () => {
     window.clearInterval(timer.current)

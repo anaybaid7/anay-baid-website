@@ -18,9 +18,11 @@ import { ENTRIES } from './entries'
 import { tabsFor, type Tab } from './details'
 import LivePreview from './components/LivePreview'
 import Minimap from './components/Minimap'
+import type { Action as TermAction } from './terminal'
 
 // the drawer and its demos load the first time someone opens one
 const DetailDrawer = lazy(() => import('./components/DetailDrawer'))
+const Terminal = lazy(() => import('./components/Terminal'))
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
 const shortOrg = (org: string) => org.replace(/ (Inc|LP|Global Holdings Inc)$/, '')
@@ -155,7 +157,7 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
-const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', try: 'demo' }
+const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', try: 'demo', code: 'code' }
 
 // the button on each row that opens its drawer, named after what's inside
 function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -402,6 +404,7 @@ export default function App() {
   const [resumeOpen, setResumeOpen] = useState(false)
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
+  const [termOpen, setTermOpen] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [detail, setDetail] = useState<{ id: string; tab: Tab } | null>(() => {
     const q = new URLSearchParams(location.search)
@@ -462,6 +465,7 @@ export default function App() {
         case 's': setSettings({ view: settings.view === 'skim' ? 'full' : 'skim' }); break
         case 't': setSettings({ theme: resolvedTheme(settings) === 'dark' ? 'light' : 'dark' }); break
         case 'm': setMatcherOpen(true); break
+        case '`': setTermOpen(true); break
         case ',': (document.getElementById('settings') as (HTMLElement & { togglePopover?: () => void }) | null)?.togglePopover?.(); break
         case '?': setKeysOpen(true); break
         case 'Escape': if (filter.length) applyFilter([]); return
@@ -503,6 +507,18 @@ export default function App() {
     return () => window.removeEventListener('hashchange', apply)
   }, [openJob, openProject])
 
+  // what terminal commands do to the page
+  const onTermAction = (a: TermAction) => {
+    if (a.kind === 'open') {
+      const tabs = tabsFor(a.id)
+      showDetail({ id: a.id, tab: a.tab && tabs.includes(a.tab as Tab) ? (a.tab as Tab) : (tabs[1] ?? 'overview') })
+    }
+    if (a.kind === 'filter') applyFilter(a.skills)
+    if (a.kind === 'theme') setSettings({ theme: a.value })
+    if (a.kind === 'view') setSettings({ view: a.value })
+    if (a.kind === 'resume') showResume()
+  }
+
   const commands = useMemo<Command[]>(() => {
     const copy = () => navigator.clipboard?.writeText(profile.email).catch(() => {})
     return [
@@ -523,6 +539,7 @@ export default function App() {
       { group: 'Page', label: 'Settings', keywords: 'preferences text size accent motion', run: () => (document.getElementById('settings') as (HTMLElement & { showPopover?: () => void }) | null)?.showPopover?.() },
       { group: 'Page', label: 'Print this view', keywords: 'pdf one page tailored', run: () => window.print() },
       { group: 'Page', label: 'Keyboard shortcuts', keywords: 'keys help', run: () => setKeysOpen(true) },
+      { group: 'Page', label: 'Open the terminal', keywords: 'shell cli command line', run: () => setTermOpen(true) },
       { group: 'Hiring', label: 'Check against a job posting', keywords: 'match requirements jd', run: () => setMatcherOpen(true) },
       ...stackFilterCommands(applyFilter),
       { group: 'Hiring', label: 'Save contact card', keywords: 'vcard vcf contacts', run: downloadVcard },
@@ -736,6 +753,11 @@ export default function App() {
       )}
       <Matcher open={matcherOpen} onOpenChange={setMatcherOpen} onFilter={applyFilter} />
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
+      {termOpen && (
+        <Suspense fallback={null}>
+          <Terminal open={termOpen} onOpenChange={setTermOpen} onAction={onTermAction} />
+        </Suspense>
+      )}
       <LivePreview
         url={preview ?? ''}
         title="Battleship for Purolator"

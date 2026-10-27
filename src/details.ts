@@ -242,7 +242,7 @@ export const DETAILS: Record<string, Detail> = {
   },
 }
 
-export type Tab = 'overview' | 'how' | 'screens' | 'try'
+export type Tab = 'overview' | 'how' | 'screens' | 'try' | 'code'
 
 
 export function tabsFor(id: string): Tab[] {
@@ -251,6 +251,7 @@ export function tabsFor(id: string): Tab[] {
   if (d?.arch) tabs.push('how')
   if (d?.screens) tabs.push('screens')
   if (d?.demo) tabs.push('try')
+  if (d?.demo && d.demo !== 'starrez') tabs.push('code')
   return tabs
 }
 

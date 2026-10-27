@@ -5,6 +5,7 @@ const SHORTCUTS: [string, string][] = [
   ['S', 'Switch between full detail and skim'],
   ['T', 'Switch light and dark'],
   ['M', 'Check against a job posting'],
+  ['`', 'Terminal'],
   [',', 'Settings'],
   ['/ or Ctrl K', 'Search'],
   ['Esc', 'Clear a filter or close what is open'],

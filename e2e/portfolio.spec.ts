@@ -150,3 +150,18 @@ test('a flow plays through and a demo responds', async ({ page }) => {
   await drawer.getByLabel(/New merchant/).check()
   await expect(drawer.locator('.verdict')).toContainText('Alert')
 })
+
+test('the terminal runs commands and opens the drawer', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('`')
+  const cmd = page.getByRole('textbox', { name: 'Command' })
+  await cmd.fill('grep sagemaker')
+  await cmd.press('Enter')
+  await expect(page.locator('.term-screen')).toContainText('purolator')
+  await cmd.fill('open insi')
+  await cmd.press('Tab')
+  await expect(cmd).toHaveValue('open insightvault ')
+  await cmd.fill('open insightvault code')
+  await cmd.press('Enter')
+  await expect(page.locator('dialog.drawer .code figcaption')).toContainText('score.ts')
+})

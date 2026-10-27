@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { compareSchemas, type Column } from './compareSchemas'
 
-const AZURE = [
+const AZURE: Column[] = [
   ['show_id', 'BIGINT'],
   ['theatre_id', 'INT'],
   ['screen_id', 'INT'],
@@ -8,7 +9,7 @@ const AZURE = [
   ['tickets_sold', 'INT'],
   ['gross', 'DECIMAL(12,2)'],
 ]
-const ONPREM = [
+const ONPREM: Column[] = [
   ['show_id', 'BIGINT'],
   ['theatre_id', 'INT'],
   ['show_date', 'VARCHAR(10)'],
@@ -19,16 +20,8 @@ const ROWS = { azure: 1204331, onprem: 1204318 }
 
 type Finding = { col: string; text: string }
 
-function compare(): Finding[] {
-  const out: Finding[] = []
-  for (const [name, type] of AZURE) {
-    const other = ONPREM.find(([n]) => n === name)
-    if (!other) out.push({ col: name, text: `${name} is missing on-prem` })
-    else if (other[1] !== type) out.push({ col: name, text: `${name} is ${type} in Azure but ${other[1]} on-prem` })
-  }
-  out.push({ col: '', text: `Row counts differ by ${ROWS.azure - ROWS.onprem}` })
-  return out
-}
+const compare = (): Finding[] =>
+  compareSchemas(AZURE, ONPREM, ROWS.azure, ROWS.onprem).map((x) => ({ col: x.column, text: x.problem }))
 
 // What the validation work at Cineplex did, on a made-up table: compare the
 // two schemas column by column, then the row counts, and list what doesn't match.
@@ -57,7 +50,7 @@ export default function SchemaCheck() {
   }
 
   const bad = new Set(findings.map((f) => f.col))
-  const table = (title: string, cols: string[][], rows: number) => (
+  const table = (title: string, cols: Column[], rows: number) => (
     <div className="schema">
       <p className="schema-title">{title}</p>
       <ul>

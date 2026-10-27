@@ -279,4 +279,22 @@ describe('App', () => {
     fireEvent.click(drawer.querySelector('.drawer-foot button:last-child')!)
     expect(drawer.querySelector('#drawer-title')).toHaveTextContent('Iotum')
   })
+
+  it('shows the code behind a demo', async () => {
+    history.replaceState(null, '', '/?open=job-purolator&tab=code')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.code figcaption')).toHaveTextContent('allocate.ts')
+    expect(drawer.querySelector('.code pre')).toHaveTextContent('export function allocate')
+  })
+
+  it('opens a terminal that drives the page', async () => {
+    render(<App />)
+    fireEvent.keyDown(document.body, { key: '`' })
+    const input = await screen.findByRole('textbox', { name: 'Command', hidden: true })
+    fireEvent.change(input, { target: { value: 'filter terraform' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(document.querySelector('.term-screen')).toHaveTextContent('showing work with Terraform')
+    expect(document.getElementById('job-iotum')).toHaveClass('dim')
+  })
 })

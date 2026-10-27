@@ -10,6 +10,8 @@ import SchemaCheck from './demos/SchemaCheck'
 import TargetedBuild from './demos/TargetedBuild'
 import StarrezFill from './demos/StarrezFill'
 import type { DemoKind } from '../details'
+import CodeView from './CodeView'
+import { SOURCES } from './demos/sources'
 
 const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   battleship: MiniBattleship,
@@ -25,6 +27,7 @@ const TAB_NAMES: Record<Tab, string> = {
   how: 'How it works',
   screens: 'Screens',
   try: 'Try it',
+  code: 'Code',
 }
 
 // A panel that slides in from the right with everything about one job or
@@ -157,6 +160,12 @@ export default function DetailDrawer({ open, onChange }: {
             )}
             {tab === 'how' && detail && <ArchDiagram arch={detail.arch} name={entry.title} />}
             {tab === 'screens' && detail?.screens && <Screens kind={detail.screens} />}
+            {tab === 'code' && detail?.demo && SOURCES[detail.demo] && (
+              <div className="code-tab">
+                <p className="demo-lede">The code behind the demo, as it runs on this page.</p>
+                <CodeView {...SOURCES[detail.demo]!} />
+              </div>
+            )}
             {tab === 'try' && detail?.demo && (() => {
               const Demo = DEMOS[detail.demo]
               return <Demo key={entry.id} />

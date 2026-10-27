@@ -32,11 +32,12 @@ CI runs these on every push.
 
 - Intro, then At a glance, experience, projects, education, skills, GitHub activity and contact.
 - A timeline of co-op terms. Click one to jump to that job.
-- Each job and project has an **Open details** button. The drawer has an overview, a diagram of how it fits together (with a play button that walks through it), screens or a wireframe where there's a UI, and a small demo on made-up data.
+- Each job and project has an **Open details** button. The drawer has an overview, an architecture diagram with a step-through of the data flow, screens or a wireframe where there's a UI, an interactive demo on made-up data, and the source behind that demo with syntax highlighting.
 - Settings for theme, text size, type width, accent, contrast, motion, a skim view, which section comes first and which sections show. The link remembers them.
 - Paste a job posting to see which of my skills it mentions and where I used them.
 - Click a skill to show only the work that used it.
 - Search (Ctrl K or /), keyboard shortcuts (? lists them), and a page map on wide screens.
+- A terminal (the ` key) over the same data, with `ls`, `cat`, `grep`, `open`, `filter`, `theme` and `view`, tab completion and command history. The command logic is in `src/terminal.ts`.
 - The resume opens on the page. The same data also builds `resume.txt`, `resume.json` and a contact card.
 - Works offline after the first visit.
 
