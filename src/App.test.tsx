@@ -118,7 +118,7 @@ describe('App', () => {
 
   it('settings change the page and survive a reload', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('radio', { name: /skim/i, hidden: true }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Results only', hidden: true }))
     fireEvent.click(screen.getByRole('radio', { name: 'Larger', hidden: true }))
     fireEvent.click(screen.getByRole('radio', { name: 'Green', hidden: true }))
     const root = document.documentElement.dataset
@@ -210,5 +210,28 @@ describe('App', () => {
     expect(about).toHaveTextContent(`${__SITE_STATS__.unit} unit tests`)
     expect(__SITE_STATS__.unit).toBeGreaterThan(60)
     expect(__SITE_STATS__.e2e).toBeGreaterThan(5)
+  })
+
+  it('presets, section order and hidden sections all apply and go in the share link', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Quick scan', hidden: true }))
+    const root = document.documentElement.dataset
+    expect(root.view).toBe('skim')
+    expect(root.lead).toBe('projects')
+    expect(root.hide).toBe('github colophon')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Education', hidden: true }))
+    expect(root.hide).toContain('education')
+    fireEvent.click(screen.getByRole('radio', { name: /Narrow/, hidden: true }))
+    expect(root.width).toBe('narrow')
+  })
+
+  it('reads hidden sections and width from a link', () => {
+    history.replaceState(null, '', '/?hide=github,nonsense,skills&width=wide&lead=projects')
+    __resetForTests()
+    render(<App />)
+    const root = document.documentElement.dataset
+    expect(root.hide).toBe('skills github')
+    expect(root.width).toBe('wide')
+    expect(root.lead).toBe('projects')
   })
 })

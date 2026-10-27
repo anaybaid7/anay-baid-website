@@ -17,6 +17,7 @@ import { setSettings, useSettings, withTransition, resolvedTheme } from './setti
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import HowItWorks from './components/HowItWorks'
 import LivePreview from './components/LivePreview'
+import Minimap from './components/Minimap'
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
 const shortOrg = (org: string) => org.replace(/ (Inc|LP|Global Holdings Inc)$/, '')
@@ -246,7 +247,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
 
 function Experience({ active, onPick, filter }: { active: number; onPick: (i: number) => void; filter: string[] }) {
   return (
-    <section className="section" aria-labelledby="experience">
+    <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
       <div className="section-body">
         <Timeline active={active} onPick={onPick} filter={filter} />
@@ -310,7 +311,7 @@ const wins = projects.filter((p) => p.award?.toLowerCase().includes('winner'))
 // the five things a recruiter checks first, answered before they scroll
 function Glance({ onCheck }: { onCheck: () => void }) {
   return (
-    <section className="section glance" aria-labelledby="glance">
+    <section className="section glance" aria-labelledby="glance" data-part="glance">
       <h2 id="glance">At a glance</h2>
       <div className="section-body">
         <dl className="facts">
@@ -367,7 +368,7 @@ function Skills({ onFilter }: { onFilter: (skills: string[]) => void }) {
     setSort((cur) => ({ key, dir: cur.key === key ? (cur.dir === 1 ? -1 : 1) : key === 'skill' ? 1 : -1 }))
 
   return (
-    <section className="section" aria-labelledby="skills">
+    <section className="section" aria-labelledby="skills" data-part="skills">
       <h2 id="skills">Skills</h2>
       <div className="section-body">
         <p className="skills-hint">
@@ -564,8 +565,9 @@ export default function App() {
         </nav>
       </header>
 
+      <Minimap version={`${settings.lead}|${settings.hide.join()}|${settings.view}|${filter.join()}`} />
       <main className="wrap">
-        <section className="hero">
+        <section className="hero" data-part="hero">
           <h1>
             <span>Anay</span> <span>Baid</span>
           </h1>
@@ -602,7 +604,7 @@ export default function App() {
         <Glance onCheck={() => setMatcherOpen(true)} />
 
         {filter.length > 0 && (
-          <div className="filterbar" role="status">
+          <div className="filterbar" role="status" data-part="filter">
             <p>
               Showing work with {listFormat(filter)}.{' '}
               <span>
@@ -619,7 +621,7 @@ export default function App() {
 
         <Experience active={activeJob} onPick={openJob} filter={filter} />
 
-        <section className="section" aria-labelledby="projects">
+        <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">Projects</h2>
           <div className="section-body">
             <ol className="entries">
@@ -645,7 +647,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section" aria-labelledby="education">
+        <section className="section" aria-labelledby="education" data-part="education">
           <h2 id="education">Education</h2>
           <div className="section-body">
             <div className="entry solo">
@@ -665,7 +667,7 @@ export default function App() {
 
         <Skills onFilter={applyFilter} />
 
-        <section className="section" aria-labelledby="github">
+        <section className="section" aria-labelledby="github" data-part="github">
           <h2 id="github">Recently on GitHub</h2>
           <div className="section-body">
             <WhenVisible>
@@ -675,7 +677,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section" aria-labelledby="colophon">
+        <section className="section" aria-labelledby="colophon" data-part="colophon">
           <h2 id="colophon">About this site</h2>
           <div className="section-body">
             <dl className="facts colophon">

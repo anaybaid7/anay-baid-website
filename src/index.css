@@ -42,7 +42,7 @@ body {
   font-family: var(--font);
   font-size: 17px;
   line-height: 1.6;
-  font-stretch: 100%;
+  font-stretch: calc(100% * var(--wscale, 1));
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
@@ -95,7 +95,7 @@ button {
 }
 .top-name {
   font-weight: 700;
-  font-stretch: 115%;
+  font-stretch: calc(115% * var(--wscale, 1));
 }
 .top-time {
   color: var(--ink-3);
@@ -128,7 +128,7 @@ button {
   font-size: min(calc((100vw - 80px) / 5.95), 188px);
   line-height: 0.86;
   font-weight: 800;
-  font-stretch: 125%;
+  font-stretch: calc(125% * var(--wscale, 1));
   letter-spacing: -0.035em;
   white-space: nowrap;
   margin-left: -0.04em;
@@ -183,7 +183,7 @@ button {
   font-size: clamp(24px, 2.6vw, 34px);
   line-height: 1.25;
   font-weight: 500;
-  font-stretch: 108%;
+  font-stretch: calc(108% * var(--wscale, 1));
   letter-spacing: -0.012em;
 }
 .sub {
@@ -241,7 +241,7 @@ button {
   font-size: 26px;
   line-height: 1.15;
   font-weight: 750;
-  font-stretch: 115%;
+  font-stretch: calc(115% * var(--wscale, 1));
   letter-spacing: -0.01em;
 }
 .section-body {
@@ -293,7 +293,7 @@ button {
   font-size: 25px;
   line-height: 1.2;
   font-weight: 750;
-  font-stretch: 112%;
+  font-stretch: calc(112% * var(--wscale, 1));
   letter-spacing: -0.012em;
 }
 .entry-title img {
@@ -419,7 +419,7 @@ button {
   font-size: 22px;
   line-height: 1.25;
   font-weight: 700;
-  font-stretch: 108%;
+  font-stretch: calc(108% * var(--wscale, 1));
 }
 .job-meta {
   margin: 4px 0 0;
@@ -738,7 +738,7 @@ dialog::backdrop {
   font-size: min(calc((100vw - 80px) / 12.5), 89px);
   line-height: 1;
   font-weight: 800;
-  font-stretch: 118%;
+  font-stretch: calc(118% * var(--wscale, 1));
   white-space: nowrap;
   letter-spacing: -0.03em;
   text-decoration-thickness: 4px;
@@ -828,7 +828,7 @@ dialog::backdrop {
   text-align: left;
   font-size: 14px;
   font-weight: 650;
-  font-stretch: 105%;
+  font-stretch: calc(105% * var(--wscale, 1));
   white-space: nowrap;
   transition: background-color 0.18s, color 0.18s;
 }
@@ -1478,7 +1478,7 @@ dialog::backdrop {
   margin: 0 0 6px;
   font-size: 19px;
   font-weight: 750;
-  font-stretch: 112%;
+  font-stretch: calc(112% * var(--wscale, 1));
 }
 .choice {
   margin: 14px 0 0;
@@ -1581,7 +1581,7 @@ dialog::backdrop {
   margin: 0;
   font-size: 22px;
   font-weight: 750;
-  font-stretch: 112%;
+  font-stretch: calc(112% * var(--wscale, 1));
 }
 .sheet-head button {
   background: none;
@@ -2124,4 +2124,240 @@ main:has(.filterbar) .section > h2 {
   body {
     zoom: 1 !important;
   }
+}
+
+/* ---- type width, from the Archivo variable font's width axis ---- */
+body {
+  font-stretch: calc(100% * var(--wscale, 1));
+}
+:root[data-width="narrow"] {
+  --wscale: 0.84;
+}
+:root[data-width="wide"] {
+  --wscale: 1.12;
+}
+
+/* ---- high contrast, chosen in settings or asked for by the system ---- */
+:root[data-contrast="high"] {
+  --ink-2: var(--ink);
+  --ink-3: color-mix(in srgb, var(--ink) 82%, var(--paper));
+  --line: color-mix(in srgb, var(--ink) 45%, var(--paper));
+}
+:root[data-contrast="high"] body {
+  font-weight: 500;
+}
+@media (prefers-contrast: more) {
+  :root:not([data-contrast="standard"]) {
+    --ink-2: var(--ink);
+    --ink-3: color-mix(in srgb, var(--ink) 82%, var(--paper));
+    --line: color-mix(in srgb, var(--ink) 45%, var(--paper));
+  }
+}
+
+/* ---- reorder and hide sections ---- */
+main.wrap {
+  display: flex;
+  flex-direction: column;
+}
+main.wrap > * {
+  min-width: 0;
+}
+[data-part="hero"] {
+  order: -4;
+}
+[data-part="glance"] {
+  order: -3;
+}
+:root[data-lead="projects"] [data-part="filter"],
+:root[data-lead="projects"] [data-part="projects"] {
+  order: -2;
+}
+:root[data-hide~="glance"] [data-part="glance"],
+:root[data-hide~="education"] [data-part="education"],
+:root[data-hide~="skills"] [data-part="skills"],
+:root[data-hide~="github"] [data-part="github"],
+:root[data-hide~="colophon"] [data-part="colophon"] {
+  display: none;
+}
+
+/* ---- page map down the right edge ---- */
+.minimap {
+  display: none;
+}
+@media (min-width: 1360px) {
+  .minimap {
+    display: block;
+    position: fixed;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+  }
+  .minimap ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    justify-items: end;
+  }
+  .minimap a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 9px;
+    width: 34px;
+    text-decoration: none;
+  }
+  .minimap a::after {
+    content: "";
+    width: 12px;
+    height: 1.5px;
+    background: var(--ink-3);
+    opacity: 0.45;
+    transition: width 0.18s ease-out, opacity 0.18s ease-out, background-color 0.18s ease-out;
+  }
+  .minimap .major a {
+    margin-top: 10px;
+  }
+  .minimap .major:first-child a {
+    margin-top: 0;
+  }
+  .minimap .major a::after {
+    width: 22px;
+    height: 2px;
+    opacity: 0.8;
+  }
+  .minimap a:hover::after,
+  .minimap a:focus-visible::after {
+    width: 30px;
+    opacity: 1;
+  }
+  .minimap a[aria-current]::after {
+    width: 30px;
+    opacity: 1;
+    background: var(--cobalt);
+  }
+  .minimap span {
+    position: absolute;
+    right: 42px;
+    padding: 4px 9px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(4px);
+    pointer-events: none;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  }
+  .minimap a:hover span,
+  .minimap a:focus-visible span {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- settings panel extras ---- */
+.presets {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.presets button {
+  flex: 1;
+  padding: 9px 10px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font: 650 14.5px var(--font);
+}
+.presets button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.settings-group {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.settings-group h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 750;
+  font-stretch: calc(110% * var(--wscale, 1));
+}
+.width-sample {
+  font-style: normal;
+  font-weight: 700;
+}
+.width-narrow {
+  font-stretch: 70%;
+}
+.width-normal {
+  font-stretch: 100%;
+}
+.width-wide {
+  font-stretch: 125%;
+}
+
+/* settings open with a short fade and drop, closing stays instant */
+.settings:popover-open {
+  transition: opacity 0.16s ease-out, transform 0.16s ease-out;
+}
+@starting-style {
+  .settings:popover-open {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ---- touch and hit targets ---- */
+a,
+button,
+summary,
+label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.copy-link {
+  min-height: 26px;
+  min-width: 36px;
+}
+.tl-bar::after {
+  content: "";
+  position: absolute;
+  inset: -28px 0 -8px;
+}
+
+@media print {
+  .minimap {
+    display: none !important;
+  }
+}
+:root[data-motion="reduced"] .settings:popover-open {
+  transition: none;
+}
+
+/* the header and date column keep their width so nothing collides */
+.top,
+.entry-when,
+.minimap {
+  --wscale: 1;
+}
+.entry {
+  grid-template-columns: 170px minmax(0, 1fr);
+}
+@media (max-width: 620px) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.top,
+.entry-when {
+  font-stretch: 100%;
+}
+.entry-when {
+  white-space: nowrap;
 }
