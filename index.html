@@ -10,20 +10,26 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="description" content="Anay Baid, Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+    <meta name="description" content="Anay Baid, Honours Computer Science student at Waterloo. On co-op at Purolator working on backend and data tooling." />
     <title>Anay Baid</title>
     <script>
-      // pick the theme before first paint so there's no flash
+      // apply saved settings before first paint so nothing flashes. src/settings.ts owns the real logic
       try {
-        var t = localStorage.getItem('theme')
+        var p = JSON.parse(localStorage.getItem('prefs') || '{}')
+        var u = new URLSearchParams(location.search)
+        var d = document.documentElement.dataset
+        var t = u.get('theme') || p.theme || localStorage.getItem('theme')
         if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        document.documentElement.dataset.theme = t
+        d.theme = t
+        d.view = u.get('view') || p.view || 'full'
+        d.size = u.get('size') || p.size || 'm'
+        d.accent = u.get('accent') || p.accent || 'blue'
       } catch (e) {}
     </script>
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Anay Baid, Software Engineer" />
-    <meta property="og:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+    <meta property="og:description" content="Honours Computer Science student at Waterloo. On co-op at Purolator working on backend and data tooling." />
     <meta property="og:url" content="https://a2baid.netlify.app" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://a2baid.netlify.app/og.png" />
@@ -31,7 +37,7 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:title" content="Anay Baid, Software Engineer" />
-    <meta name="twitter:description" content="Honours Computer Science student at Waterloo. Full-stack engineer working on forecasting systems, automation tooling, and backend infrastructure." />
+    <meta name="twitter:description" content="Honours Computer Science student at Waterloo. On co-op at Purolator working on backend and data tooling." />
 
     <script type="application/ld+json">
       {

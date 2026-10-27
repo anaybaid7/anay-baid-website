@@ -7,6 +7,9 @@ describe('skill evidence', () => {
     expect(uses('AWS', 'AWS S3')).toBe(true)
     expect(uses('Java', 'JavaScript')).toBe(false)
     expect(uses('CI/CD', 'CI/CD')).toBe(true)
+    expect(uses('S3', 'AWS S3')).toBe(true)
+    expect(uses('ECS/EKS', 'ECS/Fargate')).toBe(true)
+    expect(uses('REST APIs', 'REST')).toBe(true)
   })
   it('finds where Docker was used', () => {
     const labels = whereUsed('Docker').map((e) => e.label)

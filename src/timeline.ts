@@ -20,6 +20,12 @@ function parsePoint(text: string, end: boolean, now: Date): number | null {
   const m = MONTHS.indexOf(word)
   if (m >= 0) return monthIndex(year, m)
   if (word in TERMS) return monthIndex(year, TERMS[word] + (end ? 3 : 0))
+  // free text around the date, like "uOttaHack 5, March 2023" or "Let's Connect, Summer 2026"
+  const words = word.split(/[^a-z]+/)
+  const inner = MONTHS.findIndex((name) => words.includes(name))
+  if (inner >= 0) return monthIndex(year, inner)
+  const term = words.find((w) => w in TERMS)
+  if (term) return monthIndex(year, TERMS[term] + (end ? 3 : 0))
   return monthIndex(year, end ? 11 : 0)
 }
 

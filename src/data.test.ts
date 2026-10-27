@@ -95,3 +95,20 @@ describe('data integrity', () => {
     expect(existsSync(`${publicDir}/Anay_Baid_Resume.pdf`)).toBe(true)
   })
 })
+
+describe('headline numbers', () => {
+  it('every job and project has one', () => {
+    for (const e of experience) expect(e.highlight, e.org).toBeDefined()
+    for (const p of projects) expect(p.highlight, p.title).toBeDefined()
+  })
+})
+
+describe('how it works diagrams', () => {
+  it('have at least two steps, each with a note', () => {
+    for (const e of [...experience, ...projects]) {
+      if (!e.how) continue
+      expect(e.how.steps.length).toBeGreaterThanOrEqual(2)
+      for (const step of e.how.steps) expect(step.note.length).toBeGreaterThan(10)
+    }
+  })
+})

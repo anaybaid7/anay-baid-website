@@ -24,6 +24,8 @@ const experienceSchema = z.object({
   period: z.string().min(1),
   bullets: z.array(z.string().min(1)).min(1, 'needs at least one bullet'),
   tech: z.array(z.string().min(1)).min(1, 'needs at least one tech tag'),
+  highlight: z.object({ value: z.string().min(1), label: z.string().min(1) }).optional(),
+  how: z.object({ steps: z.array(z.object({ label: z.string().min(1), note: z.string().min(1) })).min(2), base: z.string().min(1).optional() }).optional(),
 })
 
 const projectSchema = z.object({
@@ -36,6 +38,8 @@ const projectSchema = z.object({
   tech: z.array(z.string().min(1)).min(1, 'needs at least one tech tag'),
   link: urlString.optional(),
   code: urlString.optional(),
+  highlight: z.object({ value: z.string().min(1), label: z.string().min(1) }).optional(),
+  how: z.object({ steps: z.array(z.object({ label: z.string().min(1), note: z.string().min(1) })).min(2), base: z.string().min(1).optional() }).optional(),
   image: z
     .object({ src: localAssetPath, alt: z.string().min(1), caption: z.string().min(1) })
     .optional(),

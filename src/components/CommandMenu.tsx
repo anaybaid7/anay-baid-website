@@ -73,8 +73,8 @@ export default function CommandMenu({ commands, open, onOpenChange }: {
   }
 
   useEffect(() => {
-    document.getElementById(`cmd-${index}`)?.scrollIntoView?.({ block: 'nearest' })
-  }, [index])
+    if (open) document.getElementById(`cmd-${index}`)?.scrollIntoView?.({ block: 'nearest' })
+  }, [index, open])
 
   return (
     <dialog

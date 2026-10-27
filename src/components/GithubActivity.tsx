@@ -21,7 +21,9 @@ export default function GithubActivity() {
         return res.json()
       })
       .then((repos: Repo[]) => {
-        if (!cancelled) setState({ status: 'ok', repos: selectRepos(repos, profile.pinnedRepos) })
+        // skip the profile README repo, it isn't a project
+        const real = repos.filter((r) => r.name.toLowerCase() !== 'anaybaid7')
+        if (!cancelled) setState({ status: 'ok', repos: selectRepos(real, profile.pinnedRepos) })
       })
       .catch(() => {
         if (!cancelled) setState({ status: 'error' })

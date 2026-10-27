@@ -15,4 +15,10 @@ describe('parsePeriod', () => {
   it('labels months', () => {
     expect(monthLabel(monthIndex(2024, 0))).toBe('Jan 2024')
   })
+
+  it('finds the date inside event names', () => {
+    const now = new Date(2026, 9, 1)
+    expect(parsePeriod('uOttaHack 5, March 2023', now)).toEqual({ start: monthIndex(2023, 2), end: monthIndex(2023, 2) })
+    expect(parsePeriod("Let's Connect, Summer 2026", now)).toEqual({ start: monthIndex(2026, 4), end: monthIndex(2026, 7) })
+  })
 })

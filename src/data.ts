@@ -14,7 +14,7 @@ export const profile = {
     site: 'https://a2baid.netlify.app',
   },
   blurb:
-    "I build full-stack tools fast and ship them to real users, from a browser extension used by 100+ campus staff to forecasting pipelines processing six figures of records a week. Currently on co-op at Purolator working on network optimization and internal tooling.",
+    "Computer Science student at Waterloo, on co-op at Purolator working on backend and data tooling for network planning.",
   // Exact GitHub repo names (case-sensitive) the Home page's live widget
   // always shows, in this order. Without this, "sort=updated" surfaces
   // whatever repo was pushed to most recently, which can just as easily be
@@ -22,7 +22,7 @@ export const profile = {
   // description as it can be real work. Add a repo's exact name here to
   // pin it; leave the array empty to fall back to "3 most recently
   // updated public repos".
-  pinnedRepos: ['battleship-purolator', 'starrez-logger-prod'] as string[],
+  pinnedRepos: ['insight-vault', 'battleship-purolator', 'starrez-logger-prod'] as string[],
   intro: [
     "I'm a fourth-year Computer Science student at Waterloo, currently on co-op at Purolator working on internal forecasting tools and network optimization.",
     "Most of what I build starts the same way. Something at work or school is manual, slow, or annoying, and I end up automating it. That's how the StarRez extension happened, and most of what I've shipped on co-op since.",
@@ -37,9 +37,25 @@ export type Tech = string
 // a specific experience bullet or project), so it's shown as its own block
 // rather than merged into that derived list.
 export const skills = {
-  languages: ['C', 'C++', 'Python', 'JavaScript', 'TypeScript', 'Java', 'SQL', 'R', 'Kotlin', 'C#', 'HTML5', 'CSS3'],
-  frameworks: ['React.js', 'Node.js', 'Express', 'Redux', 'Spring Boot', 'Django', '.NET', 'Flutter', 'TensorFlow', 'Pandas'],
-  devops: ['Docker', 'Kubernetes', 'AWS', 'Azure', 'Linux', 'Git', 'CI/CD', 'Selenium', 'JUnit', 'MongoDB', 'Jira', 'Postman'],
+  // "Languages & Frameworks" on the resume
+  languages: ['Python', 'R', 'Java', 'C', 'C++', 'JavaScript', 'TypeScript', 'SQL', 'Kotlin', 'C#', 'React.js', 'Node.js'],
+  // "Backend"
+  frameworks: ['Spring Boot', 'FastAPI', 'Flask', 'REST APIs', 'Kafka', 'PostgreSQL', 'Oracle', 'MongoDB', 'Redis'],
+  // "Cloud & Infra"
+  devops: ['AWS', 'Azure', 'S3', 'ECS/EKS', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'Git', 'Airflow', 'Playwright'],
+}
+
+export const skillLabels = {
+  languages: 'Languages & frameworks',
+  frameworks: 'Backend',
+  devops: 'Cloud & infra',
+}
+
+// how a piece of work fits together, drawn as a row of steps you can click
+// through. Only what's on the resume or in the code, nothing filled in.
+export interface HowItWorks {
+  steps: { label: string; note: string }[]
+  base?: string
 }
 
 export interface ExperienceEntry {
@@ -50,6 +66,9 @@ export interface ExperienceEntry {
   period: string
   bullets: string[]
   tech: Tech[]
+  // one number from the bullets above, shown in the list so it scans fast
+  highlight?: { value: string; label: string }
+  how?: HowItWorks
 }
 
 export const experience: ExperienceEntry[] = [
@@ -57,56 +76,67 @@ export const experience: ExperienceEntry[] = [
     role: 'Software & Network Optimization Engineer',
     org: 'Purolator Inc',
     orgUrl: 'https://www.purolator.com/en/services/technology-solutions',
-    logo: '/logos/purolator.png',
-    period: 'Spring 2026 to Present',
+    logo: '/logos/purolator.webp',
+    period: 'May 2026 to December 2026',
     bullets: [
-      'Cut planning turnaround 10 to 20x and diagnostics 40% by owning backend development of Python/PowerShell ETL pipelines, Airflow DAGs, and Flask REST APIs processing 100K+ forecast records with SQL-backed state, validation, and reconciliation.',
-      'Containerized forecasting workloads with Docker, using Amazon S3 and Parquet for forecast artifacts and Amazon SageMaker for managed inference, deployed via ECR/ECS/Fargate.',
-      'Provisioned the Airflow to S3 to SageMaker to ECS/Fargate architecture with Terraform, IAM-scoped workloads, private networking, Secrets Manager, and KMS.',
-      'Developed Python constraint-aware allocation algorithms preserving network volume targets, exposing capacity bottlenecks and supporting 10 to 15% projected throughput gains.',
+      "Backend work on the team's planning tools, Python and PowerShell ETL jobs, Airflow DAGs and Flask REST APIs over 100K+ forecast records, with state, validation and reconciliation in SQL. Cut planning turnaround 10-20× and diagnostics time by 40%.",
+      "Containerized the forecasting workloads with Docker, with forecast outputs in S3 as Parquet, inference on SageMaker, and deployment through ECR to ECS on Fargate.",
+      "Provisioned the Airflow, S3, SageMaker and ECS setup in Terraform, with IAM scoped per workload, private networking, Secrets Manager and KMS.",
+      "Wrote constraint-aware allocation algorithms in Python that keep network volume targets, flag capacity bottlenecks, and support a projected 10-15% throughput gain.",
     ],
-    tech: ['Python', 'PowerShell', 'Flask', 'Airflow', 'Docker', 'AWS S3', 'SageMaker', 'ECS/Fargate', 'Terraform', 'SQL'],
+    tech: ['Python', 'PowerShell', 'Flask', 'REST', 'Airflow', 'SQL', 'Docker', 'AWS S3', 'SageMaker', 'ECS/Fargate', 'Terraform'],
+    how: {
+      steps: [
+        { label: 'Airflow', note: 'DAGs schedule and run each step of the pipeline.' },
+        { label: 'ETL jobs', note: 'Python and PowerShell jobs over 100K+ forecast records, with state, validation and reconciliation in SQL.' },
+        { label: 'S3, Parquet', note: 'Forecast artifacts are written to S3 as Parquet.' },
+        { label: 'SageMaker', note: 'Managed inference for the forecasting models.' },
+        { label: 'Flask on ECS', note: 'REST APIs for the planning tools, containerized with Docker and deployed through ECR to ECS on Fargate.' },
+      ],
+      base: 'Provisioned with Terraform, with IAM scoped per workload, private networking, Secrets Manager and KMS',
+    },
+    highlight: { value: '10-20×', label: 'faster planning turnaround' },
   },
   {
     role: 'Software Engineer',
     org: 'Iotum Global Holdings Inc',
     orgUrl: 'https://www.iotum.com/',
-    logo: '/logos/iotum.png',
+    logo: '/logos/iotum.webp',
     period: 'May 2025 to August 2025',
     bullets: [
-      'Engineered full-stack React reference applications to demonstrate complex SDK integrations, increasing external developer adoption and reducing client implementation time by 30%.',
-      'Architected scalable test automation frameworks using JavaScript, Selenium, and Mocha, increasing code coverage by 85% and enabling faster CI/CD release cycles.',
-      'Diagnosed and resolved critical user-facing latency issues, improving application stability under high concurrency for 10,000+ users.',
+      "Built full-stack React reference apps showing how to integrate the SDK, which helped cut client implementation time by 30%.",
+      "Built test automation in JavaScript with Selenium and Mocha, increasing code coverage by 85% and speeding up CI/CD releases.",
+      "Fixed user-facing latency issues, improving stability under high concurrency for 10,000+ users.",
     ],
     tech: ['React', 'JavaScript', 'Selenium', 'Mocha', 'CI/CD'],
+    highlight: { value: '85%', label: 'increase in code coverage' },
   },
   {
     role: 'DevOps Engineer',
     org: 'Nationwide Appraisals',
-    orgUrl: 'https://www.nationwideappraisals.com/',
-    logo: '/logos/nationwide-appraisals.png',
+    orgUrl: 'https://www.tngoc.com/',
+    logo: '/logos/nationwide-appraisals.webp',
     period: 'September 2024 to December 2024',
     bullets: [
-      'Modernized legacy corporate infrastructure by containerizing services with Docker, optimizing TCP protocols and Layer 3 network configurations to reduce system latency.',
-      'Secured sensitive financial data pipelines using SQL Workbench and encrypted SSH tunneling, ensuring compliance and integrity across AWS S3 and hybrid cloud environments.',
-      'Orchestrated reproducible development environments for mobile testing by integrating Java 8 JDK with Android Emulators, accelerating debugging.',
-      'Implemented automated device compliance via Azure Cloud and Intune MDM, reducing manual provisioning overhead by 40%.',
+      "Containerized legacy services with Docker and tuned TCP/IP and Layer 3 network configuration for more consistent deployments.",
+      "Automated cloud and device setup across AWS, Azure and Intune MDM, using SQL checks, encrypted SSH tunnels and Java/Android tooling, reducing manual setup by 40%.",
     ],
-    tech: ['Docker', 'SQL', 'SSH', 'AWS S3', 'Java', 'Android', 'Azure', 'Intune MDM'],
+    tech: ['Docker', 'TCP/IP', 'AWS', 'Azure', 'Intune MDM', 'SQL', 'SSH', 'Java', 'Android'],
+    highlight: { value: '40%', label: 'less manual setup' },
   },
   {
     role: 'Data Engineer',
     org: 'Cineplex Entertainment LP',
     orgUrl: 'https://www.cineplex.com/',
-    logo: '/logos/cineplex.png',
+    logo: '/logos/cineplex.webp',
     period: 'January 2024 to April 2024',
     bullets: [
-      'Engineered real-time ETL pipelines for the Cineplex Homepage Dashboard, ensuring high-availability box office reporting via automated data validation scripts.',
-      'Optimized Machine Learning algorithms for show-time scheduling, improving prediction accuracy by 15% via rigorous model evaluation and input data cleansing.',
-      'Built automated data governance tools using Python and SQL schema comparison, validating 10TB+ of Azure data to ensure 100% integrity.',
-      'Led data quality assurance across hybrid Azure and on-prem systems, identifying and resolving 200+ anomalies with automated JUnit and Selenium test suites.',
+      "Worked on real-time ETL pipelines for the Cineplex homepage dashboard, with automated validation scripts for box office reporting.",
+      "Improved machine learning models for showtime scheduling, raising prediction accuracy by 15% through model evaluation and input data cleaning.",
+      "Wrote Python validation pipelines using SQL schema comparison and JUnit/Selenium tests to reconcile 10TB+ of Azure and on-prem data, finding and resolving 200+ anomalies.",
     ],
     tech: ['Python', 'SQL', 'Azure', 'ETL', 'JUnit', 'Selenium'],
+    highlight: { value: '10TB+', label: 'of data reconciled' },
   },
 ]
 
@@ -120,22 +150,57 @@ export interface ProjectEntry {
   tech: Tech[]
   link?: string
   code?: string
+  highlight?: { value: string; label: string }
+  how?: HowItWorks
   image?: { src: string; alt: string; caption: string }
 }
 
 export const projects: ProjectEntry[] = [
   {
+    title: 'InsightVault (Financial Fraud Detector)',
+    status: 'Shipped',
+    period: 'August 2026',
+    description:
+      "A fraud-alert triage tool for financial transactions, combining an auditable rule engine with a trained model, plus a dashboard for reviewing alerts.",
+    bullets: [
+      "Java/Spring Boot API combining a rule engine with a logistic regression model, at 92.9% precision and 94.1% recall on a time-based holdout of 35K+ transactions.",
+      "Python training pipeline (pandas, scikit-learn) that exports model weights to a dependency-free Java inference layer, matching training within 1e-6.",
+      "React and TypeScript review dashboard tested with Vitest and Playwright, deployed to AWS ECS Fargate, RDS and CloudFront with Terraform.",
+    ],
+    tech: ['Java', 'Spring Boot', 'React', 'TypeScript', 'AWS', 'Terraform', 'Python', 'Playwright'],
+    how: {
+      steps: [
+        { label: 'Training', note: 'Python pipeline with pandas and scikit-learn trains a logistic regression model, evaluated on a time-based holdout of 35K+ transactions.' },
+        { label: 'Weights', note: 'The trained weights are exported so the API can score without an ML runtime.' },
+        { label: 'Spring Boot API', note: 'Java API that combines the rule engine with the model. Its inference matches training within 1e-6.' },
+        { label: 'Dashboard', note: 'React and TypeScript app for reviewing alerts, tested with Vitest and Playwright.' },
+      ],
+      base: 'Deployed on AWS ECS Fargate, RDS and CloudFront with Terraform',
+    },
+    highlight: { value: '92.9%', label: 'precision, 94.1% recall on a 35K+ transaction holdout' },
+    link: 'https://github.com/anaybaid7/insight-vault',
+  },
+  {
     title: 'StarRez Enterprise Automation Suite',
     award: 'Approved by University IST Management',
     status: 'Shipped',
-    period: 'University of Waterloo',
+    period: 'February 2026',
     description:
-      'A production-grade browser automation extension for UWaterloo Campus Housing front desk staff, deployed to 100+ users.',
+      "A browser extension that automates logging for UWaterloo Campus Housing front desk staff. Deployed to 100+ users and approved by University IST.",
     bullets: [
-      'Architected a production-grade automation extension for 100+ Front Desk staff, reducing manual logging by 80% via automated DOM data extraction and processing pipelines.',
-      'Designed a scalable, modular workflow engine in JavaScript, enabling campus-wide deployment approved by University IST Management, supporting high-volume student record processing with zero manual intervention.',
+      "Extracts data from StarRez pages and fills in the logs, reducing manual logging by 80%.",
+      "Built on a modular workflow engine in JavaScript, so new front desk tasks can be added without changing the rest.",
     ],
-    tech: ['JavaScript', 'Chrome MV3', 'DOM APIs', 'Workflow Automation'],
+    tech: ['JavaScript', 'DOM Injection', 'Workflow Automation'],
+    how: {
+      steps: [
+        { label: 'StarRez page', note: 'The housing system front desk staff already work in.' },
+        { label: 'Extension', note: 'Reads the data it needs from the page.' },
+        { label: 'Workflow engine', note: 'Modular JavaScript, so a new front desk task can be added without changing the rest.' },
+        { label: 'Logs', note: 'Filled in from the extracted data, reducing manual logging by 80%.' },
+      ],
+    },
+    highlight: { value: '100+', label: 'users, 80% less manual logging' },
     link: 'https://github.com/anaybaid7/starrez-logger-prod',
   },
   {
@@ -143,13 +208,22 @@ export const projects: ProjectEntry[] = [
     status: 'Live',
     period: "Let's Connect, Summer 2026",
     description:
-      "Two-player Battleship with Purolator delivery vehicles instead of boats. I built it for our intern event and the team still runs it for events after my term.",
+      "Two-player Battleship with Purolator delivery vehicles instead of boats, built for our summer intern event.",
     bullets: [
       "Node, Express and Socket.IO server that keeps every room in memory, with a reconnect window so a dropped connection doesn't end the game.",
       'Invite links that drop a friend straight into your room, open rooms anyone can join from the lobby, and board sizes from 6x6 to 15x15 that both players have to agree on.',
       'Drag and drop fleet placement that works on phones, and a password-locked reset that wakes the free Render server and clears every game.',
     ],
     tech: ['Node.js', 'Express', 'Socket.IO', 'Render'],
+    how: {
+      steps: [
+        { label: 'Browser', note: 'Drag and drop fleet placement that works with a mouse or on a phone. Invite links open straight into a room.' },
+        { label: 'Socket.IO', note: 'Moves, turns and lobby updates in real time, with a reconnect window if a connection drops.' },
+        { label: 'Node, Express', note: 'Rooms, turns, rankings and the lobby, all kept in memory.' },
+        { label: 'Render', note: 'Free plan. It sleeps when idle, and a password-locked reset wakes it and clears every game.' },
+      ],
+    },
+    highlight: { value: 'Live', label: 'on Render, with invite links and a lobby' },
     link: 'https://purolator-battleship.onrender.com',
     code: 'https://github.com/anaybaid7/battleship-purolator',
   },
@@ -157,14 +231,23 @@ export const projects: ProjectEntry[] = [
     title: 'CI/CD Build Automation Tool',
     award: 'Winner, Best Use of GitHub',
     status: 'Shipped',
-    period: 'uOttaHack 5',
+    period: 'uOttaHack 5, March 2023',
     description:
-      'A dispatch tool that triggers targeted build pipelines via the GitHub Actions API, streamlining cross-environment deployments.',
+      "A small Python tool for running builds across several environments from one place, built over the uOttaHack 5 weekend.",
     bullets: [
-      'Developed a dispatch tool that triggers targeted build pipelines via the GitHub API, streamlining cross-environment deployments.',
-      'Implemented secure SMTP notifications and environment validation in Python, enabling auditable builds.',
+      "Python tool that uses the GitHub API to trigger targeted builds for each environment.",
+      "Checks the target environment before a build starts and emails the result over secure SMTP when it finishes.",
     ],
-    tech: ['Python', 'Flask', 'GitHub Actions API', 'SMTP', 'REST'],
+    tech: ['Python', 'GitHub Actions API', 'SMTP', 'REST'],
+    how: {
+      steps: [
+        { label: 'Python tool', note: 'Picks the environment and the builds to run.' },
+        { label: 'Checks', note: 'Validates the target environment before anything starts.' },
+        { label: 'GitHub API', note: 'Triggers only the targeted builds.' },
+        { label: 'SMTP', note: 'Emails the result over secure SMTP.' },
+      ],
+    },
+    highlight: { value: 'Won', label: 'Best Use of GitHub at uOttaHack 5' },
     link: 'https://devpost.com/software/github-build-trigger-application',
   },
   {
@@ -172,12 +255,13 @@ export const projects: ProjectEntry[] = [
     award: 'Winner, Best Gaming Hack (Big Blue Bubble)',
     status: 'Ended',
     period: 'HackWestern 9',
+    highlight: { value: 'Won', label: 'Best Gaming Hack at HackWestern 9' },
     description:
-      'An interactive social-impact game built with a team of 3, recognized for innovation, execution, and impact.',
+      "A browser game about animal welfare, built by a team of 3 over the HackWestern 9 weekend.",
     bullets: [
-      'Integrated a Unity/WebGL build into a Wix site for instant cross-platform, browser-based play during judging.',
-      'Architected the core gameplay loop in C# with a finite-state machine for NPC behavior and event-driven scoring.',
-      'Compressed textures and audio to keep the WebGL bundle under load-time targets.',
+      "Wrote the core gameplay loop in C#, with a finite-state machine driving NPC behavior and event-driven scoring.",
+      "Embedded the Unity WebGL build in a Wix site so the judges could play it in a browser on any device.",
+      "Compressed textures and audio to keep the WebGL build loading quickly.",
     ],
     tech: ['Unity', 'WebGL', 'C#', 'Wix'],
   },
@@ -185,10 +269,12 @@ export const projects: ProjectEntry[] = [
     title: 'Client-Side Routing System',
     status: 'Ended',
     period: 'Hack The North',
-    description: 'A full-stack build exploring client-side routing and real-time state.',
+    highlight: { value: 'Real-time', label: 'updates over WebSockets, fewer page reloads' },
+    description:
+      "A full-stack React app built at Hack The North, focused on fast navigation and live updates.",
     bullets: [
-      'Configured client-side routing with React Router to cut reloads, plus React-hook form validation for cleaner UX.',
-      'Streamed real-time updates via WebSockets with Redux state handling across the stack.',
+      "Client-side routing with React Router so pages switch without a full reload, plus form validation with React Hook Form.",
+      "Live updates pushed over WebSockets, with Redux keeping state in sync across the app.",
     ],
     tech: ['React', 'React Router', 'Redux', 'WebSockets'],
   },
@@ -199,10 +285,9 @@ export const education = {
   degree: 'Honours Computer Science',
   specializations: 'AI, SE and HCI Specializations, Math Minor',
   gradDate: 'Expected April 2027',
-  logo: '/logos/waterloo.png',
+  logo: '/logos/waterloo.webp',
   highlights: [
-    'Achieved 100% in CS 445 (Software Requirements Specification) and CS 446 (Software Design and Architectures), recognized by the Director of Software Engineering.',
-    'Delivered academic support for CS 136/136L (Algorithm Design and Data Abstraction) via CS and Math Tutoring, addressing technical queries and coordinating review sessions.',
+    '100% in CS 445 (Software Requirements Specification) and CS 446 (Software Design and Architectures), and recognized for it by the Director of Software Engineering.',
   ],
 }
 
