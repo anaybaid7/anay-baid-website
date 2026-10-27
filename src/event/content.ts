@@ -6,6 +6,9 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
+//   visual  'map' draws the terminal map (optional)
+//   points  a short list shown on the slide itself (optional)
+//   thumbs  small screenshots shown next to the points (optional)
 //   notes   talking points, shown when you click the slide
 //   spots   parts of the screenshot to zoom into (optional, see below)
 //
@@ -29,6 +32,9 @@ export type Slide = {
   line?: string
   image?: string
   steps?: string[]
+  visual?: 'map'
+  points?: string[]
+  thumbs?: string[]
   notes: string[]
   spots?: Spot[]
 }
@@ -44,6 +50,7 @@ export const slides: Slide[] = [
     label: 'Network Engineering, Purolator',
     title: 'Forecasting parcel volume',
     line: 'Every week our team forecasts how many parcels each of our 135 terminals will see, for pickup and delivery.',
+    visual: 'map',
     notes: [
       'Ops uses that number to decide how many couriers and trucks to send out.',
       "If we're too low, parcels sit at the terminal. If we're too high, we pay for trucks we didn't need.",
@@ -67,7 +74,7 @@ export const slides: Slide[] = [
       'Red is this year, blue is last year, and the dashed line is where we think the rest of the year goes.',
     ],
     spots: [
-      { x: 0.017, y: 0.21, w: 0.585, h: 0.125, title: 'The year so far', text: 'Our forecast for the rest of the year, what came in so far, and how both compare to last year.' },
+      { x: 0.006, y: 0.197, w: 0.596, h: 0.138, title: 'The year so far', text: 'Our forecast for the rest of the year, what came in so far, and how both compare to last year.' },
       { x: 0.514, y: 0.42, w: 0.222, h: 0.35, title: 'Summer', text: 'Volume dips in July and August, then picks back up in September.' },
       { x: 0.743, y: 0.38, w: 0.23, h: 0.4, title: 'Peak', text: 'Late November to December is the busiest part of the year. These are the weeks that matter most to get right.' },
     ],
@@ -143,11 +150,16 @@ export const slides: Slide[] = [
   {
     label: 'My part',
     title: 'What I worked on',
+    points: [
+      'The web app the team runs the forecast in',
+      'The Hub Reporting dashboard in Power BI',
+      'Automating the manual steps in between',
+      'Demoing the app to our VP with my manager',
+    ],
+    thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/powerbi-overview.webp'],
     notes: [
-      'I built the web app the team uses to run the forecast, in Python and Flask, on top of our model.',
-      'I built the Hub Reporting dashboard in Power BI.',
-      'I automated some of the manual steps between the model and the final forecast.',
-      'I got to demo the app to our VP with my manager.',
+      'The app is Python and Flask, built on top of our model.',
+      'The dashboard pulls hub volume and forecast into one place.',
     ],
   },
 ]
