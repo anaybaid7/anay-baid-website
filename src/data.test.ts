@@ -141,20 +141,6 @@ describe('drawer details', () => {
     }
   })
 
-  it('keep metric bars between 0 and 100', () => {
-    for (const d of Object.values(DETAILS)) {
-      for (const m of d.metrics ?? []) {
-        if (m.kind === 'less') {
-          for (const v of [m.after].flat()) {
-            expect(v).toBeGreaterThan(0)
-            expect(v).toBeLessThan(100)
-          }
-        }
-        if (m.kind === 'score') expect(m.value).toBeLessThanOrEqual(100)
-      }
-    }
-  })
-
   it('give every job a drawer', () => {
     for (const e of ENTRIES.filter((x) => x.kind === 'job')) expect(DETAILS[e.id], e.id).toBeDefined()
   })

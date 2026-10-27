@@ -9,7 +9,6 @@ import { slug, uses, whereUsed } from './evidence'
 import CommandMenu, { type Command } from './components/CommandMenu'
 import ResumeViewer from './components/ResumeViewer'
 import { openResume } from './resume'
-import { skillStats, sortStats, type SortKey } from './skillStats'
 import SettingsPanel from './components/SettingsPanel'
 import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
@@ -156,7 +155,7 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
-const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', numbers: 'numbers', try: 'demo' }
+const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', try: 'demo' }
 
 // the button on each row that opens its drawer, named after what's inside
 function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -364,89 +363,32 @@ function Glance({ onCheck }: { onCheck: () => void }) {
   )
 }
 
-const SKILL_ROWS = skillStats()
-const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'skill', label: 'Skill' },
-  { key: 'months', label: 'Months in roles using it' },
-  { key: 'projects', label: 'Projects' },
-  { key: 'lastUsed', label: 'Last used' },
-]
-
-// skills measured from the work on this page, never self-rated
+// Skills as on the resume, grouped. Click one to show only the work that used it.
 function Skills({ onFilter }: { onFilter: (skills: string[]) => void }) {
-  const [group, setGroup] = useState<string>('All')
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'months', dir: -1 })
-  const groupNames = ['All', ...Object.values(skillLabels)]
-  const inGroup = SKILL_ROWS.filter((r) => group === 'All' || r.group === group)
-  const shown = sortStats(inGroup.filter((r) => r.months > 0 || r.projects.length > 0), sort.key, sort.dir)
-  const untagged = inGroup.filter((r) => r.months === 0 && r.projects.length === 0).map((r) => r.skill)
-
-  const sortBy = (key: SortKey) =>
-    setSort((cur) => ({ key, dir: cur.key === key ? (cur.dir === 1 ? -1 : 1) : key === 'skill' ? 1 : -1 }))
-
   return (
     <section className="section" aria-labelledby="skills" data-part="skills">
       <h2 id="skills">Skills</h2>
       <div className="section-body">
-        <p className="skills-hint">
-          Worked out from the jobs and projects on this page, not rated by me. Pick a skill to show only the work that
-          used it.
-        </p>
-        <div className="skill-groups" role="group" aria-label="Skill group">
-          {groupNames.map((g) => (
-            <button key={g} type="button" aria-pressed={group === g} onClick={() => setGroup(g)}>
-              {g}
-            </button>
-          ))}
-        </div>
-        <table className="skill-table">
-          <thead>
-            <tr>
-              {SORTS.map(({ key, label }) => (
-                <th
-                  key={key}
-                  scope="col"
-                  className={`col-${key}`}
-                  aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
-                >
-                  <button type="button" onClick={() => sortBy(key)}>
-                    {label}
-                    <span aria-hidden="true">{sort.key === key ? (sort.dir === 1 ? '\u00a0\u2191' : '\u00a0\u2193') : ''}</span>
-                  </button>
-                </th>
-              ))}
-              <th scope="col" className="col-where">Where</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((r) => (
-              <tr key={r.skill}>
-                <th scope="row" className="col-skill">
-                  <button type="button" onClick={() => onFilter([r.skill])} title={`Show only work with ${r.skill}`}>
-                    {r.skill}
-                  </button>
-                </th>
-                <td className="col-months">{r.months > 0 ? r.months : <span className="none">none</span>}</td>
-                <td className="col-projects">{r.projects.length || <span className="none">none</span>}</td>
-                <td className="col-lastUsed">{r.current ? 'Now' : r.lastUsed !== null ? monthLabel(r.lastUsed) : <span className="none">unknown</span>}</td>
-                <td className="col-where">{listFormat([...r.jobs, ...r.projects])}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <dl className="print-skills">
+        <p className="skills-hint">Click a skill to see the work that used it.</p>
+        <dl className="skill-list">
           {(Object.keys(skills) as (keyof typeof skills)[]).map((k) => (
             <div key={k}>
               <dt>{skillLabels[k]}</dt>
-              <dd>{skills[k].join(', ')}</dd>
+              <dd>
+                {skills[k].map((sk) => {
+                  const used = whereUsed(sk).length > 0
+                  return used ? (
+                    <button key={sk} type="button" onClick={() => onFilter([sk])}>
+                      {sk}
+                    </button>
+                  ) : (
+                    <span key={sk}>{sk}</span>
+                  )
+                })}
+              </dd>
             </div>
           ))}
         </dl>
-        {untagged.length > 0 && (
-          <p className="skills-rest">
-            Also on my resume, not tagged on any work here yet: {listFormat(untagged)}.
-          </p>
-        )}
       </div>
     </section>
   )
@@ -724,40 +666,20 @@ export default function App() {
             <dl className="facts colophon">
               <div>
                 <dt>Built with</dt>
-                <dd>React 19, TypeScript and Vite, plain CSS, and the Archivo typeface served from this site</dd>
-              </div>
-              <div>
-                <dt>Tested with</dt>
-                <dd>
-                  {__SITE_STATS__.unit} unit tests in Vitest and Testing Library, {__SITE_STATS__.e2e} browser tests in
-                  Playwright, run in CI on every push
-                </dd>
+                <dd>React, TypeScript, Vite and plain CSS</dd>
               </div>
               <div>
                 <dt>Content</dt>
-                <dd>Every job, project and skill comes from one typed data file, checked against a Zod schema while I edit it</dd>
-              </div>
-              <div>
-                <dt>Formats</dt>
-                <dd>
-                  The same data file is built into a <a href={FILES.text}>plain text resume</a>,{' '}
-                  <a href={FILES.json}>JSON Resume</a>, a <a href={FILES.vcard} download>contact card</a> and search engine
-                  data. Try <code>curl {profile.links.site.replace('https://', '')}/{FILES.text}</code>
-                </dd>
+                <dd>Everything on the page comes from one data file, which also builds the <a href={FILES.text}>plain text resume</a> and <a href={FILES.json}>JSON Resume</a></dd>
               </div>
               <div>
                 <dt>Privacy</dt>
-                <dd>No analytics and no cookies. Settings stay in your browser, and the job posting checker runs locally</dd>
-              </div>
-              <div>
-                <dt>Offline</dt>
-                <dd>A service worker caches the site after the first visit</dd>
+                <dd>No tracking and no cookies. Settings stay in your browser</dd>
               </div>
               <div>
                 <dt>Source</dt>
                 <dd>
                   <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">github.com/anaybaid7/anay-baid-website</a>
-                  {__SITE_STATS__.commit && <>, built {updated} from {__SITE_STATS__.commit}</>}
                 </dd>
               </div>
             </dl>

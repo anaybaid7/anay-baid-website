@@ -97,12 +97,9 @@ test('the build publishes the resume as plain text and JSON Resume', async ({ re
   expect(json.basics.name).toBe('Anay Baid')
 })
 
-test('the skills table sorts and filters the page', async ({ page }) => {
+test('clicking a skill filters the page', async ({ page }) => {
   await page.goto('/')
-  const table = page.locator('.skill-table')
-  await table.getByRole('button', { name: /^Skill/ }).click()
-  await expect(table.locator('tbody th').first()).toHaveText('Airflow')
-  await table.getByRole('button', { name: 'Terraform' }).click()
+  await page.locator('.skill-list').getByRole('button', { name: 'Terraform' }).click()
   await expect(page.locator('.filterbar')).toContainText('Terraform')
 })
 

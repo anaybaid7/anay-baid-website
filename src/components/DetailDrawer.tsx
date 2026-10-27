@@ -2,7 +2,6 @@ import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { DETAILS, tabsFor, type Tab } from '../details'
 import { ENTRIES, entryById } from '../entries'
 import ArchDiagram from './ArchDiagram'
-import Metrics from './Metrics'
 import Screens from './Screens'
 import MiniBattleship from './MiniBattleship'
 import Allocation from './demos/Allocation'
@@ -25,7 +24,6 @@ const TAB_NAMES: Record<Tab, string> = {
   overview: 'Overview',
   how: 'How it works',
   screens: 'Screens',
-  numbers: 'Numbers',
   try: 'Try it',
 }
 
@@ -159,7 +157,6 @@ export default function DetailDrawer({ open, onChange }: {
             )}
             {tab === 'how' && detail && <ArchDiagram arch={detail.arch} name={entry.title} />}
             {tab === 'screens' && detail?.screens && <Screens kind={detail.screens} />}
-            {tab === 'numbers' && detail?.metrics && <Metrics metrics={detail.metrics} />}
             {tab === 'try' && detail?.demo && (() => {
               const Demo = DEMOS[detail.demo]
               return <Demo key={entry.id} />

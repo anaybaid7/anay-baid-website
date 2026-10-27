@@ -95,7 +95,7 @@ export default function SchemaCheck() {
           {done && <li className="sum">{findings.length} issues to resolve before the data is trusted</li>}
         </ul>
       )}
-      <p className="demo-note">Made-up table and counts. The real checks covered 10TB+ and found 200+ anomalies.</p>
+      <p className="demo-note">Made-up table, just to show the idea.</p>
     </div>
   )
 }

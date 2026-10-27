@@ -81,19 +81,13 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('prefs')!).theme).toBe('dark')
   })
 
-  it('measures skills from the work instead of rating them', () => {
+  it('lists skills by group and filters the page when one is clicked', () => {
     render(<App />)
-    const table = document.querySelector('.skill-table')!
-    const python = Array.from(table.querySelectorAll('tbody tr')).find((r) => r.querySelector('th')?.textContent === 'Python')!
-    expect(python.querySelector('.col-where')).toHaveTextContent('Purolator')
-    expect(Number(python.querySelector('.col-months')!.textContent)).toBeGreaterThan(0)
-    // sorting by name puts the rows in alphabetical order
-    fireEvent.click(screen.getByRole('button', { name: /^Skill/ }))
-    const names = Array.from(table.querySelectorAll('tbody th')).map((th) => th.textContent!)
-    expect(names).toEqual([...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())))
-    // group buttons narrow it down
-    fireEvent.click(screen.getByRole('button', { name: 'Backend' }))
-    expect(table.querySelectorAll('tbody tr').length).toBeLessThan(names.length)
+    const list = document.querySelector('.skill-list')!
+    expect(list).toHaveTextContent('Languages & frameworks')
+    fireEvent.click(screen.getByRole('button', { name: 'Terraform' }))
+    expect(document.getElementById('job-iotum')).toHaveClass('dim')
+    expect(document.getElementById('job-purolator')).not.toHaveClass('dim')
   })
 
   it('opens a job from a link like #job-iotum', async () => {
@@ -200,9 +194,9 @@ describe('App', () => {
     expect(nodes.length).toBe(DETAILS['project-insightvault'].arch.nodes.length)
     fireEvent.click(nodes[3])
     expect(drawer.querySelector('.arch-note')).toHaveTextContent(DETAILS['project-insightvault'].arch.nodes[3].note)
-    fireEvent.click(screen.getByRole('tab', { name: 'Numbers', hidden: true }))
-    expect(drawer).toHaveTextContent('92.9%')
-    expect(new URL(location.href).searchParams.get('tab')).toBe('numbers')
+    fireEvent.click(screen.getByRole('tab', { name: 'Try it', hidden: true }))
+    expect(drawer.querySelector('.scorer')).not.toBeNull()
+    expect(new URL(location.href).searchParams.get('tab')).toBe('try')
   })
 
   it('moves between entries inside the drawer', async () => {
@@ -238,14 +232,6 @@ describe('App', () => {
     const bar = screen.getAllByRole('button', { name: /cineplex/i }).find((b) => b.classList.contains('tl-bar'))!
     fireEvent.mouseEnter(bar)
     expect(document.querySelector('.tl-sum')).toHaveTextContent('Cineplex Entertainment, Data Engineer')
-  })
-
-  it('reports real test counts in About this site', () => {
-    render(<App />)
-    const about = screen.getByRole('heading', { name: 'About this site' }).closest('section')!
-    expect(about).toHaveTextContent(`${__SITE_STATS__.unit} unit tests`)
-    expect(__SITE_STATS__.unit).toBeGreaterThan(60)
-    expect(__SITE_STATS__.e2e).toBeGreaterThan(5)
   })
 
   it('presets, section order and hidden sections all apply and go in the share link', () => {

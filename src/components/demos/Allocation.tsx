@@ -71,7 +71,7 @@ export default function Allocation() {
       <p className="demo-legend">
         <i className="k-fill" /> placed <i className="k-target" /> share of the volume <i className="k-cap" /> capacity
       </p>
-      <p className="demo-note">Made-up terminals and numbers. It shows the idea, not Purolator's data or the production code.</p>
+      <p className="demo-note">Made-up terminals and numbers, just to show the idea.</p>
     </div>
   )
 }

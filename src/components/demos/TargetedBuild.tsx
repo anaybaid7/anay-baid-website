@@ -73,7 +73,7 @@ export default function TargetedBuild() {
       <pre className="term" aria-live="polite">
         {lines.length ? lines.join('\n') : 'Press Run'}
       </pre>
-      <p className="demo-note">Made-up repo and output. It shows what the tool does, not its exact logs.</p>
+      <p className="demo-note">Made-up repo, just to show the idea.</p>
     </div>
   )
 }

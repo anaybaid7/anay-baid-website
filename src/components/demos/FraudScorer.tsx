@@ -87,8 +87,7 @@ export default function FraudScorer() {
         </div>
       </div>
       <p className="demo-note">
-        Made-up rules and weights, a sketch of the approach. The real model is trained in Python and scored on a 35K+
-        transaction holdout.
+        Made-up rules and weights, just to show the idea.
       </p>
     </div>
   )

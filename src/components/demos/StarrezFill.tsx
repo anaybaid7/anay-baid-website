@@ -98,7 +98,7 @@ export default function StarrezFill() {
         {by === 'ext' && `Filled ${t.fields.length} fields in one click, ready to check and save.`}
         {by === 'hand' && `Typing ${t.fields.length} fields from the page, one at a time.`}
       </p>
-      <p className="demo-note">Made-up residents and rooms. The real extension reads live StarRez pages and cut manual logging by 80%.</p>
+      <p className="demo-note">Made-up residents and rooms, just to show the idea.</p>
     </div>
   )
 }
