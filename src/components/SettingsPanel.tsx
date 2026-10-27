@@ -35,7 +35,7 @@ const SECTION_NAMES: Record<Hideable, string> = {
   glance: 'At a glance',
   education: 'Education',
   skills: 'Skills',
-  github: 'GitHub',
+  github: 'Code',
   colophon: 'About this site',
 }
 

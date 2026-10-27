@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from './App'
 import { __resetForTests, setSettings } from './settings'
 import { DETAILS } from './details'
-import { experience, projects, profile } from './data'
+import { experience, projects, profile, repos } from './data'
 
-const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']
+const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Code']
 
 beforeEach(() => {
   history.replaceState(null, '', '/')
@@ -68,8 +68,8 @@ describe('App', () => {
 
   it('links the live Battleship game and its code', () => {
     render(<App />)
-    expect(screen.getByRole('link', { name: 'Play it' })).toHaveAttribute('href', 'https://purolator-battleship.onrender.com')
-    const code = screen.getAllByRole('link', { name: 'Code' }).map((a) => a.getAttribute('href'))
+    expect(screen.getByRole('link', { name: 'Play it live' })).toHaveAttribute('href', 'https://purolator-battleship.onrender.com')
+    const code = screen.getAllByRole('link', { name: 'Source' }).map((a) => a.getAttribute('href'))
     expect(code).toContain('https://github.com/anaybaid7/battleship-purolator')
   })
 
@@ -113,9 +113,11 @@ describe('App', () => {
     await waitFor(() => expect(screen.getByText(/copied .* to your clipboard/i)).toBeInTheDocument())
   })
 
-  it('falls back to a GitHub link when the API is unreachable', async () => {
+  it('lists my repos with my own summaries even when the GitHub API is unreachable', () => {
     render(<App />)
-    await waitFor(() => expect(screen.getByText(/couldn't load this from github/i)).toBeInTheDocument())
+    const list = document.querySelector('.repos')!
+    expect(list.querySelectorAll('li')).toHaveLength(repos.length)
+    expect(list).toHaveTextContent(repos[0].about)
   })
 
   it('settings change the page and survive a reload', () => {
@@ -220,11 +222,13 @@ describe('App', () => {
     expect(drawer).toHaveTextContent('Mock data')
   })
 
-  it('opens the live game inside the page on request only', () => {
+  it('labels project links by where they go', () => {
     render(<App />)
-    expect(document.querySelector('.preview iframe')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Try it here' }))
-    expect(document.querySelector('.preview iframe')).toHaveAttribute('src', 'https://purolator-battleship.onrender.com')
+    const battleship = document.getElementById('project-battleship-for-purolator')!
+    expect(battleship.querySelector('.project-links a[href="https://purolator-battleship.onrender.com"]')).toHaveTextContent('Play it live')
+    expect(battleship.querySelector('.project-links a[href="https://github.com/anaybaid7/battleship-purolator"]')).toHaveTextContent('Source')
+    const cicd = document.getElementById('project-ci-cd-build-automation-tool')!
+    expect(cicd.querySelector('.project-links')).toHaveTextContent('Devpost')
   })
 
   it('names a job on the timeline when you point at it', () => {
@@ -296,5 +300,20 @@ describe('App', () => {
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(document.querySelector('.term-screen')).toHaveTextContent('showing work with Terraform')
     expect(document.getElementById('job-iotum')).toHaveClass('dim')
+  })
+
+  it('drops repos GitHub does not list publicly, so nothing links to a 404', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => repos.filter((r) => r.name !== 'insight-vault').map((r) => ({ name: r.name, language: 'TypeScript', pushed_at: new Date().toISOString() })),
+      }),
+    )
+    render(<App />)
+    await waitFor(() => expect(document.querySelector('.repo-meta')).not.toBeNull())
+    const names = Array.from(document.querySelectorAll('.repos li > a')).map((a) => a.textContent)
+    expect(names).not.toContain('insight-vault')
+    expect(names).toContain('battleship-purolator')
   })
 })
