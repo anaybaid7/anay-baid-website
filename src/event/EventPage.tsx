@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEv
 import ThemeToggle from '../components/ThemeToggle.tsx'
 import { profile } from '../data'
 import { deck, slides, type Slide, type Spot } from './content'
+import { canadaPath, mapSize, terminals } from './map'
 
 // Which slide the address points at: /purolator-intern-event#3 opens slide 3.
 const fromHash = () => {
@@ -179,17 +180,38 @@ function Shot({ slide, spot, setSpot }: ShotProps) {
   )
 }
 
+// The opening slide: every terminal on a map, filling in west to east.
+function TerminalMap() {
+  return (
+    <svg className="deck-map" viewBox={`0 0 ${mapSize.w} ${mapSize.h}`} role="img" aria-label={`Map of Canada with ${terminals.length} terminals`}>
+      <path className="deck-map-land" d={canadaPath} />
+      {terminals.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="4.6" style={{ animationDelay: `${200 + i * 7}ms` }} />
+      ))}
+    </svg>
+  )
+}
+
+// The closing slide: the two things I built, stacked like windows.
+function Work({ thumbs }: { thumbs: string[] }) {
+  return (
+    <div className="deck-work">
+      {thumbs.map((t, i) => <img key={t} src={t} alt="" className={`deck-thumb t${i}`} />)}
+    </div>
+  )
+}
+
 function Visual({ slide, spot, setSpot }: ShotProps) {
   if (slide.image) return <Shot slide={slide} spot={spot} setSpot={setSpot} key={slide.image} />
   return (
     <div className="deck-visual">
-      {slide.steps ? (
+      {slide.steps && (
         <ol className="deck-steps">
-          {slide.steps.map((s) => <li key={s}>{s}</li>)}
+          {slide.steps.map((s) => <li key={s}><span>{s}</span></li>)}
         </ol>
-      ) : (
-        <img className="deck-logo" src="/logos/purolator.png" alt="Purolator" />
       )}
+      {slide.visual === 'map' && <TerminalMap />}
+      {slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
   )
 }
@@ -257,9 +279,11 @@ export default function EventPage() {
     if (next) new Image().src = next
   }, [at])
 
+  const layout = slide.image || slide.steps ? 'is-stack' : 'is-split'
+
   return (
     <>
-      <header className="top wrap">
+      <header className="top wrap ev-top">
         <a className="top-name ev-home" href="/">Anay Baid</a>
         <span className="top-time">{deck.kicker}</span>
         <nav aria-label="Site">
@@ -268,35 +292,39 @@ export default function EventPage() {
         </nav>
       </header>
 
-      <main className="wrap">
+      <main className="ev-main">
         <div className="deck" ref={stage}>
           <div
-            className={`deck-slide${notes ? ' with-notes' : ''}${slide.image ? '' : ' no-image'}`}
+            className={`deck-slide ${layout}${notes ? ' with-notes' : ''}`}
             onClick={advance}
             role="button"
             tabIndex={0}
             aria-label={step === 'notes' ? 'Show the notes' : step === 'zoom' ? 'Zoom into the next part' : 'Next slide'}
             key={at}
           >
-            <div className="deck-head">
-              <p className="deck-label">{slide.label}</p>
-              <h1 className="deck-title">{slide.title}</h1>
-              {slide.line && <p className="deck-line">{slide.line}</p>}
-              {step !== 'next' && <span className="deck-hint">{step === 'notes' ? 'Click for notes' : 'Click a number to zoom in'}</span>}
-            </div>
-            <div className="deck-body">
+            <div className="deck-main">
+              <div className="deck-head">
+                <h1 className="deck-title">{slide.title}</h1>
+                {slide.line && <p className="deck-line">{slide.line}</p>}
+                {slide.points && (
+                  <ul className="deck-points">
+                    {slide.points.map((p) => <li key={p}>{p}</li>)}
+                  </ul>
+                )}
+              </div>
               <Visual slide={slide} spot={spot} setSpot={setSpot} />
-              <aside className="deck-notes" aria-hidden={!notes}>
-                <ul className="dashes">
-                  {slide.notes.map((n, i) => <li key={n} style={{ transitionDelay: `${notes ? 120 + i * 70 : 0}ms` }}>{n}</li>)}
-                </ul>
-              </aside>
             </div>
+            <aside className="deck-notes" aria-hidden={!notes}>
+              <p className="deck-notes-head">Notes</p>
+              <ul>
+                {slide.notes.map((n, i) => <li key={n} style={{ transitionDelay: `${notes ? 80 + i * 50 : 0}ms` }}>{n}</li>)}
+              </ul>
+            </aside>
           </div>
 
           <div className="deck-bar">
-            <button type="button" onClick={() => go(at - 1)} disabled={at === 0} aria-label="Previous slide">←</button>
-            <div className="deck-dots" role="tablist" aria-label="Slides">
+            <button type="button" className="deck-arrow" onClick={() => go(at - 1)} disabled={at === 0} aria-label="Previous slide">←</button>
+            <div className="deck-track" role="tablist" aria-label="Slides">
               {slides.map((s, i) => (
                 <button
                   key={s.title + i}
@@ -304,21 +332,21 @@ export default function EventPage() {
                   role="tab"
                   aria-selected={i === at}
                   aria-label={`Slide ${i + 1}, ${s.title}`}
-                  className={i === at ? 'on' : ''}
+                  className={i <= at ? 'done' : ''}
                   onClick={() => go(i)}
                 />
               ))}
             </div>
-            <span className="deck-count">{at + 1} / {slides.length}</span>
+            <span className="deck-where">
+              <span className="deck-section">{slide.label}</span>
+              <span className="deck-count">{at + 1} / {slides.length}</span>
+            </span>
             <button type="button" onClick={() => setNotes((v) => !v)} aria-pressed={notes}>Notes</button>
             <button type="button" onClick={fullscreen}>Full screen</button>
-            <button type="button" onClick={() => go(at + 1)} disabled={at === last} aria-label="Next slide">→</button>
+            <button type="button" className="deck-arrow" onClick={() => go(at + 1)} disabled={at === last} aria-label="Next slide">→</button>
           </div>
         </div>
-
-        <p className="ev-note">
-          {deck.mockNote} Click a numbered part of a screenshot to zoom in and press Esc to zoom back out. Use the arrow keys to move between slides and F for full screen.
-        </p>
+        <p className="ev-note">{deck.mockNote}</p>
       </main>
 
       <footer className="foot ev-foot">
