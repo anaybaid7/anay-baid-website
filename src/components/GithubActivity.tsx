@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { profile, repos } from '../data'
 import { formatRelativeTime } from '../formatRelativeTime'
 
@@ -13,8 +13,19 @@ interface Live {
 // out, so the page never links to a 404.
 export default function GithubActivity() {
   const [live, setLive] = useState<Record<string, Live> | null>(null)
+  const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined')
+  const ref = useRef<HTMLUListElement>(null)
+
+  // only call GitHub once the section is about to scroll into view
+  useEffect(() => {
+    if (near || !ref.current) return
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setNear(true), { rootMargin: '600px 0px' })
+    io.observe(ref.current)
+    return () => io.disconnect()
+  }, [near])
 
   useEffect(() => {
+    if (!near) return
     let cancelled = false
     fetch(`https://api.github.com/users/anaybaid7/repos?per_page=100`)
       .then((res) => {
@@ -28,11 +39,11 @@ export default function GithubActivity() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [near])
 
   return (
     <>
-      <ul className="repos">
+      <ul className="repos" ref={ref}>
         {repos.filter((r) => !live || live[r.name]).map((r) => {
           const info = live?.[r.name]
           return (
