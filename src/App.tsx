@@ -567,12 +567,13 @@ export default function App() {
             />
             <div className="hero-copy">
               <p className="lede">
-                I work on backend and data tooling. Right now I'm on co-op with Purolator's Network Engineering team,
-                working on forecasting and planning tools.
+                I build backend services and data pipelines. Right now I'm on co-op with Purolator's Network
+                Engineering team, working on the forecasting pipeline and planning tools and the AWS infrastructure
+                they run on.
               </p>
               <p className="sub">
-                Fourth-year Computer Science at Waterloo, graduating in April 2027. Four co-op terms so far, in backend,
-                test automation, DevOps and data engineering.
+                Fourth-year Computer Science at Waterloo, graduating in April 2027, with co-op terms across backend
+                development, test automation, DevOps and data engineering.
               </p>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>

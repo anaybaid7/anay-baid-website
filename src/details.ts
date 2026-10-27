@@ -47,12 +47,12 @@ export const DETAILS: Record<string, Detail> = {
     arch: {
       nodes: [
         { id: 'airflow', label: 'Airflow', sub: 'DAGs', col: 0, row: 0, note: 'Schedules and runs each step of the pipeline.' },
-        { id: 'etl', label: 'ETL jobs', sub: 'Python, PowerShell', col: 1, row: 0, note: 'Pull in the forecast records, check them and reconcile them.' },
+        { id: 'etl', label: 'ETL jobs', sub: 'Python, PowerShell', col: 1, row: 0, note: 'Ingest the forecast records, then validate and reconcile them against SQL-backed state.' },
         { id: 'sql', label: 'SQL', sub: 'state and checks', col: 1, row: 1, note: 'Holds the pipeline state the validation and reconciliation steps use.' },
         { id: 's3', label: 'S3', sub: 'Parquet artifacts', col: 2, row: 0, note: 'Forecast artifacts are written to S3 as Parquet.' },
         { id: 'sm', label: 'SageMaker', sub: 'managed inference', col: 3, row: 0, note: 'Runs inference for the forecasting models.' },
         { id: 'api', label: 'Flask REST APIs', sub: 'Docker on ECS Fargate', col: 3, row: 1, note: 'Containerized with Docker and deployed through ECR to ECS on Fargate.' },
-        { id: 'tools', label: 'Planning tools', sub: "the team's", col: 3, row: 2, note: 'What the team works in. They read from the APIs.' },
+        { id: 'tools', label: 'Planning tools', sub: "the team's", col: 3, row: 2, note: 'The team’s planning tools, which read from the REST APIs.' },
       ],
       edges: [
         { from: 'airflow', to: 'etl' },
@@ -73,7 +73,7 @@ export const DETAILS: Record<string, Detail> = {
       nodes: [
         { id: 'sdk', label: 'Iotum SDK', col: 0, row: 0, note: 'The SDK the reference apps show how to integrate.' },
         { id: 'apps', label: 'Reference apps', sub: 'full-stack React', col: 1, row: 0, note: 'End to end examples of SDK integrations for client teams.' },
-        { id: 'devs', label: 'Client developers', col: 2, row: 0, note: 'Use the reference apps as a starting point.' },
+        { id: 'devs', label: 'Client developers', col: 2, row: 0, note: 'Client teams start their integration from the reference apps.' },
         { id: 'tests', label: 'Test automation', sub: 'JavaScript, Selenium, Mocha', col: 1, row: 1, note: 'Browser tests in JavaScript with Selenium and Mocha.' },
         { id: 'ci', label: 'CI/CD', sub: 'release pipeline', col: 2, row: 1, note: 'Releases got faster with the tests in the pipeline.' },
       ],
