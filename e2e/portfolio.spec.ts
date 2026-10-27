@@ -56,7 +56,7 @@ test('the search menu finds a project and opens it', async ({ page }) => {
 test('settings open as a popover, apply, and stick after a reload', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Settings' }).click()
-  await page.getByText('Skim, results only').click()
+  await page.getByText('Results only').click()
   // let the crossfade finish, clicks during a view transition land on its snapshot
   await page.waitForTimeout(400)
   await page.getByText('Red', { exact: true }).click()
@@ -112,4 +112,22 @@ test('the skills table sorts and filters the page', async ({ page }) => {
   await expect(table.locator('tbody th').first()).toHaveText('Airflow')
   await table.getByRole('button', { name: 'Terraform' }).click()
   await expect(page.locator('.filterbar')).toContainText('Terraform')
+})
+
+test('a shared view link reorders and hides sections', async ({ page }) => {
+  await page.goto('/?lead=projects&hide=github,colophon')
+  const projectsTop = await page.locator('#projects').evaluate((el) => el.getBoundingClientRect().top)
+  const experienceTop = await page.locator('#experience').evaluate((el) => el.getBoundingClientRect().top)
+  expect(projectsTop).toBeLessThan(experienceTop)
+  await expect(page.locator('[data-part="github"]')).toBeHidden()
+  await expect(page.locator('[data-part="colophon"]')).toBeHidden()
+})
+
+test('the page map jumps to a project', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+  const mark = page.locator('.minimap a[href="#project-pashu"]')
+  await mark.click()
+  await expect(page).toHaveURL(/#project-pashu$/)
+  await expect(page.locator('#project-pashu')).toBeInViewport()
 })

@@ -11,24 +11,59 @@ export const OPTIONS = {
   size: ['s', 'm', 'l'],
   accent: ['blue', 'green', 'red', 'ink'],
   motion: ['full', 'reduced'],
+  width: ['normal', 'narrow', 'wide'],
+  contrast: ['standard', 'high'],
+  lead: ['experience', 'projects'],
 } as const
 
-export type Settings = { [K in keyof typeof OPTIONS]: (typeof OPTIONS)[K][number] }
+// sections a visitor can switch off. Experience and projects always stay.
+export const HIDEABLE = ['glance', 'education', 'skills', 'github', 'colophon'] as const
+export type Hideable = (typeof HIDEABLE)[number]
 
-export const DEFAULTS: Settings = { theme: 'system', view: 'full', size: 'm', accent: 'blue', motion: 'full' }
+type Choices = { [K in keyof typeof OPTIONS]: (typeof OPTIONS)[K][number] }
+export type Settings = Choices & { hide: Hideable[] }
+
+export const DEFAULTS: Settings = {
+  theme: 'system',
+  view: 'full',
+  size: 'm',
+  accent: 'blue',
+  motion: 'full',
+  width: 'normal',
+  contrast: 'standard',
+  lead: 'experience',
+  hide: [],
+}
+
+// ready-made combinations for the two most common visits
+export const PRESETS: { name: string; settings: Partial<Settings> }[] = [
+  { name: 'Quick scan', settings: { view: 'skim', lead: 'projects', hide: ['github', 'colophon'] } },
+  { name: 'Everything', settings: { view: 'full', lead: 'experience', hide: [] } },
+]
 
 const KEY = 'prefs'
 
-const valid = <K extends keyof Settings>(key: K, value: unknown): value is Settings[K] =>
+const valid = <K extends keyof Choices>(key: K, value: unknown): value is Choices[K] =>
   (OPTIONS[key] as readonly unknown[]).includes(value)
+
+function pickHide(value: unknown): Hideable[] | undefined {
+  const list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : null
+  if (!list) return undefined
+  return HIDEABLE.filter((h) => list.includes(h))
+}
 
 function pick(source: Record<string, unknown>): Partial<Settings> {
   const out: Partial<Settings> = {}
-  for (const key of Object.keys(OPTIONS) as (keyof Settings)[]) {
+  for (const key of Object.keys(OPTIONS) as (keyof Choices)[]) {
     if (valid(key, source[key])) (out as Record<string, unknown>)[key] = source[key]
   }
+  const hide = pickHide(source.hide)
+  if (hide) out.hide = hide
   return out
 }
+
+export const sameSettings = (a: Settings, b: Settings) =>
+  (Object.keys(OPTIONS) as (keyof Choices)[]).every((k) => a[k] === b[k]) && a.hide.join() === b.hide.join()
 
 function load(): Settings {
   let saved: Record<string, unknown> = {}
@@ -57,6 +92,10 @@ function apply(s: Settings) {
   root.size = s.size
   root.accent = s.accent
   root.motion = calm(s) ? 'reduced' : 'full'
+  root.width = s.width
+  root.contrast = s.contrast
+  root.lead = s.lead
+  root.hide = s.hide.join(' ')
 }
 
 let state = load()
@@ -80,7 +119,7 @@ export function withTransition(change: () => void) {
 
 export function setSettings(patch: Partial<Settings>) {
   // only theme and layout changes are worth a crossfade, the rest apply instantly
-  const run = 'theme' in patch || 'view' in patch ? withTransition : (fn: () => void) => fn()
+  const run = ['theme', 'view', 'lead', 'hide', 'width'].some((k) => k in patch) ? withTransition : (fn: () => void) => fn()
   run(() => {
     state = { ...state, ...patch }
     apply(state)
@@ -110,9 +149,10 @@ export function useSettings() {
 // a link to this page that opens with the current settings
 export function linkWithSettings(s: Settings = state) {
   const params = new URLSearchParams()
-  for (const key of Object.keys(OPTIONS) as (keyof Settings)[]) {
+  for (const key of Object.keys(OPTIONS) as (keyof Choices)[]) {
     if (s[key] !== DEFAULTS[key]) params.set(key, s[key])
   }
+  if (s.hide.length) params.set('hide', s.hide.join(','))
   const q = params.toString()
   return `${location.origin}${location.pathname}${q ? `?${q}` : ''}`
 }

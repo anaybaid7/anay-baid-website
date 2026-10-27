@@ -50,6 +50,8 @@ CI runs all of these on every push.
 - The stack filter dims the timeline too, and "Print this view" prints exactly what's on screen, filtered or in skim, as a clean document with the interactive parts left out.
 - The footer shows the time in Toronto, and the visitor's own time when they're somewhere else.
 - One data file, every format. At build time a small Vite plugin (`publishResume` in `vite.config.ts`) writes `resume.txt`, `resume.json` (JSON Resume) and `anay-baid.vcf` next to the page, and puts schema.org data in the page head, all from `src/resumeFormats.ts`. The dev server serves the same files. `curl https://a2baid.netlify.app/resume.txt` prints the resume in a terminal.
+- Settings also cover type width (Archivo's variable width axis, from narrow to wide), high contrast (also turned on by the system's "more contrast" setting), which section leads, and which sections show. Two presets set several at once ("Quick scan" and "Everything"). The share link carries all of it, for example `/?view=skim&lead=projects&hide=github,colophon`, and "Print this view" prints the page as set up.
+- A page map down the right edge on wide screens, one line per section and per job or project. The one you're reading is marked, hovering names it, and clicking jumps there.
 - A grid of my public GitHub activity for the last 13 weeks, plus my most recently pushed repos, both pulled live from GitHub.
 - A light and dark switch that remembers your choice.
 - A search menu (Cmd/Ctrl+K or "/") that jumps to any job or project, copies my email, opens the resume, and so on.

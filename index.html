@@ -24,6 +24,10 @@
         d.view = u.get('view') || p.view || 'full'
         d.size = u.get('size') || p.size || 'm'
         d.accent = u.get('accent') || p.accent || 'blue'
+        d.width = u.get('width') || p.width || 'normal'
+        d.contrast = u.get('contrast') || p.contrast || 'standard'
+        d.lead = u.get('lead') || p.lead || 'experience'
+        d.hide = (u.get('hide') || (p.hide || []).join(',')).split(',').join(' ')
       } catch (e) {}
     </script>
 
