@@ -60,7 +60,6 @@ const profileSchema = z.object({
   }),
   blurb: z.string().min(1),
   intro: z.array(z.string().min(1)).min(1),
-  pinnedRepos: z.array(z.string().min(1)),
 })
 
 const educationSchema = z.object({

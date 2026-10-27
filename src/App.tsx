@@ -1,8 +1,7 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { profile, experience, projects, education, skills, skillLabels } from './data'
 import { downloadResume } from './downloadResume'
 import GithubActivity from './components/GithubActivity'
-import Activity from './components/Activity'
 import ThemeToggle from './components/ThemeToggle'
 import { parsePeriod, monthIndex, monthLabel } from './timeline'
 import { slug, uses, whereUsed } from './evidence'
@@ -16,7 +15,6 @@ import { setSettings, useSettings, withTransition, resolvedTheme } from './setti
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES } from './entries'
 import { tabsFor, type Tab } from './details'
-import LivePreview from './components/LivePreview'
 import Minimap from './components/Minimap'
 import type { Action as TermAction } from './terminal'
 
@@ -179,20 +177,6 @@ function Result({ h }: { h?: { value: string; label: string } }) {
   )
 }
 
-// holds off rendering (and the GitHub requests inside) until the section is
-// about to scroll into view, so the first load stays light
-function WhenVisible({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [show, setShow] = useState(() => typeof IntersectionObserver === 'undefined')
-  useEffect(() => {
-    if (show || !ref.current) return
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && setShow(true), { rootMargin: '600px 0px' })
-    io.observe(ref.current)
-    return () => io.disconnect()
-  }, [show])
-  return <div ref={ref}>{show ? children : <p className="muted">Loading GitHub activity...</p>}</div>
-}
-
 const GRAD = monthIndex(2027, 3)
 
 function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i: number) => void; filter?: string[] }) {
@@ -300,20 +284,18 @@ function Experience({ active, onPick, filter, onOpen }: { active: number; onPick
   )
 }
 
-function ProjectLinks({ p, onPreview }: { p: (typeof projects)[number]; onPreview: () => void }) {
-  if (!p.link && !p.code) return null
+// the outside links for a project, named for where they go
+function ProjectLinks({ p }: { p: (typeof projects)[number] }) {
+  const github = [p.link, p.code].find((u) => u?.includes('github.com'))
+  const live = p.status === 'Live' ? p.link : undefined
+  const devpost = p.link?.includes('devpost') ? p.link : undefined
+  if (!github && !live && !devpost) return null
   return (
-    <p className="project-links">
-      {p.status === 'Live' && p.link && (
-        <button type="button" onClick={onPreview}>Try it here</button>
-      )}
-      {p.link && (
-        <a href={p.link} target="_blank" rel="noreferrer">
-          {p.status === 'Live' ? 'Play it' : p.link.includes('devpost') ? 'Devpost' : 'Code'}
-        </a>
-      )}
-      {p.code && <a href={p.code} target="_blank" rel="noreferrer">Code</a>}
-    </p>
+    <span className="project-links">
+      {live && <a href={live} target="_blank" rel="noreferrer">Play it live</a>}
+      {github && <a href={github} target="_blank" rel="noreferrer">Source</a>}
+      {devpost && <a href={devpost} target="_blank" rel="noreferrer">Devpost</a>}
+    </span>
   )
 }
 
@@ -357,8 +339,8 @@ function Glance({ onCheck }: { onCheck: () => void }) {
           </div>
         </dl>
         <p className="glance-check">
-          Recruiting for a role? <button type="button" onClick={onCheck}>Paste the job posting</button> to see which parts
-          of it I've worked with, or press S to skim the page.
+          Recruiting for a role? <button type="button" onClick={onCheck}>Paste the job posting</button> to see which of
+          the skills it asks for I've used, and where.
         </p>
       </div>
     </section>
@@ -405,7 +387,6 @@ export default function App() {
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
   const [termOpen, setTermOpen] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
   const [detail, setDetail] = useState<{ id: string; tab: Tab } | null>(() => {
     const q = new URLSearchParams(location.search)
     const id = q.get('open')
@@ -531,9 +512,9 @@ export default function App() {
       { group: 'Elsewhere', label: 'GitHub', run: () => window.open(profile.links.github, '_blank', 'noopener') },
       { group: 'Elsewhere', label: 'LinkedIn', run: () => window.open(profile.links.linkedin, '_blank', 'noopener') },
       { group: 'Elsewhere', label: 'Devpost', keywords: 'hackathons', run: () => window.open(profile.links.devpost, '_blank', 'noopener') },
-      { group: 'Elsewhere', label: 'Play Battleship here', keywords: 'game live demo', run: () => setPreview('https://purolator-battleship.onrender.com') },
+      { group: 'Elsewhere', label: 'Play Battleship live', keywords: 'game demo', run: () => window.open('https://purolator-battleship.onrender.com', '_blank', 'noopener') },
       { group: 'Page', label: 'Skills', run: () => goTo('skills') },
-      { group: 'Page', label: 'GitHub activity', run: () => goTo('github') },
+      { group: 'Page', label: 'Code on GitHub', keywords: 'repos source', run: () => goTo('github') },
       { group: 'Page', label: 'Switch light or dark', keywords: 'theme mode', run: () => (document.querySelector('.theme') as HTMLButtonElement | null)?.click() },
       { group: 'Page', label: 'Switch between full detail and skim', keywords: 'view compact summary', run: () => setSettings({ view: document.documentElement.dataset.view === 'skim' ? 'full' : 'skim' }) },
       { group: 'Page', label: 'Settings', keywords: 'preferences text size accent motion', run: () => (document.getElementById('settings') as (HTMLElement & { showPopover?: () => void }) | null)?.showPopover?.() },
@@ -639,8 +620,10 @@ export default function App() {
                     <p className="entry-desc">{p.description}</p>
                     <Bullets items={p.bullets} />
                     <p className="stack">{p.tech.join(', ')}</p>
-                    <OpenDetail id={`project-${slug(p.title)}`} onOpen={openDetail} />
-                    <ProjectLinks p={p} onPreview={() => setPreview(p.link ?? null)} />
+                    <div className="entry-actions">
+                      <OpenDetail id={`project-${slug(p.title)}`} onOpen={openDetail} />
+                      <ProjectLinks p={p} />
+                    </div>
                   </div>
                 </li>
               ))}
@@ -669,12 +652,9 @@ export default function App() {
         <Skills onFilter={applyFilter} />
 
         <section className="section" aria-labelledby="github" data-part="github">
-          <h2 id="github">Recently on GitHub</h2>
+          <h2 id="github">Code</h2>
           <div className="section-body">
-            <WhenVisible>
-              <Activity user="anaybaid7" />
-              <GithubActivity />
-            </WhenVisible>
+            <GithubActivity />
           </div>
         </section>
 
@@ -758,12 +738,6 @@ export default function App() {
           <Terminal open={termOpen} onOpenChange={setTermOpen} onAction={onTermAction} />
         </Suspense>
       )}
-      <LivePreview
-        url={preview ?? ''}
-        title="Battleship for Purolator"
-        open={preview !== null}
-        onOpenChange={(o) => !o && setPreview(null)}
-      />
     </>
   )
 }
