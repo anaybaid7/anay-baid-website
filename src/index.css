@@ -617,36 +617,6 @@ dialog::backdrop {
 }
 
 /* github */
-.feed {
-  list-style: none;
-  margin: 0;
-  padding: 4px 34px;
-  background: var(--card);
-  border-radius: 0;
-}
-.feed li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
-  gap: 24px;
-  padding: 18px 0;
-}
-.feed li + li {
-  border-top: 1px solid var(--line);
-}
-.feed-when {
-  order: 2;
-  text-align: right;
-  font-size: 15px;
-  color: var(--ink-3);
-}
-.feed-what a {
-  font-weight: 700;
-}
-.feed-desc {
-  display: block;
-  color: var(--ink-2);
-  font-size: 15.5px;
-}
 .muted {
   color: var(--ink-3);
 }
@@ -858,45 +828,6 @@ dialog::backdrop {
 }
 
 /* github activity: thirteen weeks, a square a day */
-.activity {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-  padding: 24px 34px;
-  background: var(--card);
-  border-radius: 0;
-}
-.activity-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(7, 13px);
-  grid-auto-columns: 13px;
-  gap: 4px;
-}
-.cell {
-  border-radius: 0;
-  background: var(--paper);
-}
-.cell.l1 {
-  background: color-mix(in srgb, var(--cobalt) 30%, var(--paper));
-}
-.cell.l2 {
-  background: color-mix(in srgb, var(--cobalt) 55%, var(--paper));
-}
-.cell.l3 {
-  background: color-mix(in srgb, var(--cobalt) 78%, var(--paper));
-}
-.cell.l4 {
-  background: var(--cobalt);
-}
-.activity-sum {
-  margin: 0;
-  flex: 1;
-  min-width: 220px;
-  color: var(--ink-2);
-}
 
 /* copy confirmation */
 .toast {
@@ -943,10 +874,8 @@ dialog::backdrop {
   .hero-links,
   .timeline,
   .foot-actions,
-  .activity,
   .toast,
-  #github,
-  .feed {
+  #github {
     display: none !important;
   }
   .print-only {
@@ -1060,8 +989,6 @@ dialog::backdrop {
   .section {
     margin-top: 96px;
   }
-  .feed,
-  .activity,
   .timeline {
     padding-left: 20px;
     padding-right: 20px;
@@ -1094,14 +1021,6 @@ dialog::backdrop {
   }
   .search {
     display: none;
-  }
-  .feed li {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
-  }
-  .feed-when {
-    order: 0;
-    text-align: left;
   }
   .foot {
     margin-top: 110px;
@@ -1197,17 +1116,6 @@ dialog::backdrop {
 }
 
 /* github: no panels, just the grid and the list */
-.activity,
-.feed {
-  padding: 0;
-  background: none;
-}
-.activity {
-  margin-bottom: 28px;
-}
-.cell {
-  background: var(--card);
-}
 
 /* skills read as text until one is picked */
 
@@ -1757,23 +1665,6 @@ main:has(.filterbar) .section > h2 {
 }
 
 /* live preview */
-.preview[open] {
-  width: min(1100px, calc(100vw - 32px));
-  margin-top: 4vh;
-  max-height: 92vh;
-}
-.preview iframe {
-  display: block;
-  width: 100%;
-  height: min(70vh, 760px);
-  border: 1.5px solid var(--line);
-  background: #fff;
-}
-.preview-actions {
-  display: inline-flex;
-  gap: 18px;
-  font-weight: 600;
-}
 
 /* reading progress, driven by scroll position in CSS where supported */
 .progress {
@@ -3492,4 +3383,72 @@ label {
   font: inherit;
   font-size: 16px;
   caret-color: #7ea6ff;
+}
+
+/* skills that aren't tagged on any work read as plain text, not disabled */
+.skill-list span {
+  color: var(--ink-2);
+}
+
+/* ---- row actions: open details plus outside links on one line ---- */
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 16px;
+}
+.entry-actions .open-detail {
+  margin-top: 0;
+}
+.entry-actions .project-links {
+  margin: 0;
+  display: inline-flex;
+  gap: 18px;
+}
+.project-links a::after {
+  content: " \2197";
+  font-size: 0.85em;
+}
+
+/* ---- code section ---- */
+.repos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 40px;
+}
+.repos li {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.repos a {
+  font: 650 17px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-decoration: none;
+}
+.repos a:hover {
+  color: var(--cobalt);
+  text-decoration: underline;
+}
+.repos p {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.repos .repo-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.repos-more {
+  margin: 18px 0 0;
+  color: var(--ink-2);
+}
+@media (max-width: 720px) {
+  .repos {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

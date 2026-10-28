@@ -15,14 +15,6 @@ export const profile = {
   },
   blurb:
     "Computer Science student at Waterloo, on co-op at Purolator working on backend and data tooling for network planning.",
-  // Exact GitHub repo names (case-sensitive) the Home page's live widget
-  // always shows, in this order. Without this, "sort=updated" surfaces
-  // whatever repo was pushed to most recently, which can just as easily be
-  // a scratch interview-prep repo or a WIP demo with a placeholder
-  // description as it can be real work. Add a repo's exact name here to
-  // pin it; leave the array empty to fall back to "3 most recently
-  // updated public repos".
-  pinnedRepos: ['insight-vault', 'battleship-purolator', 'starrez-logger-prod'] as string[],
   intro: [
     "I'm a fourth-year Computer Science student at Waterloo, currently on co-op at Purolator working on internal forecasting tools and network optimization.",
     "Most of what I build starts the same way. Something at work or school is manual, slow, or annoying, and I end up automating it. That's how the StarRez extension happened, and most of what I've shipped on co-op since.",
@@ -150,7 +142,6 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['Java', 'Spring Boot', 'React', 'TypeScript', 'AWS', 'Terraform', 'Python', 'Playwright'],
     highlight: { value: '92.9%', label: 'precision on held-out transactions' },
-    link: 'https://github.com/anaybaid7/insight-vault',
   },
   {
     title: 'StarRez Enterprise Automation Suite',
@@ -197,6 +188,7 @@ export const projects: ProjectEntry[] = [
     tech: ['Python', 'GitHub Actions API', 'SMTP', 'REST'],
     highlight: { value: 'Won', label: 'Best Use of GitHub at uOttaHack 5' },
     link: 'https://devpost.com/software/github-build-trigger-application',
+    code: 'https://github.com/anaybaid7/GitHub-Build-Trigger-Code-UOttaHack5',
   },
   {
     title: 'Pashu (Animal Welfare Game)',
@@ -211,6 +203,7 @@ export const projects: ProjectEntry[] = [
       "Shipped a Unity WebGL build embedded in a Wix site so judges could play it in any browser.",
       "Compressed textures and audio to keep the WebGL bundle small and load times short.",
     ],
+    code: 'https://github.com/anaybaid7/HackWestern9-ProjectPashu',
     tech: ['Unity', 'WebGL', 'C#', 'Wix'],
   },
   {
@@ -226,6 +219,17 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['React', 'React Router', 'Redux', 'WebSockets'],
   },
+]
+
+// Public repos shown in the Code section, with my own one-line summary.
+// Language and last push are read live from GitHub.
+export const repos = [
+  { name: 'insight-vault', about: 'Fraud-alert triage service with a Spring Boot API, a rule engine and logistic regression model, and a React review dashboard.' },
+  { name: 'battleship-purolator', about: 'Real-time two-player Battleship on Node, Express and Socket.IO, built for a Purolator intern event.' },
+  { name: 'starrez-logger-prod', about: 'Manifest V3 Chrome extension that automates front desk logging in StarRez for UWaterloo Campus Housing.' },
+  { name: 'GitHub-Build-Trigger-Code-UOttaHack5', about: 'Python tool that dispatches targeted GitHub Actions builds per environment. Best Use of GitHub at uOttaHack 5.' },
+  { name: 'HackWestern9-ProjectPashu', about: 'Unity and C# browser game with FSM-driven NPCs, shipped as a WebGL build. Best Gaming Hack at HackWestern 9.' },
+  { name: 'anay-baid-website', about: 'This site, built with React, TypeScript and Vite.' },
 ]
 
 export const education = {

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('loads with every section', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  for (const name of ['Experience', 'Projects', 'Education', 'Skills', 'Recently on GitHub']) {
+  for (const name of ['Experience', 'Projects', 'Education', 'Skills', 'Code']) {
     await expect(page.getByRole('heading', { level: 2, name })).toBeVisible()
   }
 })
