@@ -3,10 +3,10 @@ import allocate from './allocate.ts?raw'
 import sales from './sales.ts?raw'
 import compareSchemas from './compareSchemas.ts?raw'
 import score from './score.ts?raw'
-import workflow from './workflow.ts?raw'
+import starrez from './starrez.ts?raw'
 import battleship from '../../battleship.ts?raw'
-import planBuild from './planBuild.ts?raw'
-import npc from './npc.ts?raw'
+import dispatch from './dispatch.ts?raw'
+import shelter from './shelter.ts?raw'
 import appStore from './appStore.ts?raw'
 import type { DemoKind } from '../../details'
 
@@ -23,10 +23,10 @@ export const SOURCES: Partial<Record<DemoKind, Source>> = {
   dataval: { file: 'compareSchemas.ts', source: compareSchemas },
   fraud: { file: 'score.ts', source: score },
   scorer: { file: 'score.ts', source: score },
-  extension: { file: 'workflow.ts', source: workflow },
+  extension: { file: 'starrez.ts', source: starrez },
   battleship: { file: 'battleship.ts', source: battleship },
-  build: { file: 'planBuild.ts', source: planBuild },
-  fsm: { file: 'npc.ts', source: npc },
+  build: { file: 'dispatch.ts', source: dispatch },
+  fsm: { file: 'shelter.ts', source: shelter },
   router: { file: 'appStore.ts', source: appStore },
 }
 

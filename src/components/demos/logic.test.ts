@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { score, decide } from './score'
 import { compareSchemas } from './compareSchemas'
-import { planBuild, serviceOf } from './planBuild'
+import { jobsFor, payload, validate, type Inputs } from './dispatch'
 import { check, merge, runPipeline } from './pipeline'
 import { checkSale, makeSale, rng } from './sales'
-import { MODULES, runTask } from './workflow'
-import { next, points } from './npc'
+import { findRoom, initials, keyCodes, lockoutEntry, packageEntry, readStudent } from './starrez'
+import { applyXp, tick, type Animal } from './shelter'
 import { initial, matchRoute, reducer, validateEvent } from './appStore'
 import { botShot, FLEET, N, placeFleet } from '../../battleship'
 
@@ -75,40 +75,85 @@ describe('reconcile', () => {
   })
 })
 
+const ENV: Inputs = {
+  GITHUB_REPO_NAME: 'app',
+  GITHUB_USERNAME: 'me',
+  GITHUB_BRANCH_NAME: 'refs/heads/main',
+  ENVIRONMENT_NAME: 'staging',
+  SEND_EMAIL_NOTIFICATION: false,
+  INPUT_CUSTOM_DATA: '{"a": 1}',
+}
+
 describe('build trigger', () => {
-  it('maps files to services and only builds what changed', () => {
-    expect(serviceOf('web/src/App.tsx')).toBe('web')
-    const p = planBuild(['web/src/App.tsx', 'web/x.ts'], 'dev', 'main')
-    expect(p.build).toEqual(['web'])
-    expect(p.skip).toEqual(['api', 'worker', 'docs'])
+  it('names the missing variable and stops', () => {
+    expect(validate({ ...ENV, ENVIRONMENT_NAME: '' })).toBe('Error: Required environment variable ENVIRONMENT_NAME is missing.')
+    expect(validate(ENV)).toBeNull()
   })
 
-  it('refuses to deploy a feature branch to prod', () => {
-    expect(planBuild(['api/a.py'], 'prod', 'feature/login').ok).toBe(false)
-    expect(planBuild(['api/a.py'], 'prod', 'main').ok).toBe(true)
-  })
-})
-
-describe('extension workflow', () => {
-  it('fills the log from the page', () => {
-    const r = runTask(MODULES[0], { Resident: 'A', Room: 'R1', 'Student #': '1', Packages: '2 waiting' })
-    expect(r.entry?.Packages).toBe('2 picked up')
-    expect(r.stages.every((s) => s.ok)).toBe(true)
+  it('sends one repository_dispatch with the branch, environment and custom data', () => {
+    const p = payload(ENV)
+    expect(p.url).toBe('https://api.github.com/repos/me/app/dispatches')
+    expect(p.body).toEqual({ event_type: 'build', client_payload: { ref: 'refs/heads/main', environment: 'staging', a: 1 } })
   })
 
-  it('stops at validate when there is nothing to pick up', () => {
-    const r = runTask(MODULES[0], { Resident: 'A', Room: 'R1', 'Student #': '1', Packages: '0 waiting' })
-    expect(r.entry).toBeNull()
-    expect(r.stages.at(-1)).toMatchObject({ stage: 'Validate', ok: false })
+  it('runs only the matching job on the receiving side', () => {
+    expect(jobsFor('staging', ['dev', 'staging', 'production']).filter((j) => j.runs).map((j) => j.job)).toEqual(['staging'])
   })
 })
 
-describe('npc state machine', () => {
-  it('moves on known events, ignores the rest, and scores state changes', () => {
-    expect(next('Wandering', 'PlayerNear')).toBe('Following')
-    expect(next('Sleeping', 'Fed')).toBeNull()
-    expect(points('Hungry', 'Eating')).toBe(10)
-    expect(points('Hungry', 'Sleeping')).toBe(-5)
+describe('starrez extension', () => {
+  const text = 'EntryID: 1\nStudent Number 20871234\nRez 360\nRoom Space V1S-305a\n2 Parcels'
+
+  it('makes initials either way round', () => {
+    expect(initials('Lee, Sam')).toBe('S.L')
+    expect(initials('Sam Lee')).toBe('S.L')
+    expect(initials(null)).toBe('X.X')
+  })
+
+  it('reads and validates the student from the page text', () => {
+    expect(readStudent('Lee, Sam', text)).toEqual({ fullName: 'Lee, Sam', studentNumber: '20871234', roomSpace: 'V1S-305a' })
+    expect(readStudent('Lee, Sam', text.replace('20871234', '2087'))).toBeNull()
+    expect(findRoom('Room A1-101a/V1S-305a')).toEqual({ room: 'V1S-305a', method: 1 })
+  })
+
+  it('formats package and lockout entries the way the desk log expects', () => {
+    const s = readStudent('Lee, Sam', text)!
+    expect(packageEntry(s, 2, 'Baid, Anay', new Date(2026, 1, 18, 15, 42))).toBe('S.L (20871234) V1S-305a 2 pkgs @ 3:42 pm - A.B')
+    expect(lockoutEntry(s, ['L0932'], 'locked out', 'Baid, Anay')).toBe('S.L (20871234) V1S-305a KC: L0932; locked out - A.B')
+  })
+
+  it('prefers loaner keys and returns nothing when there are none', () => {
+    expect(keyCodes('Bedroom: 4F21A\nLOANER L-1: L0932', '20871234')).toEqual(['L0932'])
+    expect(keyCodes('Bedroom: 4F21A', '20871234')).toEqual(['4F21A'])
+    expect(keyCodes('', '20871234')).toBeNull()
+  })
+})
+
+describe('pashu shelter', () => {
+  const cat: Animal = { name: 'Milo', type: 'cat', health: 51, water: 90, decay: 2, state: 'Wander' }
+
+  it('goes for food under 50, then eats on the next tick and scores', () => {
+    const a = tick(cat, 1, { food: 1, water: 0 }, () => 0.5)
+    expect(a.animal.state).toBe('goToFood')
+    const b = tick(a.animal, 1, a.bowls, () => 0.5)
+    expect(b.animal).toMatchObject({ state: 'Wander', health: 100 })
+    expect(b.bowls.food).toBe(0)
+    expect(b.events).toContainEqual({ kind: 'ate', name: 'Milo', xp: 15 })
+  })
+
+  it('keeps looking when there is no food, and dies at zero', () => {
+    const hungry = { ...cat, state: 'goToFood' as const, health: 40 }
+    const r1 = tick(hungry, 1, { food: 0, water: 0 })
+    expect(r1.animal).toMatchObject({ state: 'goToFood', waiting: true })
+    expect(tick(r1.animal, 1, { food: 0, water: 0 }).events).toEqual([])
+    const r = tick({ ...cat, health: 1 }, 1, { food: 0, water: 0 })
+    expect(r.animal.state).toBe('Dead')
+    expect(r.events[0]).toMatchObject({ kind: 'died', xp: -75 })
+  })
+
+  it('rolls XP into levels both ways', () => {
+    expect(applyXp(90, 1, 20)).toEqual({ xp: 10, level: 2 })
+    expect(applyXp(30, 2, -75)).toEqual({ xp: 55, level: 1 })
   })
 })
 

@@ -6,6 +6,12 @@ import { useSequence } from '../sim/useSequence'
 const name = (i: number) => `${'ABCDEFGH'[i % N]}${Math.floor(i / N) + 1}`
 type Ships = ReturnType<typeof placeFleet>
 const ROOM = 'K7QX2'
+const OPENING: LogLine[] = [
+  { src: 'server', text: `both_connected { room: "${ROOM}", boardDim: 8 }` },
+  { src: 'you', text: 'emit place_ships { ships: [5 vehicles] }' },
+  { src: 'server', text: 'placement_confirmed, waiting for the bot' },
+  { src: 'server', text: 'game_start { turn: "you" }, coin flip went your way', tone: 'ok' },
+]
 
 function result(ships: Ships, shots: number[], cell: number) {
   const ship = ships.find((s) => s.cells.includes(cell))
@@ -23,7 +29,7 @@ export default function BattleshipMatch() {
   const [botShots, setBotShots] = useState<number[]>([])
   const [turn, setTurn] = useState<'you' | 'bot' | 'over'>('you')
   const [online, setOnline] = useState(true)
-  const [log, setLog] = useState<LogLine[]>([{ src: 'server', text: `room ${ROOM} ready, 8x8, you go first` }])
+  const [log, setLog] = useState<LogLine[]>(OPENING)
   const [msg, setMsg] = useState('Your turn. Fire at the right board.')
   const bot = useRef<number[]>([])
   const seq = useSequence()
@@ -40,18 +46,17 @@ export default function BattleshipMatch() {
     const r = result(mine, next, cell)
     seq.run(
       [
-        () => say({ src: 'bot', text: `emit fire { room: "${ROOM}", cell: "${name(cell)}" }` }),
+        () => say({ src: 'bot', text: `emit fire { index: ${cell} }  (${name(cell)})` }),
         () => {
           setBotShots(next)
-          say({ src: 'server', text: `broadcast shot { cell: "${name(cell)}", hit: ${r.hit}${r.sunk ? `, sunk: "${r.sunk}"` : ''} }`, tone: r.hit ? 'warn' : undefined })
+          say({ src: 'server', text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "you" }`, tone: r.hit ? 'warn' : undefined })
           if (r.over) {
             setTurn('over')
             setMsg('The bot cleared your fleet. New game?')
-            say({ src: 'server', text: 'broadcast game-over { winner: "bot" }', tone: 'err' })
+            say({ src: 'server', text: 'game_over { winner: "bot" }', tone: 'err' })
           } else {
             setTurn('you')
             setMsg(r.sunk ? `The bot sank your ${r.sunk}. Your turn.` : 'Your turn.')
-            say({ src: 'server', text: 'broadcast turn { next: "you" }' })
           }
         },
       ],
@@ -62,39 +67,38 @@ export default function BattleshipMatch() {
   const fire = (cell: number) => {
     if (!online || turn === 'over' || myShots.includes(cell)) return
     if (turn !== 'you') {
-      say({ src: 'you', text: `emit fire { room: "${ROOM}", cell: "${name(cell)}" }` }, { src: 'server', text: 'ignored, not your turn', tone: 'err' })
+      say({ src: 'you', text: `emit fire { index: ${cell} }  (${name(cell)})` }, { src: 'server', text: 'dropped, room.turn is not your socket', tone: 'err' })
       return
     }
     const next = [...myShots, cell]
     const r = result(theirs, next, cell)
     setMyShots(next)
     say(
-      { src: 'you', text: `emit fire { room: "${ROOM}", cell: "${name(cell)}" }` },
-      { src: 'server', text: `broadcast shot { cell: "${name(cell)}", hit: ${r.hit}${r.sunk ? `, sunk: "${r.sunk}"` : ''} }`, tone: r.hit ? 'ok' : undefined },
+      { src: 'you', text: `emit fire { index: ${cell} }  (${name(cell)})` },
+      { src: 'server', text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "bot" }`, tone: r.hit ? 'ok' : undefined },
     )
     if (r.over) {
       setTurn('over')
       setMsg(`You cleared the fleet in ${next.length} shots.`)
-      say({ src: 'server', text: 'broadcast game-over { winner: "you" }', tone: 'ok' })
+      say({ src: 'server', text: 'game_over { winner: "you" }', tone: 'ok' })
       return
     }
     setMsg(r.sunk ? `${name(cell)}, you sank the ${r.sunk}.` : `${name(cell)}, ${r.hit ? 'hit' : 'miss'}. Bot’s turn.`)
     setTurn('bot')
-    say({ src: 'server', text: 'broadcast turn { next: "bot" }' })
     botTurn(botShots)
   }
 
   const drop = () => {
     setOnline(false)
-    say({ src: 'server', text: 'disconnect, holding your seat for 30s', tone: 'warn' })
+    say({ src: 'server', text: 'disconnect, opponent_left sent to the bot, room held for 8 s', tone: 'warn' })
     seq.run(
       [
         () => {},
         () => {
           setOnline(true)
           say(
-            { src: 'you', text: `reconnect, emit rejoin { room: "${ROOM}" }` },
-            { src: 'server', text: `sync { yourShots: ${myShots.length}, theirShots: ${bot.current.length}, turn: "${turn}" }`, tone: 'ok' },
+            { src: 'you', text: 'reconnected inside the grace window' },
+            { src: 'server', text: `room ${ROOM} kept, the game carries on`, tone: 'ok' },
           )
         },
       ],
@@ -111,7 +115,7 @@ export default function BattleshipMatch() {
     bot.current = []
     setTurn('you')
     setOnline(true)
-    setLog([{ src: 'server', text: `room ${ROOM} reset, you go first` }])
+    setLog(OPENING)
     setMsg('Your turn. Fire at the right board.')
   }
 
