@@ -26,3 +26,24 @@ export function placeFleet(random: () => number = Math.random): Ship[] {
   })
 }
 
+
+// The bot opponent: aim next to an unsunk hit when there is one, otherwise
+// pick an open square on a checkerboard, since every ship covers one.
+export function botShot(shots: number[], hits: number[], random: () => number = Math.random): number {
+  const tried = new Set(shots)
+  for (const h of hits) {
+    const r = Math.floor(h / N)
+    const c = h % N
+    const around = [
+      r > 0 ? h - N : -1,
+      r < N - 1 ? h + N : -1,
+      c > 0 ? h - 1 : -1,
+      c < N - 1 ? h + 1 : -1,
+    ].filter((x) => x >= 0 && !tried.has(x))
+    if (around.length) return around[Math.floor(random() * around.length)]
+  }
+  const open = Array.from({ length: N * N }, (_, i) => i).filter((i) => !tried.has(i))
+  const even = open.filter((i) => (Math.floor(i / N) + (i % N)) % 2 === 0)
+  const pool = even.length ? even : open
+  return pool[Math.floor(random() * pool.length)]
+}

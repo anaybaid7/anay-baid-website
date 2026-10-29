@@ -1,20 +1,23 @@
-// Work out which builds to dispatch: only the services that changed, after
-// checking the environment, then report back.
+// Work out which builds to dispatch: map changed files to services, check
+// the environment, and only dispatch the services that changed.
 
-export function planBuild(services: string[], changed: string[], env: string) {
-  const build = services.filter((s) => changed.includes(s))
-  const skip = services.filter((s) => !changed.includes(s))
-  return [
-    `$ build-trigger --env ${env}`,
-    `checking ${env} ... ok`,
-    `changed since last build: ${build.length ? build.map((s) => `${s}/`).join(' ') : 'nothing'}`,
-    ...(build.length
-      ? [
-          `triggering ${build.length} of ${services.length} builds through the GitHub API`,
-          ...build.map((s) => `  POST /actions/workflows/${s}.yml/dispatches  204`),
-        ]
-      : ['nothing to build']),
-    ...(skip.length ? [`skipped ${skip.join(', ')}, no changes`] : []),
-    'emailed the result over SMTP (TLS)',
+export const SERVICES = ['api', 'web', 'worker', 'docs'] as const
+export type Service = (typeof SERVICES)[number]
+
+export const serviceOf = (file: string) => SERVICES.find((s) => file.startsWith(`${s}/`)) ?? null
+
+export interface Check {
+  name: string
+  ok: boolean
+}
+
+export function planBuild(changedFiles: string[], env: string, branch: string) {
+  const build = SERVICES.filter((s) => changedFiles.some((f) => serviceOf(f) === s))
+  const skip = SERVICES.filter((s) => !build.includes(s))
+  const checks: Check[] = [
+    { name: `environment ${env} exists`, ok: true },
+    { name: 'secrets API_KEY, DB_URL are set', ok: true },
+    { name: `branch ${branch} may deploy to ${env}`, ok: env !== 'prod' || branch === 'main' },
   ]
+  return { build, skip, checks, ok: checks.every((c) => c.ok) }
 }
