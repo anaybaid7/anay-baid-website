@@ -6,6 +6,7 @@ import { check, merge, runPipeline } from './pipeline'
 import { checkSale, makeSale, rng } from './sales'
 import { findRoom, initials, keyCodes, lockoutEntry, packageEntry, readStudent } from './starrez'
 import { applyXp, tick, type Animal } from './shelter'
+import { applyPercent, editTotal, gapCheck, normalize, splitWeek, sumsTo100 } from './planner'
 import { initial, matchRoute, reducer, validateEvent } from './appStore'
 import { botShot, FLEET, N, placeFleet } from '../../battleship'
 
@@ -192,5 +193,35 @@ describe('battleship', () => {
     expect([hit - N, hit + N, hit - 1, hit + 1]).toContain(shot)
     const all = Array.from({ length: N * N - 1 }, (_, i) => i)
     expect(botShot(all, [])).toBe(N * N - 1)
+  })
+})
+
+describe('forecast planner', () => {
+  const w = { week: 48, pcl: 300, agent: 100, origPcl: 300, origAgent: 100 }
+
+  it('scales PCL and Agent together when Total changes', () => {
+    const e = editTotal(w, 500)
+    expect([e.pcl, e.agent]).toEqual([375, 125])
+    expect(editTotal({ ...w, pcl: 0, agent: 0, origPcl: 0, origAgent: 0 }, 100)).toMatchObject({ pcl: 50, agent: 50 })
+  })
+
+  it('never stacks a repeated operation', () => {
+    const once = applyPercent([w], [48], 10)
+    const twice = applyPercent(once, [48], 10)
+    expect(twice[0].pcl + twice[0].agent).toBeCloseTo(440)
+  })
+
+  it('normalizes to exactly 100 and splits without losing volume', () => {
+    const n = normalize([0.4, 20.6, 20.1, 0, 19.7, 18.9, 0.5])
+    expect(n.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 6)
+    expect(sumsTo100(n)).toBe(true)
+    expect(splitWeek(18241, n).reduce((a, b) => a + b, 0)).toBe(18241)
+  })
+
+  it('flags only gaps of 50% and 100 pieces, and leaves holidays out of the baseline', () => {
+    const quebec = { terminal: 744, day: 'Wed', forecast: 720, history: [{ value: 600 }, { value: 620 }, { value: 0, holiday: 'x' }, { value: 580 }] }
+    expect(gapCheck(quebec).check).toBe(false)
+    expect(gapCheck(quebec, false)).toMatchObject({ baseline: 450, check: true })
+    expect(gapCheck({ terminal: 1, day: 'Fri', forecast: 140, history: [{ value: 80 }, { value: 90 }, { value: 70 }, { value: 85 }] }).check).toBe(false)
   })
 })

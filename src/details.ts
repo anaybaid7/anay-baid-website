@@ -51,6 +51,7 @@ export type ScreenKind = 'forecast-tool' | 'insightvault' | 'starrez' | 'battles
 
 export type DemoKind =
   | 'pipeline'
+  | 'planner'
   | 'allocation'
   | 'sdk'
   | 'release'
@@ -150,6 +151,40 @@ export const DETAILS: Record<string, Detail> = {
         ],
       },
       {
+        name: 'Adjusting a forecast',
+        summary: 'What happens when a planner changes a number in the forecast tool.',
+        steps: [
+          {
+            from: 'tools',
+            to: 'api',
+            title: 'A planner raises Cyber week',
+            detail: 'Edits happen in the table. Changing Total keeps PCL plus Agent equal to it by scaling both by the same ratio, and a repeated operation starts from the original forecast so it never stacks.',
+            payload: { label: 'ratio_split.js', code: 'const ratio = newTotal / oldTotal\nreturn { overrideA: pcl * ratio, overrideB: agent * ratio }\n// pcl*r + agent*r = oldTotal*r = newTotal' },
+          },
+          {
+            from: 'api',
+            to: 'sql',
+            title: 'The week is split into days',
+            detail: 'Each weekday gets a share of the week. Shares are rounded to two decimals with the last day taking the remainder, and saving is refused unless they add to 100%.',
+            payload: { label: 'Request', code: 'POST /api/save_daily_dist\n{ "week": 48, "terminal": "412", "metric": "PCL.Del.Pcs.N",\n  "days": [{ "wd": 1, "pct": 0.4 }, { "wd": 2, "pct": 20.6 }, ...] }' },
+          },
+          {
+            from: 'sql',
+            to: 'api',
+            title: 'Days add back to the week',
+            detail: 'Every build checks that the daily rows sum back to the weekly forecast for every terminal, so no volume is created or lost in the split.',
+            payload: { label: 'Check', code: 'for each terminal and week:\n  assert sum(daily) == weekly' },
+          },
+          {
+            from: 'api',
+            to: 'tools',
+            title: 'The export matches the screen',
+            detail: 'The CSV export is exactly what is on screen, adjustments included, so what planners review is what gets sent.',
+            payload: { label: 'Request', code: 'POST /api/export\n200 text/csv  forecast_412_2026.csv' },
+          },
+        ],
+      },
+      {
         name: 'Allocating volume',
         summary: 'How a week’s volume gets split across terminals without going over any terminal’s capacity.',
         steps: [
@@ -212,6 +247,7 @@ export const DETAILS: Record<string, Detail> = {
     screens: 'forecast-tool',
     demos: [
       { kind: 'pipeline', name: 'Run the pipeline' },
+      { kind: 'planner', name: 'Plan a week' },
       { kind: 'allocation', name: 'Allocate volume' },
     ],
   },
@@ -1089,4 +1125,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['pipeline', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router']
+export const CODE_KINDS: DemoKind[] = ['pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router']
