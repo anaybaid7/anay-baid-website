@@ -16,6 +16,7 @@ import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES } from './entries'
 import { tabsFor, type Tab } from './details'
 import Minimap from './components/Minimap'
+import MiniArch from './components/MiniArch'
 import type { Action as TermAction } from './terminal'
 
 // the drawer and its demos load the first time someone opens one
@@ -247,7 +248,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter, onOpen }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: (id: string) => void }) {
+function Experience({ active, onPick, filter, onOpen }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: (id: string, tab?: Tab) => void }) {
   return (
     <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
@@ -263,6 +264,7 @@ function Experience({ active, onPick, filter, onOpen }: { active: number; onPick
               <p className="entry-when">
                 {shortPeriod(e.period)}
                 <span>{isCurrent(e.period) ? 'Current role' : plural(monthsIn(e.period), 'month')}</span>
+                <MiniArch id={`job-${slug(shortOrg(e.org))}`} name={shortOrg(e.org)} onOpen={(id) => onOpen(id, 'how')} />
               </p>
               <div className="entry-main">
                 <h3 className="entry-title">
@@ -410,7 +412,10 @@ export default function App() {
     history.replaceState(null, '', url)
     if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
   }, [])
-  const openDetail = useCallback((id: string) => showDetail({ id, tab: tabsFor(id)[1] ?? 'overview' }), [showDetail])
+  const openDetail = useCallback(
+    (id: string, tab?: Tab) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview' }),
+    [showDetail],
+  )
   const [filter, setFilter] = useState<string[]>(() =>
     (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
   )
@@ -609,7 +614,10 @@ export default function App() {
             <ol className="entries">
               {projects.map((p) => (
                 <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} id={`project-${slug(p.title)}`}>
-                  <p className="entry-when">{p.period}</p>
+                  <p className="entry-when">
+                    {p.period}
+                    <MiniArch id={`project-${slug(p.title)}`} name={p.title} onOpen={(id) => openDetail(id, 'how')} />
+                  </p>
                   <div className="entry-main">
                     <h3 className="entry-title">
                       {p.link ? <a href={p.link} target="_blank" rel="noreferrer">{p.title}</a> : p.title}
