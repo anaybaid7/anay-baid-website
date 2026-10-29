@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { matchPosting } from '../match'
+import { stepsUsing } from '../flowEvidence'
 
 const list = (items: string[]) => new Intl.ListFormat('en-CA', { type: 'conjunction' }).format(items)
 
 // Paste a job posting, see which parts of my stack it asks for and where I've
 // used each one. Plain matching against the tech on this page, all in the
 // browser, nothing is sent anywhere.
-export default function Matcher({ open, onOpenChange, onFilter }: {
+export default function Matcher({ open, onOpenChange, onFilter, onStep }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onFilter: (skills: string[]) => void
+  onStep: (id: string, flow: number, step: number) => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [text, setText] = useState('')
@@ -59,11 +61,31 @@ export default function Matcher({ open, onOpenChange, onFilter }: {
                 {used.length > 0 && <>, {used.length} with work on this page to back {used.length === 1 ? 'it' : 'them'} up</>}.
               </p>
               <ul className="match-list">
-                {used.map((m) => (
-                  <li key={m.skill}>
-                    <b>{m.skill}</b> <span>{list(m.where.map((w) => w.label))}</span>
-                  </li>
-                ))}
+                {used.map((m) => {
+                  const steps = stepsUsing(m.skill, 2)
+                  return (
+                    <li key={m.skill}>
+                      <b>{m.skill}</b> <span>{list(m.where.map((w) => w.label))}</span>
+                      {steps.length > 0 && (
+                        <span className="match-steps">
+                          <span className="match-see">See it in</span>
+                          {steps.map((h) => (
+                            <button
+                              key={`${h.id}${h.flow}`}
+                              type="button"
+                              onClick={() => {
+                                onOpenChange(false)
+                                onStep(h.id, h.flow, h.step)
+                              }}
+                            >
+                              {h.entry}: {h.stepTitle}
+                            </button>
+                          ))}
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
                 {listed.map((m) => (
                   <li key={m.skill}>
                     <b>{m.skill}</b> <span>on my resume</span>

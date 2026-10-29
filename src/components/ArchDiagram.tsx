@@ -81,8 +81,16 @@ function flowsOf(arch: Architecture, flows?: Flow[]): Flow[] {
 // every hop shows what is sent and what happens with it.
 export default function ArchDiagram({ arch, flows: given, name, initialPick }: { arch: Architecture; flows?: Flow[]; name: string; initialPick?: string }) {
   const flows = useMemo(() => flowsOf(arch, given), [arch, given])
-  const [f, setF] = useState(0)
-  const [step, setStep] = useState(-1)
+  // a shared link can point at one step of one flow, as ?flow=1&step=2
+  const [start] = useState(() => {
+    const q = new URLSearchParams(location.search)
+    const fl = Math.min(Math.max(0, Number(q.get('flow') ?? 1) - 1), flows.length - 1)
+    const st = Number(q.get('step') ?? 0) - 1
+    return { f: fl, step: Math.min(st, flows[fl].steps.length - 1) }
+  })
+  const [f, setF] = useState(start.f)
+  const [step, setStep] = useState(initialPick ? -1 : start.step)
+  const [copied, setCopied] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [picked, setPicked] = useState<string | null>(initialPick ?? null)
   const calm = useCalm()
@@ -106,6 +114,46 @@ export default function ArchDiagram({ arch, flows: given, name, initialPick }: {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, step])
+
+  // keep the flow and step in the URL so the exact hop can be shared
+  useEffect(() => {
+    const url = new URL(location.href)
+    if (step >= 0 || f > 0) {
+      url.searchParams.set('flow', String(f + 1))
+      if (step >= 0) url.searchParams.set('step', String(step + 1))
+      else url.searchParams.delete('step')
+    } else {
+      url.searchParams.delete('flow')
+      url.searchParams.delete('step')
+    }
+    history.replaceState(history.state, '', url)
+  }, [f, step])
+
+  const copyLink = () =>
+    navigator.clipboard?.writeText(location.href).then(
+      () => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      },
+      () => {},
+    )
+
+  // Space plays or pauses, the arrows step, and 1 to 9 pick a flow, whenever
+  // focus is in the diagram but not on a box (boxes use the arrows to move)
+  const onFigureKey = (e: KeyboardEvent<HTMLElement>) => {
+    const t = e.target as HTMLElement
+    if (t.closest('.arch-node, input, textarea')) return
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault()
+      setPlaying(false)
+      goTo(step + (e.key === 'ArrowRight' ? 1 : -1))
+    } else if (e.key === ' ' && t.tagName !== 'BUTTON') {
+      e.preventDefault()
+      play()
+    } else if (/^[1-9]$/.test(e.key) && Number(e.key) <= flows.length) {
+      pickFlow(Number(e.key) - 1)
+    }
+  }
 
   const play = () => {
     if (playing) return setPlaying(false)
@@ -151,7 +199,7 @@ export default function ArchDiagram({ arch, flows: given, name, initialPick }: {
   }
 
   return (
-    <figure className="arch">
+    <figure className="arch" onKeyDown={onFigureKey}>
       {flows.length > 1 && (
         <div className="flow-tabs" role="tablist" aria-label="Flows">
           {flows.map((fl, i) => (
@@ -275,6 +323,9 @@ export default function ArchDiagram({ arch, flows: given, name, initialPick }: {
               </p>
               <h3>{active.title}</h3>
               <p>{active.detail}</p>
+              <button type="button" className="flow-link" onClick={copyLink}>
+                {copied ? 'Link copied' : 'Copy a link to this step'}
+              </button>
               {active.payload && (
                 <div className="flow-payload">
                   <p>{active.payload.label}</p>

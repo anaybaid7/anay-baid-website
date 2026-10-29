@@ -1,12 +1,13 @@
 import { education, profile, skillLabels, skills } from './data'
 import { ENTRIES, type Entry } from './entries'
 import { whereUsed } from './evidence'
+import { DETAILS } from './details'
 
 // The command language behind the terminal. Pure functions over the same
 // data the page renders, so the UI only has to print lines and run actions.
 
 export type Action =
-  | { kind: 'open'; id: string; tab?: string }
+  | { kind: 'open'; id: string; tab?: string; at?: { flow: number; step: number } }
   | { kind: 'filter'; skills: string[] }
   | { kind: 'theme'; value: 'light' | 'dark' | 'system' }
   | { kind: 'view'; value: 'full' | 'skim' }
@@ -35,7 +36,10 @@ const HELP = [
   'ls [jobs|projects]  list work',
   'cat <name>          details for one job or project',
   'open <name> [tab]   open it in the drawer (how, screens, try, code)',
-  'grep <text>         search every bullet and stack',
+  'why <name>          what was manual and what I built',
+  'flows <name>        the flows through a system, step by step',
+  'trace <name> [f] [s] open the diagram on flow f, step s',
+  'grep <text>         search bullets, stacks, flows and their payloads',
   'skills              skills by group',
   'filter <skill>      show only work that used it, "filter clear" to reset',
   'theme <light|dark|system>',
@@ -91,10 +95,46 @@ export function run(input: string): Output {
     case 'grep': {
       if (!arg) return { lines: ['grep: give it something to look for'] }
       const q = arg.toLowerCase()
-      const hits = ENTRIES.flatMap((e) =>
-        [...e.bullets, e.tech.join(', ')].filter((t) => t.toLowerCase().includes(q)).map((t) => `${pad(nameOf(e), 26)}${t}`),
-      )
-      return { lines: hits.length ? hits : [`no matches for "${arg}"`] }
+      const hits = ENTRIES.flatMap((e) => [
+        ...[...e.bullets, e.tech.join(', ')].filter((t) => t.toLowerCase().includes(q)).map((t) => `${pad(nameOf(e), 26)}${t}`),
+        ...(DETAILS[e.id]?.flows ?? []).flatMap((f, fi) =>
+          f.steps
+            .map((st, si) => ({ st, si }))
+            .filter(({ st }) => `${st.title} ${st.detail} ${st.payload?.code ?? ''}`.toLowerCase().includes(q))
+            .map(({ st, si }) => `${pad(nameOf(e), 26)}flow ${fi + 1} step ${si + 1}  ${st.title}`),
+        ),
+      ])
+      return { lines: hits.length ? [...hits, '', 'trace <name> <flow> <step> opens one of these'] : [`no matches for "${arg}"`] }
+    }
+    case 'why': {
+      const e = find(arg)
+      if (!e) return { lines: [`why: ${arg || '(nothing)'}: no such job or project, try ls`] }
+      return { lines: [e.title, '', `before  ${e.why}`, `built   ${e.built}`, ...(e.highlight ? [`result  ${e.highlight.value} ${e.highlight.label}`] : [])] }
+    }
+    case 'flows': {
+      const e = find(arg)
+      const flows = e && DETAILS[e.id]?.flows
+      if (!e || !flows) return { lines: [`flows: ${arg || '(nothing)'}: no such job or project, try ls`] }
+      return {
+        lines: flows.flatMap((f, fi) => [
+          `${fi + 1}  ${f.name}`,
+          ...f.steps.map((st, si) => `   ${si + 1}. ${st.title}`),
+          '',
+        ]),
+      }
+    }
+    case 'trace': {
+      const [name, fl = '1', st = '1'] = rest
+      const e = name ? find(name) : undefined
+      const flows = e && DETAILS[e.id]?.flows
+      if (!e || !flows) return { lines: [`trace: ${name || '(nothing)'}: no such job or project, try ls`] }
+      const f = flows[Number(fl) - 1]
+      const step = f?.steps[Number(st) - 1]
+      if (!step) return { lines: [`trace: no flow ${fl} step ${st} for ${nameOf(e)}, try flows ${nameOf(e)}`] }
+      return {
+        lines: [`${f.name}, step ${st}: ${step.title}`, ...(step.payload ? ['', ...step.payload.code.split('\n')] : [])],
+        action: { kind: 'open', id: e.id, tab: 'how', at: { flow: Number(fl), step: Number(st) } },
+      }
     }
     case 'skills':
       return {
@@ -137,7 +177,7 @@ export function run(input: string): Output {
   }
 }
 
-const COMMANDS = ['help', 'whoami', 'ls', 'cat', 'open', 'grep', 'skills', 'filter', 'theme', 'view', 'contact', 'resume', 'clear', 'exit']
+const COMMANDS = ['help', 'whoami', 'ls', 'cat', 'open', 'why', 'flows', 'trace', 'grep', 'skills', 'filter', 'theme', 'view', 'contact', 'resume', 'clear', 'exit']
 
 // tab completion for the command, then for names, skills and options
 export function complete(input: string): string {
@@ -146,8 +186,8 @@ export function complete(input: string): string {
   const pool =
     parts.length === 1
       ? COMMANDS
-      : ['cat', 'open'].includes(parts[0])
-        ? parts.length === 2 ? NAMES : ['how', 'screens', 'try', 'code']
+      : ['cat', 'open', 'why', 'flows', 'trace'].includes(parts[0])
+        ? parts.length === 2 ? NAMES : parts[0] === 'open' ? ['how', 'screens', 'try', 'code'] : []
         : parts[0] === 'filter'
           ? ['clear', ...allSkills]
           : parts[0] === 'theme'
