@@ -4,6 +4,10 @@ export interface Command {
   group: string
   label: string
   keywords?: string
+  // shown under the label, for results from inside a project
+  hint?: string
+  // only offered once something is typed, so the empty list stays short
+  deep?: boolean
   run: () => void
 }
 
@@ -47,10 +51,14 @@ export default function CommandMenu({ commands, open, onOpenChange }: {
 
   const results = useMemo(() => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-    return commands.filter((c) => {
-      const hay = `${c.group} ${c.label} ${c.keywords ?? ''}`.toLowerCase()
+    const hits = commands.filter((c) => {
+      if (c.deep && query.trim().length < 2) return false
+      const hay = `${c.group} ${c.label} ${c.hint ?? ''} ${c.keywords ?? ''}`.toLowerCase()
       return words.every((w) => hay.includes(w))
     })
+    // keep the top-level results, and at most a dozen from inside the work
+    const deep = hits.filter((c) => c.deep).slice(0, 12)
+    return [...hits.filter((c) => !c.deep), ...deep]
   }, [commands, query])
 
   const run = (c: Command) => {
@@ -88,7 +96,7 @@ export default function CommandMenu({ commands, open, onOpenChange }: {
         <input
           ref={input}
           className="cmd-input"
-          placeholder="Search jobs, projects, or do something"
+          placeholder="Search jobs, projects, tools, or what’s inside them"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
@@ -105,7 +113,7 @@ export default function CommandMenu({ commands, open, onOpenChange }: {
           {results.map((c, i) => {
             const head = i === 0 || results[i - 1].group !== c.group ? c.group : null
             return (
-              <li key={`${c.group}-${c.label}`} role="presentation">
+              <li key={`${c.group}-${c.label}-${c.hint ?? ''}`} role="presentation">
                 {head && <p className="cmd-group">{head}</p>}
                 <div
                   id={`cmd-${i}`}
@@ -116,6 +124,7 @@ export default function CommandMenu({ commands, open, onOpenChange }: {
                   onClick={() => run(c)}
                 >
                   {c.label}
+                  {c.hint && <small className="cmd-hint">{c.hint}</small>}
                 </div>
               </li>
             )

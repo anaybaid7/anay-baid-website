@@ -35,3 +35,23 @@ describe('terminal', () => {
     expect(complete('c')).toBe('c')
   })
 })
+
+describe('terminal, inside the work', () => {
+  it('explains why an entry exists', () => {
+    const out = run('why starrez').lines.join('\n')
+    expect(out).toContain('before  I worked the front desk')
+    expect(out).toContain('result  80%')
+  })
+
+  it('lists flows and traces one step into the drawer', () => {
+    expect(run('flows battleship').lines[0]).toBe('1  A shot is fired')
+    const t = run('trace battleship 1 2')
+    expect(t.lines[0]).toBe('A shot is fired, step 2: The server checks the move')
+    expect(t.action).toEqual({ kind: 'open', id: 'project-battleship-for-purolator', tab: 'how', at: { flow: 1, step: 2 } })
+    expect(run('trace battleship 9 9').lines[0]).toContain('no flow 9 step 9')
+  })
+
+  it('greps inside flow payloads', () => {
+    expect(run('grep repository_dispatch').lines.some((l) => l.includes('flow 1 step'))).toBe(true)
+  })
+})
