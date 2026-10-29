@@ -5,7 +5,7 @@ import { __resetForTests, setSettings } from './settings'
 import { DETAILS } from './details'
 import { experience, projects, profile, repos } from './data'
 
-const SECTIONS = ['Experience', 'Projects', 'Education', 'Skills', 'Code']
+const SECTIONS = ['What I work on', 'Experience', 'Projects', 'Education', 'Skills', 'Code']
 
 beforeEach(() => {
   history.replaceState(null, '', '/')
@@ -275,8 +275,8 @@ describe('App', () => {
     expect(drawer.querySelector('.flow-hop')).toHaveTextContent('Socket.IO → Express server')
     expect(drawer.querySelector('.flow-payload')).toHaveTextContent("socket.on('fire'")
     expect(drawer.querySelectorAll('.arch-live')).toHaveLength(1)
-    fireEvent.click(screen.getByRole('tab', { name: 'Joining by invite link', hidden: true }))
-    expect(drawer.querySelector('.arch-count')).toHaveTextContent('3 steps')
+    fireEvent.click(screen.getByRole('tab', { name: 'Setting up a game', hidden: true }))
+    expect(drawer.querySelector('.arch-count')).toHaveTextContent('4 steps')
   })
 
   it('has a working demo for each project that lists one', async () => {
@@ -324,5 +324,29 @@ describe('App', () => {
     const names = Array.from(document.querySelectorAll('.repos li > a')).map((a) => a.textContent)
     expect(names).not.toContain('insight-vault')
     expect(names).toContain('battleship-purolator')
+  })
+})
+
+describe('what I work on', () => {
+  it('lists each step with its problem and result, and opens the entry', async () => {
+    render(<App />)
+    const section = document.querySelector('[data-part="thread"]')!
+    expect(section).toHaveTextContent('I worked the front desk across Campus Housing')
+    expect(section).toHaveTextContent('10-20×')
+    fireEvent.click(screen.getByRole('button', { name: /^PurolatorSoftware & Network/ }))
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('#drawer-title')).toHaveTextContent('Purolator')
+    expect(drawer.querySelector('.entry-why')).toHaveTextContent('The problem')
+  })
+
+  it('links a wireframe note to its part of the diagram', async () => {
+    history.replaceState(null, '', '/?open=project-battleship-for-purolator&tab=screens')
+    render(<App />)
+    const drawer = await findDrawer()
+    await waitFor(() => expect(drawer.querySelector('.to-node')).not.toBeNull())
+    expect(drawer.querySelector('.to-node')).toHaveTextContent('Handled by Player 1')
+    fireEvent.click(drawer.querySelector('.to-node')!)
+    expect(new URL(location.href).searchParams.get('tab')).toBe('how')
+    expect(drawer.querySelector('.arch-node.on')).not.toBeNull()
   })
 })

@@ -17,7 +17,7 @@ export const OPTIONS = {
 } as const
 
 // sections a visitor can switch off. Experience and projects always stay.
-export const HIDEABLE = ['glance', 'education', 'skills', 'github', 'colophon'] as const
+export const HIDEABLE = ['thread', 'glance', 'education', 'skills', 'github', 'colophon'] as const
 export type Hideable = (typeof HIDEABLE)[number]
 
 type Choices = { [K in keyof typeof OPTIONS]: (typeof OPTIONS)[K][number] }

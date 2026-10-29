@@ -1,4 +1,4 @@
-import { experience, projects } from './data'
+import { experience, projects, type Area } from './data'
 import { slug } from './evidence'
 
 export const shortOrg = (org: string) => org.replace(/ (Inc|LP|Global Holdings Inc)$/, '')
@@ -15,6 +15,9 @@ export interface Entry {
   tech: string[]
   highlight?: { value: string; label: string }
   links: { label: string; href: string }[]
+  why: string
+  built: string
+  areas: Area[]
 }
 
 export const ENTRIES: Entry[] = [
@@ -28,6 +31,9 @@ export const ENTRIES: Entry[] = [
     tech: e.tech,
     highlight: e.highlight,
     links: [{ label: e.org, href: e.orgUrl }],
+    why: e.why,
+    built: e.built,
+    areas: e.areas,
   })),
   ...projects.map<Entry>((p) => ({
     id: `project-${slug(p.title)}`,
@@ -43,6 +49,9 @@ export const ENTRIES: Entry[] = [
       ...(p.link ? [{ label: p.status === 'Live' ? 'Play the real game' : p.link.includes('devpost') ? 'Devpost' : 'Code', href: p.link }] : []),
       ...(p.code ? [{ label: 'Code', href: p.code }] : []),
     ],
+    why: p.why,
+    built: p.built,
+    areas: p.areas,
   })),
 ]
 
