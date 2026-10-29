@@ -17,8 +17,8 @@ import FraudQueue from './demos/FraudQueue'
 import FraudScorer from './demos/FraudScorer'
 import Extension from './demos/Extension'
 import BattleshipMatch from './demos/BattleshipMatch'
-import TargetedBuild from './demos/TargetedBuild'
-import NpcFsm from './demos/NpcFsm'
+import DispatchRun from './demos/DispatchRun'
+import Shelter from './demos/Shelter'
 import RouterApp from './demos/RouterApp'
 
 const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
@@ -33,8 +33,8 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   scorer: FraudScorer,
   extension: Extension,
   battleship: BattleshipMatch,
-  build: TargetedBuild,
-  fsm: NpcFsm,
+  build: DispatchRun,
+  fsm: Shelter,
   router: RouterApp,
 }
 
@@ -98,6 +98,8 @@ export default function DetailDrawer({ open, onChange }: {
   onChange: (next: { id: string; tab: Tab } | null) => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
+  // a part of the diagram to select when a screen note links to it
+  const [focus, setFocus] = useState<{ entry: string; node: string } | null>(null)
   const entry = open ? entryById(open.id) : undefined
   const detail = open ? DETAILS[open.id] : undefined
   const tabs = open ? tabsFor(open.id) : []
@@ -106,6 +108,7 @@ export default function DetailDrawer({ open, onChange }: {
   const prev = index > 0 ? ENTRIES[index - 1] : undefined
   const next = index >= 0 && index < ENTRIES.length - 1 ? ENTRIES[index + 1] : undefined
   const sameKind = entry ? ENTRIES.filter((e) => e.kind === entry.kind) : []
+  const focusNode = focus && focus.entry === open?.id ? focus.node : undefined
 
   useEffect(() => {
     const d = dialog.current
@@ -191,6 +194,7 @@ export default function DetailDrawer({ open, onChange }: {
                   </p>
                 )}
                 {entry.description && <p className="entry-desc">{entry.description}</p>}
+                <p className="entry-why"><span>{entry.kind === 'job' ? 'The problem' : 'Why I built it'}</span> {entry.why}</p>
                 <ul className="dashes">
                   {entry.bullets.map((b) => <li key={b}>{b}</li>)}
                 </ul>
@@ -218,8 +222,23 @@ export default function DetailDrawer({ open, onChange }: {
                 )}
               </div>
             )}
-            {tab === 'how' && detail && <ArchDiagram key={entry.id} arch={detail.arch} flows={detail.flows} name={entry.title} />}
-            {tab === 'screens' && detail?.screens && <Screens kind={detail.screens} />}
+            {tab === 'how' && detail && <ArchDiagram
+                key={`${entry.id}-${focusNode ?? ''}`}
+                arch={detail.arch}
+                flows={detail.flows}
+                name={entry.title}
+                initialPick={focusNode}
+              />}
+            {tab === 'screens' && detail?.screens && (
+              <Screens
+                kind={detail.screens}
+                nodes={detail.arch.nodes}
+                onNode={(node) => {
+                  setFocus({ entry: entry.id, node })
+                  onChange({ id: entry.id, tab: 'how' })
+                }}
+              />
+            )}
             {tab === 'code' && detail?.demos && <CodeTab key={entry.id} kinds={detail.demos.map((d) => d.kind)} />}
             {tab === 'try' && detail?.demos && <TryIt key={entry.id} demos={detail.demos} />}
           </div>

@@ -138,8 +138,8 @@ test('a Battleship round sends shots over the socket and the bot answers', async
   await page.goto('/?open=project-battleship-for-purolator&tab=play')
   await page.getByRole('button', { name: 'D4', exact: true }).click()
   const log = page.locator('dialog.drawer .log')
-  await expect(log).toContainText('cell: "D4"')
-  await expect(log).toContainText('broadcast turn { next: "you" }')
+  await expect(log).toContainText('emit fire { index: 27 }')
+  await expect(log).toContainText('nextTurn: "you"')
 })
 
 test('the pipeline stops on a bad record and recovers when the task is cleared', async ({ page }) => {

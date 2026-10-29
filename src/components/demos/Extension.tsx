@@ -1,145 +1,219 @@
 import { useState } from 'react'
-import { MODULES, runTask, STAGES, type Record_, type StageResult } from './workflow'
+import { findRoom, keyCodes, labelEntry, lockoutEntry, packageEntry, readStudent } from './starrez'
 import { Frame } from '../sim/Frame'
 import { Log, type LogLine } from '../sim/Log'
-import { Status, type State } from '../sim/Status'
 import { useSequence } from '../sim/useSequence'
 
-const PAGE: Record_ = {
-  Resident: 'Sam Lee',
-  Room: 'V1 South 305',
-  'Student #': '20871234',
-  Packages: '2 waiting',
-  Carrier: 'Canada Post',
-  'Key type': 'Room key',
+const STAFF = 'Baid, Anay'
+const RESIDENTS = [
+  { name: 'Lee, Sam', id: '20871234', entry: '48213', room: 'V1S-305a', parcels: 2, keys: 'Bedroom: 4F21A\nLOANER L-1: L0932' },
+  { name: 'Shah, Priya', id: '20895511', entry: '48377', room: 'MKV-4-112b', parcels: 1, keys: 'Bedroom: 7K30C' },
+]
+
+type Kind = 'package' | 'lockout' | 'label'
+interface Entry {
+  kind: Kind
+  text: string
+  at: Date
 }
 
-// The extension working on a resident record. The content script reads each
-// field from the page, messages go through the service worker, and the
-// workflow engine runs the picked task module stage by stage.
+// A StarRez profile with the extension running on it. The buttons it adds
+// sit next to the parts of the page staff already use. Each click reads the
+// page, validates, formats and copies, and the popup keeps the shift's log.
 export default function Extension() {
-  const [task, setTask] = useState(MODULES[0].id)
-  const [empty, setEmpty] = useState(false)
+  const [who, setWho] = useState(0)
+  const [noKeys, setNoKeys] = useState(false)
+  const [injected, setInjected] = useState(true)
   const [reading, setReading] = useState<string | null>(null)
-  const [stages, setStages] = useState<(StageResult | 'running' | null)[]>(STAGES.map(() => null))
-  const [entry, setEntry] = useState<Record_ | null>(null)
-  const [log, setLog] = useState<LogLine[]>([])
-  const [typed, setTyped] = useState(0)
+  const [copied, setCopied] = useState<Kind | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [asking, setAsking] = useState(false)
+  const [reason, setReason] = useState('locked out after class')
+  const [entries, setEntries] = useState<Entry[]>([])
+  const [log, setLog] = useState<LogLine[]>([{ src: 'content', text: 'profile loaded, 4 buttons injected' }])
+  const [filter, setFilter] = useState<'all' | Kind>('all')
   const seq = useSequence()
-  const m = MODULES.find((x) => x.id === task)!
-  const page = empty ? { ...PAGE, Packages: '0 waiting' } : PAGE
+  const r = RESIDENTS[who]
+  const keys = noKeys ? '' : r.keys
 
-  const run = () => {
-    const res = runTask(m, page)
-    setEntry(null)
-    setStages(STAGES.map(() => null))
-    setLog([])
-    setTyped(0)
-    const say = (l: LogLine) => setLog((x) => [...x, l])
-    const stage = (i: number, v: StageResult | 'running') => setStages((s) => s.map((x, j) => (j === i ? v : x)))
+  // the text the content script sees, the same shape as the real page
+  const pageText = `EntryID: ${r.entry}\nStudent Number ${r.id}\nRez 360\nRoom Space ${r.room}\n${r.parcels} Parcels`
+  const say = (...l: LogLine[]) => setLog((x) => [...x, ...l].slice(-40))
+
+  const run = (kind: Kind, extra?: string) => {
+    const s = readStudent(r.name, pageText)
+    const room = findRoom(pageText)
+    const now = new Date(2026, 1, 18, 15, 42)
     const steps: (() => void)[] = [
-      () => say({ src: 'popup', text: `run ${m.id}` }),
-      () => say({ src: 'worker', text: `forwarding to tab 3, content script` }),
-      () => stage(0, 'running'),
-      () => stage(0, res.stages[0]),
-      () => stage(1, 'running'),
-      ...m.fields.map((f) => () => {
-        setReading(f)
-        say({ src: 'content', text: `read "${f}" → ${page[f]}` })
-      }),
       () => {
-        setReading(null)
-        stage(1, res.stages[1])
-        say({ src: 'content', text: `sendMessage({ task: '${m.id}', record })` })
+        setReading('name')
+        say({ src: 'read', text: `breadcrumb → "${r.name}"` })
+      },
+      () => {
+        setReading('id')
+        say({ src: 'read', text: `/Student Number\\s+(\\d{8})/ → ${r.id}` })
+      },
+      () => {
+        setReading('room')
+        say({ src: 'read', text: `room, try ${room?.method} of 3 matched → ${room?.room}` })
       },
     ]
-    res.stages.slice(2).forEach((r, k) => {
-      steps.push(() => stage(k + 2, 'running'))
+    if (kind === 'lockout') {
       steps.push(() => {
-        stage(k + 2, r)
-        if (!r.ok) say({ src: 'engine', text: r.note, tone: 'err' })
+        setReading('keys')
+        const codes = s && keyCodes(keys, s.studentNumber)
+        say(codes ? { src: 'read', text: `Keys card → ${codes.join(', ')}${/LOANER/.test(keys) ? ' (loaner first)' : ''}` } : { src: 'read', text: 'No loaner keys found, no entry made', tone: 'warn' })
       })
-    })
+    }
     steps.push(() => {
-      if (res.entry) {
-        setEntry(res.entry)
-        setTyped(Object.values(res.entry).join('').length)
-        say({ src: 'engine', text: `log filled, ${m.fields.length} fields`, tone: 'ok' })
-      } else say({ src: 'engine', text: 'stopped, nothing written to the log', tone: 'warn' })
+      setReading(null)
+      const codes = s && keyCodes(keys, s.studentNumber)
+      if (!s || (kind === 'lockout' && !codes)) return
+      const text =
+        kind === 'package' ? packageEntry(s, r.parcels, STAFF, now) : kind === 'label' ? labelEntry(s, STAFF, now) : lockoutEntry(s, codes!, extra ?? '', STAFF)
+      say({ src: 'format', text: text.split('\n').join(' / '), tone: 'ok' }, { src: 'clipboard', text: 'copied, preview shown for 4s' })
+      setEntries((e) => [{ kind, text, at: now }, ...e])
+      setCopied(kind)
+      setPreview(text)
     })
-    seq.run(steps, 320)
+    steps.push(() => setCopied(null))
+    seq.run(steps, 380)
   }
 
-  const stateOf = (s: StageResult | 'running' | null): State => (s === null ? 'idle' : s === 'running' ? 'running' : s.ok ? 'success' : 'failed')
+  const nextResident = () => {
+    const to = (who + 1) % RESIDENTS.length
+    seq.run(
+      [
+        () => {
+          setInjected(false)
+          setPreview(null)
+          say({ src: 'observer', text: 'DOM changed, waiting 500 ms for it to settle' })
+        },
+        () => {
+          setWho(to)
+          say({ src: 'observer', text: `breadcrumb changed → "${RESIDENTS[to].name}", removing old buttons` })
+        },
+        () => say({ src: 'content', text: 'waiting for EntryID: on the page' }),
+        () => {
+          setInjected(true)
+          say({ src: 'content', text: '4 buttons injected for the new profile', tone: 'ok' })
+        },
+      ],
+      450,
+    )
+  }
+
+  const btn = (kind: Kind, label: string, onClick: () => void) =>
+    injected && (
+      <button type="button" className={`sr-inj ${copied === kind ? 'done' : ''}`} onClick={onClick} disabled={seq.running}>
+        {copied === kind ? 'Copied!' : label}
+      </button>
+    )
+
+  const count = (k: Kind) => entries.filter((e) => e.kind === k).length
+  const shown = entries.filter((e) => filter === 'all' || e.kind === filter)
 
   return (
     <div className="demo ext">
       <p className="demo-lede">
-        Pick a front desk task and run it on the resident record. Watch the fields get read off the page, the messages pass
-        between the extension’s parts, and the log fill itself in.
+        A resident profile with the extension running. The outlined buttons are the ones it adds. Click one to see it read
+        the page and copy a finished entry, then switch residents to see it re-inject without a reload.
       </p>
       <div className="ext-grid">
-        <Frame title="StarRez" url="housing.example.ca/starrez/resident/20871234" className="ext-page">
-          <p className="ext-h">Resident record</p>
-          <dl>
-            {Object.entries(page).map(([k, v]) => (
-              <div key={k} className={reading === k ? 'reading' : m.fields.includes(k) ? 'used' : ''}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </dl>
+        <Frame title="StarRez" url="uwaterloo.starrezhousing.com/StarRezWeb/main/directory" className="sr-mock">
+          <p className={`sr-crumb ${reading === 'name' ? 'reading' : ''}`}>
+            Dashboard › Desk › <b>{r.name}</b>
+          </p>
+          <div className="sr-cols">
+            <div className="sr-main">
+              <dl>
+                <div><dt>EntryID:</dt><dd>{r.entry}</dd></div>
+                <div className={reading === 'id' ? 'reading' : ''}><dt>Student Number</dt><dd>{r.id}</dd></div>
+                <div className={reading === 'room' ? 'reading' : ''}><dt>Room Space</dt><dd>{r.room}</dd></div>
+              </dl>
+              <p className="sr-row">
+                <span className="sr-native">{r.parcels} Parcels</span>
+                {btn('package', `Copy ${r.parcels} pkg${r.parcels > 1 ? 's' : ''}`, () => run('package'))}
+              </p>
+              <p className="sr-row">
+                <span className="sr-native">Entry Actions</span>
+                {btn('label', 'Print Label', () => run('label'))}
+              </p>
+            </div>
+            <aside className={`sr-keys ${reading === 'keys' ? 'reading' : ''}`}>
+              <p className="sr-h">Rez 360</p>
+              <p className="sr-k">KEYS</p>
+              <pre>{keys || 'No keys on file'}</pre>
+              {btn('lockout', 'Copy Lockout', () => setAsking(true))}
+            </aside>
+          </div>
+          {asking && (
+            <div className="sr-modal" role="dialog" aria-label="Lockout reason">
+              <p>Reason for lockout</p>
+              <input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" />
+              <p className="demo-actions">
+                <button type="button" onClick={() => setAsking(false)}>Cancel</button>
+                <button
+                  type="button"
+                  className="demo-primary"
+                  onClick={() => {
+                    setAsking(false)
+                    run('lockout', reason.trim() || 'no reason given')
+                  }}
+                >
+                  Copy entry
+                </button>
+              </p>
+            </div>
+          )}
+          {preview && (
+            <div className="sr-toast" aria-live="polite">
+              <small>Logged by: {STAFF}</small>
+              <pre>{preview}</pre>
+            </div>
+          )}
         </Frame>
 
-        <div className="ext-popup">
-          <p className="ext-h">Front desk logger</p>
-          <div className="ext-tasks" role="radiogroup" aria-label="Task">
-            {MODULES.map((x) => (
-              <label key={x.id} className={task === x.id ? 'on' : ''}>
-                <input type="radio" name="ext-task" checked={task === x.id} onChange={() => setTask(x.id)} disabled={seq.running} />
-                {x.name}
-              </label>
+        <div className="sr-popup">
+          <p className="sr-pop-head">StarRez Logger, activity</p>
+          <div className="sr-counts">
+            <div><b>{count('package')}</b>Packages</div>
+            <div><b>{count('lockout')}</b>Lockouts</div>
+            <div><b>{count('label')}</b>Labels</div>
+            <div><b>{entries.length}</b>Total</div>
+          </div>
+          <div className="sr-filters" role="radiogroup" aria-label="Filter">
+            {(['all', 'package', 'lockout', 'label'] as const).map((f) => (
+              <button key={f} type="button" role="radio" aria-checked={filter === f} onClick={() => setFilter(f)}>
+                {f === 'all' ? 'All' : f[0].toUpperCase() + f.slice(1)}
+              </button>
             ))}
           </div>
-          <ol className="ext-stages">
-            {STAGES.map((s, i) => {
-              const v = stages[i]
-              return (
-                <li key={s}>
-                  <Status state={stateOf(v)} />
-                  <span>{s}</span>
-                  {v && v !== 'running' && <small>{v.note}</small>}
-                </li>
-              )
-            })}
-          </ol>
-          <button type="button" className="demo-primary" onClick={run} disabled={seq.running}>Run {m.name.toLowerCase()}</button>
+          <ul className="sr-list">
+            {shown.length === 0 && <li className="none">No entries this shift yet</li>}
+            {shown.map((e, i) => (
+              <li key={i}>
+                <span className={`sr-type t-${e.kind}`}>{e.kind}</span>
+                <code>{e.text.split('\n').join(' / ')}</code>
+              </li>
+            ))}
+          </ul>
+          <p className="sr-saved">
+            {entries.length > 0
+              ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} in one click each. By hand, each takes about 20 seconds of reading and typing.`
+              : 'By hand, each entry takes about 20 seconds of reading and typing.'}
+          </p>
         </div>
       </div>
 
-      <div className="ext-grid lower">
-        <div className="sr-log">
-          <p className="sr-title">{m.name} log</p>
-          {m.fields.map((f) => (
-            <label key={f} className="sr-field">
-              <span>{f}</span>
-              <input readOnly value={entry?.[f] ?? ''} />
-            </label>
-          ))}
-          {entry && (
-            <p className="ext-saved">
-              {typed} characters that would have been typed by hand, filled in one click.
-            </p>
-          )}
-        </div>
-        <Log title="Extension messages" lines={log} empty="Run a task to see the messages" />
+      <div className="demo-actions">
+        <button type="button" onClick={nextResident} disabled={seq.running}>Open another resident</button>
+        <label className="demo-check">
+          <input type="checkbox" checked={noKeys} onChange={(e) => setNoKeys(e.target.checked)} /> No keys on file
+        </label>
       </div>
-
-      <label className="demo-check">
-        <input type="checkbox" checked={empty} onChange={(e) => setEmpty(e.target.checked)} disabled={seq.running} />
-        Resident has no packages waiting
-      </label>
-      <p className="demo-note">Made-up resident, just to show the idea.</p>
+      <Log title="Content script" lines={log} />
+      <p className="demo-note">Made-up residents. The parsing and formats are the extension’s own, shown in the Code tab.</p>
     </div>
   )
 }
