@@ -7,6 +7,7 @@ import CodeView from './CodeView'
 import { SpeedPicker } from './sim/SpeedPicker'
 import { sourcesFor } from './demos/sources'
 import PipelineRun from './demos/PipelineRun'
+import Planner from './demos/Planner'
 import Allocation from './demos/Allocation'
 import SdkRun from './demos/SdkRun'
 import ReleaseRun from './demos/ReleaseRun'
@@ -23,6 +24,7 @@ import RouterApp from './demos/RouterApp'
 
 const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   pipeline: PipelineRun,
+  planner: Planner,
   allocation: Allocation,
   sdk: SdkRun,
   release: ReleaseRun,
@@ -93,9 +95,16 @@ const TAB_NAMES: Record<Tab, string> = {
 // A panel that slides in from the right with everything about one job or
 // project. Previous and next move through the list without closing it, Esc
 // closes it, and the URL keeps which one is open so it can be shared.
+// which entry is open, on which tab, and optionally one step of one flow
+export interface Opened {
+  id: string
+  tab: Tab
+  at?: { flow: number; step: number }
+}
+
 export default function DetailDrawer({ open, onChange }: {
-  open: { id: string; tab: Tab } | null
-  onChange: (next: { id: string; tab: Tab } | null) => void
+  open: Opened | null
+  onChange: (next: Opened | null) => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   // a part of the diagram to select when a screen note links to it
@@ -223,7 +232,7 @@ export default function DetailDrawer({ open, onChange }: {
               </div>
             )}
             {tab === 'how' && detail && <ArchDiagram
-                key={`${entry.id}-${focusNode ?? ''}`}
+                key={`${entry.id}-${focusNode ?? ''}-${open?.at ? `${open.at.flow}.${open.at.step}` : ''}`}
                 arch={detail.arch}
                 flows={detail.flows}
                 name={entry.title}

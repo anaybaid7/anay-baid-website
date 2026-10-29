@@ -1,4 +1,5 @@
 import pipeline from './pipeline.ts?raw'
+import planner from './planner.ts?raw'
 import allocate from './allocate.ts?raw'
 import sales from './sales.ts?raw'
 import compareSchemas from './compareSchemas.ts?raw'
@@ -18,6 +19,7 @@ export interface Source {
 // the logic behind each demo, shown as is in the drawer's Code tab
 export const SOURCES: Partial<Record<DemoKind, Source>> = {
   pipeline: { file: 'pipeline.ts', source: pipeline },
+  planner: { file: 'planner.ts', source: planner },
   allocation: { file: 'allocate.ts', source: allocate },
   stream: { file: 'sales.ts', source: sales },
   dataval: { file: 'compareSchemas.ts', source: compareSchemas },

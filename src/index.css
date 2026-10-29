@@ -5387,3 +5387,208 @@ button.thread-row:hover .thread-where b {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.cmd-hint {
+  display: block;
+  margin-top: 1px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.cmd-item.on .cmd-hint {
+  color: inherit;
+  opacity: 0.8;
+}
+.flow-link {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 600 13.5px var(--font);
+  color: var(--cobalt);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.match-list .match-steps {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: -6px;
+}
+.match-steps button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 600 13.5px var(--font);
+  color: var(--cobalt);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---- forecast planner ---- */
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+.plan-table th {
+  padding: 6px 8px;
+  border-bottom: 1.5px solid var(--ink);
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.plan-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.plan-table tr.changed td {
+  background: color-mix(in srgb, var(--cobalt) 6%, transparent);
+}
+.plan-table td.up {
+  color: var(--cobalt);
+  font-weight: 650;
+}
+.plan-table td.down {
+  color: var(--bad);
+  font-weight: 650;
+}
+.plan-input {
+  width: 92px;
+  padding: 4px 6px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 14px var(--mono);
+}
+.plan-event {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--cobalt);
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--cobalt);
+}
+.demo-check.tight {
+  margin: 0;
+  min-height: 0;
+}
+.plan-bar {
+  position: relative;
+  width: 28%;
+}
+.plan-bar i {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  max-width: calc(100% - 16px);
+  background: var(--cobalt);
+  transition: width 0.2s ease-out;
+}
+.plan-bar i.orig {
+  height: 14px;
+  margin-top: -7px;
+  background: none;
+  border-right: 2px solid var(--ink);
+}
+.daily {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.daily-col {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.daily-bar {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 120px;
+  background: var(--card);
+}
+.daily-bar i {
+  display: block;
+  width: 100%;
+  background: var(--cobalt);
+  transition: height 0.25s ease-out;
+}
+.daily-col b {
+  font-size: 13.5px;
+}
+.daily-col label {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.daily-col input {
+  width: 100%;
+  max-width: 72px;
+  padding: 4px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 13px var(--mono);
+  text-align: center;
+}
+.gaps td.hist span {
+  display: inline-block;
+  min-width: 3.2em;
+  margin-right: 4px;
+  font: 13px var(--mono);
+}
+.gaps td.hist span.hol {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.gaps td.hist span.hol.in {
+  color: var(--bad);
+  text-decoration: none;
+  font-weight: 700;
+}
+.gaps tr.flag td {
+  background: color-mix(in srgb, var(--bad) 8%, transparent);
+}
+.gaps tr.flag td:last-child {
+  color: var(--bad);
+  font-weight: 750;
+}
+@media (max-width: 760px) {
+  .plan-bar {
+    display: none;
+  }
+  .daily {
+    gap: 4px;
+  }
+  .gaps {
+    font-size: 13px;
+  }
+  .gaps td.hist span {
+    min-width: 2.6em;
+  }
+  .plan-table th,
+  .plan-table td {
+    padding: 4px 4px;
+  }
+}
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.match-see {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.plan-table.gaps {
+  min-width: 620px;
+}
