@@ -5,10 +5,10 @@ import Allocation from './Allocation'
 import FraudScorer from './FraudScorer'
 import PipelineRun from './PipelineRun'
 import Reconcile from './Reconcile'
-import TargetedBuild from './TargetedBuild'
+import DispatchRun from './DispatchRun'
 import Extension from './Extension'
 import BattleshipMatch from './BattleshipMatch'
-import NpcFsm from './NpcFsm'
+import Shelter from './Shelter'
 import RouterApp from './RouterApp'
 import ReleaseRun from './ReleaseRun'
 import SdkRun from './SdkRun'
@@ -87,37 +87,42 @@ describe('demos', () => {
     expect(screen.getByText(/Both copies match/)).toBeInTheDocument()
   })
 
-  it('build trigger dispatches only changed services and blocks a feature branch on prod', () => {
-    render(<TargetedBuild />)
-    fireEvent.click(screen.getByRole('button', { name: 'Run build-trigger' }))
-    expect(document.querySelector('.email')).toHaveTextContent('2 of 4 services')
-    fireEvent.click(screen.getByLabelText('prod'))
-    fireEvent.click(screen.getByLabelText('feature/login'))
-    fireEvent.click(screen.getByRole('button', { name: 'Run build-trigger' }))
-    expect(document.querySelector('.email')).toHaveTextContent('build blocked')
+  it('build trigger stops on a missing variable, and builds only the matching environment', () => {
+    render(<DispatchRun />)
+    fireEvent.click(screen.getByRole('button', { name: 'Run the action' }))
+    expect(document.querySelector('.wf.s-success')).toHaveTextContent('staging')
+    expect(document.querySelector('.email')).toHaveTextContent('anaybaid7/planner-app/refs/heads/main/staging')
+    fireEvent.change(screen.getByLabelText('GITHUB_REPO_NAME'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Run the action' }))
+    expect(document.querySelector('.log')).toHaveTextContent('GITHUB_REPO_NAME is missing')
   })
 
-  it('extension reads the page and fills the log', () => {
+  it('extension reads the profile and copies a formatted entry', () => {
     render(<Extension />)
-    fireEvent.click(screen.getByRole('button', { name: 'Run package pickup' }))
-    const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('.sr-field input'))
-    expect(inputs.every((i) => i.value.length > 0)).toBe(true)
-    expect(document.querySelector('.log')).toHaveTextContent('read "Room" → V1 South 305')
+    fireEvent.click(screen.getByRole('button', { name: 'Copy 2 pkgs' }))
+    expect(document.querySelector('.sr-list')).toHaveTextContent('S.L (20871234) V1S-305a 2 pkgs @ 3:42 pm - A.B')
+    fireEvent.click(screen.getByRole('button', { name: 'Copy Lockout' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy entry' }))
+    expect(document.querySelector('.sr-list')).toHaveTextContent('KC: L0932; locked out after class - A.B')
+    fireEvent.click(screen.getByLabelText(/No keys on file/))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy Lockout' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy entry' }))
+    expect(document.querySelector('.log')).toHaveTextContent('No loaner keys found')
   })
 
-  it('battleship refuses a shot out of turn', () => {
+  it('battleship sends the real socket events for a shot and the reply', () => {
     render(<BattleshipMatch />)
     fireEvent.click(screen.getByRole('button', { name: 'A1' }))
-    expect(document.querySelector('.log')).toHaveTextContent('emit fire { room: "K7QX2", cell: "A1" }')
-    expect(document.querySelector('.log')).toHaveTextContent('broadcast turn { next: "you" }')
+    expect(document.querySelector('.log')).toHaveTextContent('emit fire { index: 0 }')
+    expect(document.querySelector('.log')).toHaveTextContent('shot_result { index: 0')
+    expect(document.querySelector('.log')).toHaveTextContent('nextTurn: "you"')
   })
 
-  it('state machine ignores events that do not apply', () => {
-    render(<NpcFsm />)
-    fireEvent.click(screen.getByRole('button', { name: 'Fed' }))
-    expect(document.querySelector('.log')).toHaveTextContent('Fed ignored in Wandering')
-    fireEvent.click(screen.getByRole('button', { name: 'PlayerNear' }))
-    expect(document.querySelector('.fsm-now b')).toHaveTextContent('Following')
+  it('shelter animals go for food and score when they eat', () => {
+    render(<Shelter />)
+    for (let i = 0; i < 12; i++) fireEvent.click(screen.getByRole('button', { name: 'Advance one tick' }))
+    expect(document.querySelector('.log')).toHaveTextContent('goToFood')
+    expect(document.querySelector('.log')).toHaveTextContent('XP')
   })
 
   it('routing app navigates without a reload and validates the form', () => {
