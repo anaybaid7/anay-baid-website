@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { profile, experience, projects, education, skills, skillLabels } from './data'
+import { profile, experience, projects, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import GithubActivity from './components/GithubActivity'
 import ThemeToggle from './components/ThemeToggle'
@@ -13,7 +13,7 @@ import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
 import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
-import { ENTRIES } from './entries'
+import { ENTRIES, entryById } from './entries'
 import { tabsFor, type Tab } from './details'
 import Minimap from './components/Minimap'
 import MiniArch from './components/MiniArch'
@@ -274,6 +274,7 @@ function Experience({ active, onPick, filter, onOpen }: { active: number; onPick
                 </h3>
                 <p className="entry-sub">{e.role}</p>
                 <Result h={e.highlight} />
+                <p className="entry-why"><span>The problem</span> {e.why}</p>
                 <Bullets items={e.bullets} />
                 <p className="stack">{e.tech.join(', ')}</p>
                 <OpenDetail id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
@@ -344,6 +345,78 @@ function Glance({ onCheck }: { onCheck: () => void }) {
           Recruiting for a role? <button type="button" onClick={onCheck}>Paste the job posting</button> to see which of
           the skills it asks for I've used, and where.
         </p>
+      </div>
+    </section>
+  )
+}
+
+// The through-line: what was slow or manual at each place, what I built,
+// and what changed, in the order it happened. Each row opens its drawer.
+const THREAD: [string, string[]][] = [
+  ['2023', ['project-ci-cd-build-automation-tool']],
+  ['2024', ['job-cineplex-entertainment', 'job-nationwide-appraisals']],
+  ['2025', ['job-iotum']],
+  ['2026', ['project-starrez-enterprise-automation-suite', 'job-purolator', 'project-battleship-for-purolator', 'project-insightvault']],
+]
+
+function Thread({ onOpen }: { onOpen: (id: string, tab?: Tab) => void }) {
+  return (
+    <section className="section thread" aria-labelledby="thread" data-part="thread">
+      <h2 id="thread">What I work on</h2>
+      <div className="section-body">
+        <p className="thread-lede">
+          Most of what I build starts with work someone is doing by hand. I turn it into a pipeline, a service or a tool
+          that does it reliably. Each term added a layer: data at Cineplex, infrastructure at Nationwide, testing at
+          Iotum, and all of it together at Purolator.
+        </p>
+        <div className="thread-table">
+          <div className="thread-row head" aria-hidden="true">
+            <span>Where</span>
+            <span>What was slow or manual</span>
+            <span>What I built</span>
+            <span>Result</span>
+          </div>
+          {THREAD.map(([year, ids]) => (
+            <div key={year} className="thread-year">
+              <p className="thread-y" aria-hidden="true">{year}</p>
+              {ids.map((id) => {
+                const e = entryById(id)!
+                return (
+                  <button key={id} type="button" className="thread-row" onClick={() => onOpen(id, 'overview')}>
+                    <span className="thread-where">
+                      <b>{e.title.replace(/ \(.*\)$/, '')}</b>
+                      <small>{e.kind === 'job' ? e.sub : 'Project'}</small>
+                    </span>
+                    <span>{e.why}</span>
+                    <span>{e.built}</span>
+                    <span className="thread-result">
+                      {e.highlight && (
+                        <>
+                          <b>{e.highlight.value}</b> {e.highlight.label}
+                        </>
+                      )}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+        <dl className="areas">
+          {(Object.keys(AREAS) as Area[]).map((a) => (
+            <div key={a}>
+              <dt>{AREAS[a]}</dt>
+              <dd>
+                {ENTRIES.filter((e) => e.areas.includes(a)).map((e, i, all) => (
+                  <span key={e.id}>
+                    <button type="button" onClick={() => onOpen(e.id, 'overview')}>{e.title.replace(/ \(.*\)$/, '')}</button>
+                    {i < all.length - 1 && ', '}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   )
@@ -575,8 +648,8 @@ export default function App() {
                 they run on.
               </p>
               <p className="sub">
-                Fourth-year Computer Science at Waterloo, graduating in April 2027, with co-op terms across backend
-                development, test automation, DevOps and data engineering.
+                Fourth-year Computer Science at Waterloo, graduating in April 2027. Each co-op term has taken work people
+                were doing by hand and turned it into a system that does it reliably.
               </p>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>
@@ -587,6 +660,8 @@ export default function App() {
             </div>
           </div>
         </section>
+
+        <Thread onOpen={openDetail} />
 
         <Glance onCheck={() => setMatcherOpen(true)} />
 
@@ -626,6 +701,7 @@ export default function App() {
                     {p.award && p.highlight?.value !== 'Won' && <p className="entry-sub">{p.award}</p>}
                     <Result h={p.highlight} />
                     <p className="entry-desc">{p.description}</p>
+                    <p className="entry-why"><span>Why I built it</span> {p.why}</p>
                     <Bullets items={p.bullets} />
                     <p className="stack">{p.tech.join(', ')}</p>
                     <div className="entry-actions">

@@ -24,6 +24,16 @@ export const profile = {
 
 export type Tech = string
 
+// the kinds of work an entry covers, used for the overview at the top
+export const AREAS = {
+  data: 'Data pipelines',
+  backend: 'Backend services',
+  infra: 'Cloud and infrastructure',
+  automation: 'Testing and automation',
+  frontend: 'Interfaces',
+} as const
+export type Area = keyof typeof AREAS
+
 // The resume's own "Technical Skills" section, verbatim by category. This is
 // broader than allTech below (which is only what's actually demonstrated in
 // a specific experience bullet or project), so it's shown as its own block
@@ -53,6 +63,10 @@ export interface ExperienceEntry {
   tech: Tech[]
   // one number from the bullets above, shown in the list so it scans fast
   highlight?: { value: string; label: string }
+  // what was slow or manual before, and what I built about it
+  why: string
+  built: string
+  areas: Area[]
 }
 
 export const experience: ExperienceEntry[] = [
@@ -70,6 +84,9 @@ export const experience: ExperienceEntry[] = [
     ],
     tech: ['Python', 'PowerShell', 'Flask', 'REST', 'Airflow', 'SQL', 'Docker', 'AWS S3', 'SageMaker', 'ECS/Fargate', 'Terraform'],
     highlight: { value: '10-20×', label: 'faster planning turnaround' },
+    why: 'Forecasts were built by scripts run by hand and passed around as spreadsheets, so every planning change meant another manual run.',
+    built: 'The pipeline, API and AWS infrastructure behind the team’s planning tools',
+    areas: ['data', 'backend', 'infra'],
   },
   {
     role: 'Software Engineer',
@@ -84,6 +101,9 @@ export const experience: ExperienceEntry[] = [
     ],
     tech: ['React', 'JavaScript', 'Selenium', 'Mocha', 'CI/CD'],
     highlight: { value: '85%', label: 'increase in code coverage' },
+    why: 'Client teams were starting SDK integrations from scratch, and regressions were caught by hand late in a release.',
+    built: 'Reference apps to build from, and a browser test framework that runs in CI',
+    areas: ['automation', 'frontend'],
   },
   {
     role: 'DevOps Engineer',
@@ -97,6 +117,9 @@ export const experience: ExperienceEntry[] = [
     ],
     tech: ['Docker', 'TCP/IP', 'AWS', 'Azure', 'Intune MDM', 'SQL', 'SSH', 'Java', 'Android'],
     highlight: { value: '40%', label: 'less manual setup' },
+    why: 'Services and devices were set up by hand, one machine at a time, so environments drifted apart.',
+    built: 'Containerized services, and automated cloud and device provisioning',
+    areas: ['infra', 'automation'],
   },
   {
     role: 'Data Engineer',
@@ -111,6 +134,9 @@ export const experience: ExperienceEntry[] = [
     ],
     tech: ['Python', 'SQL', 'Azure', 'ETL', 'JUnit', 'Selenium'],
     highlight: { value: '10TB+', label: 'of data reconciled' },
+    why: 'The same data lived in Azure and on-prem, and when the copies disagreed the dashboard and the models were working from bad numbers.',
+    built: 'Real-time ETL with validation, and pipelines that reconcile the two copies',
+    areas: ['data', 'automation'],
   },
 ]
 
@@ -126,6 +152,9 @@ export interface ProjectEntry {
   code?: string
   highlight?: { value: string; label: string }
   image?: { src: string; alt: string; caption: string }
+  why: string
+  built: string
+  areas: Area[]
 }
 
 export const projects: ProjectEntry[] = [
@@ -142,6 +171,9 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['Java', 'Spring Boot', 'React', 'TypeScript', 'AWS', 'Terraform', 'Python', 'Playwright'],
     highlight: { value: '92.9%', label: 'precision on held-out transactions' },
+    why: 'A fraud alert is only useful if a reviewer can see why it fired, so every flag here comes with the rules and features behind it.',
+    built: 'A rule engine and a logistic model behind a Spring Boot API, with a review dashboard',
+    areas: ['backend', 'data', 'infra', 'frontend'],
   },
   {
     title: 'StarRez Enterprise Automation Suite',
@@ -156,6 +188,9 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['JavaScript', 'DOM Injection', 'Workflow Automation'],
     highlight: { value: '80%', label: 'less manual logging' },
+    why: 'I worked the front desk across Campus Housing, and every package or lockout meant retyping a name, student number and room from the screen.',
+    built: 'A Chrome extension that reads the page and copies a finished log entry in one click',
+    areas: ['automation', 'frontend'],
     link: 'https://github.com/anaybaid7/starrez-logger-prod',
   },
   {
@@ -171,6 +206,9 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['Node.js', 'Express', 'Socket.IO', 'Render'],
     highlight: { value: 'Live', label: 'on Render, with invite links and a lobby' },
+    why: 'Our summer intern event needed something people across teams could play together on their phones, and it had to survive a dropped connection.',
+    built: 'A real-time two-player game on Node, Express and Socket.IO',
+    areas: ['backend', 'frontend'],
     link: 'https://purolator-battleship.onrender.com',
     code: 'https://github.com/anaybaid7/battleship-purolator',
   },
@@ -187,6 +225,9 @@ export const projects: ProjectEntry[] = [
     ],
     tech: ['Python', 'GitHub Actions API', 'SMTP', 'REST'],
     highlight: { value: 'Won', label: 'Best Use of GitHub at uOttaHack 5' },
+    why: 'Deploying one branch to one environment shouldn’t mean rerunning the whole pipeline.',
+    built: 'A GitHub Action that dispatches a build for exactly that branch and environment',
+    areas: ['infra', 'automation'],
     link: 'https://devpost.com/software/github-build-trigger-application',
     code: 'https://github.com/anaybaid7/GitHub-Build-Trigger-Code-UOttaHack5',
   },
@@ -196,6 +237,9 @@ export const projects: ProjectEntry[] = [
     status: 'Ended',
     period: 'HackWestern 9',
     highlight: { value: 'Won', label: 'Best Gaming Hack at HackWestern 9' },
+    why: 'Built around animal welfare. You run a shelter, keep the animals fed and watered, and earn by getting them adopted.',
+    built: 'The gameplay loop and animal state machine in Unity and C#',
+    areas: ['frontend'],
     description:
       "A browser-based Unity game about animal welfare, built by a team of three at HackWestern 9.",
     bullets: [
@@ -211,6 +255,9 @@ export const projects: ProjectEntry[] = [
     status: 'Ended',
     period: 'Hack The North',
     highlight: { value: 'Real-time', label: 'updates over WebSockets, fewer page reloads' },
+    why: 'A weekend build focused on getting client-side navigation and live shared state right in one app.',
+    built: 'A React app with client-side routing, a Redux store and WebSocket updates',
+    areas: ['frontend'],
     description:
       "A full-stack React app built at Hack The North, focused on client-side navigation and real-time state.",
     bullets: [
