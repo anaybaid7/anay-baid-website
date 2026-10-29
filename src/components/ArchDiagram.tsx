@@ -79,12 +79,12 @@ function flowsOf(arch: Architecture, flows?: Flow[]): Flow[] {
 // An architecture diagram drawn from data. Each flow is one scenario through
 // the system, played a hop at a time with a dot moving along the line, and
 // every hop shows what is sent and what happens with it.
-export default function ArchDiagram({ arch, flows: given, name }: { arch: Architecture; flows?: Flow[]; name: string }) {
+export default function ArchDiagram({ arch, flows: given, name, initialPick }: { arch: Architecture; flows?: Flow[]; name: string; initialPick?: string }) {
   const flows = useMemo(() => flowsOf(arch, given), [arch, given])
   const [f, setF] = useState(0)
   const [step, setStep] = useState(-1)
   const [playing, setPlaying] = useState(false)
-  const [picked, setPicked] = useState<string | null>(null)
+  const [picked, setPicked] = useState<string | null>(initialPick ?? null)
   const calm = useCalm()
   const marker = useId().replace(/:/g, '')
   const flow = flows[f]
