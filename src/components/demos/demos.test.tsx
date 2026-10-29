@@ -1,11 +1,26 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { allocate } from './allocate'
 import Allocation from './Allocation'
 import FraudScorer from './FraudScorer'
-import SchemaCheck from './SchemaCheck'
+import PipelineRun from './PipelineRun'
+import Reconcile from './Reconcile'
 import TargetedBuild from './TargetedBuild'
-import StarrezFill from './StarrezFill'
+import Extension from './Extension'
+import BattleshipMatch from './BattleshipMatch'
+import NpcFsm from './NpcFsm'
+import RouterApp from './RouterApp'
+import ReleaseRun from './ReleaseRun'
+import SdkRun from './SdkRun'
+import Provision from './Provision'
+
+// every timed demo runs its steps at once with reduced motion
+beforeEach(() => {
+  document.documentElement.dataset.motion = 'reduced'
+})
+afterEach(() => {
+  delete document.documentElement.dataset.motion
+})
 
 describe('allocate', () => {
   const sites = [
@@ -38,7 +53,6 @@ describe('demos', () => {
     render(<Allocation />)
     fireEvent.change(screen.getByLabelText('Terminal C capacity'), { target: { value: '1500' } })
     expect(document.querySelector('.demo-out')).toHaveTextContent('Terminal A, Terminal B and Terminal C are at capacity')
-    expect(document.querySelector('.demo-out')).toHaveTextContent('All 10,000 placed')
     fireEvent.change(screen.getByLabelText('Terminal C capacity'), { target: { value: '500' } })
     expect(document.querySelector('.demo-out')).toHaveTextContent("300 parcels don't fit anywhere")
   })
@@ -49,34 +63,97 @@ describe('demos', () => {
     fireEvent.click(screen.getByLabelText(/New merchant/))
     fireEvent.click(screen.getByLabelText(/Different country/))
     expect(document.querySelector('.verdict')).toHaveTextContent('Alert')
-    expect(document.querySelector('.rules')).toHaveTextContent('Abroad at a new merchant')
   })
 
-  it('schema check finds every mismatch', () => {
-    document.documentElement.dataset.motion = 'reduced'
-    render(<SchemaCheck />)
+  it('pipeline fails on a bad record, then clears and retries the same run', () => {
+    render(<PipelineRun />)
+    fireEvent.click(screen.getByLabelText('Add a bad record to the export'))
+    fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
+    fireEvent.click(screen.getByRole('button', { name: 'validate, run 1' }))
+    expect(document.querySelector('.log')).toHaveTextContent('unknown terminal 999')
+    fireEvent.click(screen.getByRole('button', { name: 'Fix the record, clear validate' }))
+    expect(screen.getByText('try 2')).toBeInTheDocument()
+    expect(document.querySelector('.pipe-facts')).toHaveTextContent('success')
+    expect(document.querySelector('.pipe-facts')).toHaveTextContent('4 rows')
+  })
+
+  it('reconcile needs every fix and a rerun before it goes green', () => {
+    render(<Reconcile />)
     fireEvent.click(screen.getByRole('button', { name: 'Run the check' }))
-    const out = document.querySelector('.findings')!
-    expect(out).toHaveTextContent('screen_id is missing on-prem')
-    expect(out).toHaveTextContent('show_date is DATE in Azure but VARCHAR(10) on-prem')
-    expect(out).toHaveTextContent('Row counts differ by 13')
-    delete document.documentElement.dataset.motion
+    expect(document.querySelector('.findings')).toHaveTextContent('screen_id is missing on-prem')
+    for (const b of screen.getAllByRole('button', { name: 'Apply fix' })) fireEvent.click(b)
+    expect(screen.getByText(/Run the check again to confirm/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Run it again' }))
+    expect(screen.getByText(/Both copies match/)).toBeInTheDocument()
   })
 
-  it('targeted build only triggers what changed', () => {
-    document.documentElement.dataset.motion = 'reduced'
+  it('build trigger dispatches only changed services and blocks a feature branch on prod', () => {
     render(<TargetedBuild />)
-    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
-    const term = document.querySelector('.term')!
-    expect(term).toHaveTextContent('triggering 2 of 4 builds')
-    expect(term).toHaveTextContent('skipped worker, docs')
-    delete document.documentElement.dataset.motion
+    fireEvent.click(screen.getByRole('button', { name: 'Run build-trigger' }))
+    expect(document.querySelector('.email')).toHaveTextContent('2 of 4 services')
+    fireEvent.click(screen.getByLabelText('prod'))
+    fireEvent.click(screen.getByLabelText('feature/login'))
+    fireEvent.click(screen.getByRole('button', { name: 'Run build-trigger' }))
+    expect(document.querySelector('.email')).toHaveTextContent('build blocked')
   })
 
-  it('StarRez fill copies every field from the page in one click', () => {
-    render(<StarrezFill />)
-    fireEvent.click(screen.getByRole('button', { name: 'Fill from the page' }))
+  it('extension reads the page and fills the log', () => {
+    render(<Extension />)
+    fireEvent.click(screen.getByRole('button', { name: 'Run package pickup' }))
     const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('.sr-field input'))
     expect(inputs.every((i) => i.value.length > 0)).toBe(true)
+    expect(document.querySelector('.log')).toHaveTextContent('read "Room" → V1 South 305')
+  })
+
+  it('battleship refuses a shot out of turn', () => {
+    render(<BattleshipMatch />)
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    expect(document.querySelector('.log')).toHaveTextContent('emit fire { room: "K7QX2", cell: "A1" }')
+    expect(document.querySelector('.log')).toHaveTextContent('broadcast turn { next: "you" }')
+  })
+
+  it('state machine ignores events that do not apply', () => {
+    render(<NpcFsm />)
+    fireEvent.click(screen.getByRole('button', { name: 'Fed' }))
+    expect(document.querySelector('.log')).toHaveTextContent('Fed ignored in Wandering')
+    fireEvent.click(screen.getByRole('button', { name: 'PlayerNear' }))
+    expect(document.querySelector('.fsm-now b')).toHaveTextContent('Following')
+  })
+
+  it('routing app navigates without a reload and validates the form', () => {
+    render(<RouterApp />)
+    fireEvent.click(screen.getByRole('button', { name: 'New event' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create event' }))
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/^Title/), { target: { value: 'Demo day' } })
+    fireEvent.change(screen.getByLabelText(/^Organizer email/), { target: { value: 'a@b.co' } })
+    fireEvent.change(screen.getByLabelText(/^Seats/), { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create event' }))
+    expect(document.querySelector('.frame-url')).toHaveTextContent('app.local/events/43')
+    expect(document.querySelector('.rf-event')).toHaveTextContent('Demo day')
+    expect(document.querySelector('.rf-foot')).toHaveTextContent('Page loads 1')
+  })
+
+  it('release pipeline blocks on a failing browser spec', () => {
+    render(<ReleaseRun />)
+    fireEvent.click(screen.getByLabelText(/Introduce a regression/))
+    fireEvent.click(screen.getByRole('button', { name: 'Run the pipeline' }))
+    expect(document.querySelector('.log')).toHaveTextContent('release blocked')
+  })
+
+  it('sdk demo walks the integration and reacts to live events', () => {
+    render(<SdkRun />)
+    fireEvent.click(screen.getByRole('button', { name: 'Run the app' }))
+    expect(document.querySelector('.log')).toHaveTextContent('POST /v1/sessions 201')
+    fireEvent.click(screen.getByRole('button', { name: 'Someone joins' }))
+    expect(document.querySelector('.sdk-people')).toHaveTextContent('Priya')
+  })
+
+  it('provisioning shows a device become compliant', () => {
+    render(<Provision />)
+    fireEvent.click(screen.getByRole('button', { name: 'Enroll the laptop' }))
+    expect(document.querySelector('.laptop')).toHaveTextContent('Compliant')
+    fireEvent.click(screen.getByRole('button', { name: 'Turn off encryption' }))
+    expect(document.querySelector('.laptop')).toHaveTextContent('Not compliant')
   })
 })

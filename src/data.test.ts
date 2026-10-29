@@ -141,6 +141,19 @@ describe('drawer details', () => {
     }
   })
 
+  it('only run flows through boxes that exist, and leave no box unconnected', () => {
+    for (const [id, d] of Object.entries(DETAILS)) {
+      const nodes = new Set(d.arch.nodes.map((n) => n.id))
+      const used = new Set(d.arch.edges.flatMap((e) => [e.from, e.to]))
+      for (const f of d.flows ?? [])
+        for (const s of f.steps) {
+          expect(nodes.has(s.from) && nodes.has(s.to), `${id} ${f.name}: ${s.from} → ${s.to}`).toBe(true)
+          used.add(s.from).add(s.to)
+        }
+      for (const n of nodes) expect(used.has(n), `${id}: ${n} is never connected`).toBe(true)
+    }
+  })
+
   it('give every job a drawer', () => {
     for (const e of ENTRIES.filter((x) => x.kind === 'job')) expect(DETAILS[e.id], e.id).toBeDefined()
   })

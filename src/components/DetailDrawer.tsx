@@ -1,25 +1,85 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react'
-import { DETAILS, tabsFor, type Tab } from '../details'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { DETAILS, tabsFor, type DemoKind, type Tab } from '../details'
 import { ENTRIES, entryById } from '../entries'
 import ArchDiagram from './ArchDiagram'
 import Screens from './Screens'
-import MiniBattleship from './MiniBattleship'
-import Allocation from './demos/Allocation'
-import FraudScorer from './demos/FraudScorer'
-import SchemaCheck from './demos/SchemaCheck'
-import TargetedBuild from './demos/TargetedBuild'
-import StarrezFill from './demos/StarrezFill'
-import type { DemoKind } from '../details'
 import CodeView from './CodeView'
-import { SOURCES } from './demos/sources'
+import { SpeedPicker } from './sim/SpeedPicker'
+import { sourcesFor } from './demos/sources'
+import PipelineRun from './demos/PipelineRun'
+import Allocation from './demos/Allocation'
+import SdkRun from './demos/SdkRun'
+import ReleaseRun from './demos/ReleaseRun'
+import Provision from './demos/Provision'
+import SalesStream from './demos/SalesStream'
+import Reconcile from './demos/Reconcile'
+import FraudQueue from './demos/FraudQueue'
+import FraudScorer from './demos/FraudScorer'
+import Extension from './demos/Extension'
+import BattleshipMatch from './demos/BattleshipMatch'
+import TargetedBuild from './demos/TargetedBuild'
+import NpcFsm from './demos/NpcFsm'
+import RouterApp from './demos/RouterApp'
 
 const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
-  battleship: MiniBattleship,
+  pipeline: PipelineRun,
   allocation: Allocation,
+  sdk: SdkRun,
+  release: ReleaseRun,
+  provision: Provision,
+  stream: SalesStream,
+  dataval: Reconcile,
+  fraud: FraudQueue,
   scorer: FraudScorer,
-  schema: SchemaCheck,
+  extension: Extension,
+  battleship: BattleshipMatch,
   build: TargetedBuild,
-  starrez: StarrezFill,
+  fsm: NpcFsm,
+  router: RouterApp,
+}
+
+// the demos for one entry, with a row of sub-tabs when there is more than one
+function TryIt({ demos }: { demos: { kind: DemoKind; name: string }[] }) {
+  const [i, setI] = useState(0)
+  const Demo = DEMOS[demos[i].kind]
+  return (
+    <div className="try">
+      <div className="try-bar">
+        {demos.length > 1 && (
+          <div className="sub-tabs" role="tablist" aria-label="Demos">
+            {demos.map((d, j) => (
+              <button key={d.kind} type="button" role="tab" aria-selected={i === j} onClick={() => setI(j)}>
+                {d.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <SpeedPicker />
+      </div>
+      <Demo key={demos[i].kind} />
+    </div>
+  )
+}
+
+// the logic modules behind an entry's demos, one file at a time
+function CodeTab({ kinds }: { kinds: DemoKind[] }) {
+  const files = sourcesFor(kinds)
+  const [i, setI] = useState(0)
+  return (
+    <div className="code-tab">
+      <p className="demo-lede">The logic behind the demos, exactly as it runs on this page.</p>
+      {files.length > 1 && (
+        <div className="sub-tabs" role="tablist" aria-label="Files">
+          {files.map((f, j) => (
+            <button key={f.file} type="button" role="tab" aria-selected={i === j} onClick={() => setI(j)}>
+              {f.file}
+            </button>
+          ))}
+        </div>
+      )}
+      <CodeView {...files[Math.min(i, files.length - 1)]} />
+    </div>
+  )
 }
 
 const TAB_NAMES: Record<Tab, string> = {
@@ -68,7 +128,7 @@ export default function DetailDrawer({ open, onChange }: {
 
   const onKey = (e: KeyboardEvent<HTMLDialogElement>) => {
     const t = e.target as HTMLElement
-    if (t.closest('.arch, .bs-board, .demo, [role="tablist"]')) return
+    if (t.closest('.arch, .demo, .try-bar, .code-tab, [role="tablist"]')) return
     if (e.key === 'ArrowRight' && next) go(next.id)
     if (e.key === 'ArrowLeft' && prev) go(prev.id)
   }
@@ -158,18 +218,10 @@ export default function DetailDrawer({ open, onChange }: {
                 )}
               </div>
             )}
-            {tab === 'how' && detail && <ArchDiagram arch={detail.arch} name={entry.title} />}
+            {tab === 'how' && detail && <ArchDiagram key={entry.id} arch={detail.arch} flows={detail.flows} name={entry.title} />}
             {tab === 'screens' && detail?.screens && <Screens kind={detail.screens} />}
-            {tab === 'code' && detail?.demo && SOURCES[detail.demo] && (
-              <div className="code-tab">
-                <p className="demo-lede">The code behind the demo, as it runs on this page.</p>
-                <CodeView {...SOURCES[detail.demo]!} />
-              </div>
-            )}
-            {tab === 'try' && detail?.demo && (() => {
-              const Demo = DEMOS[detail.demo]
-              return <Demo key={entry.id} />
-            })()}
+            {tab === 'code' && detail?.demos && <CodeTab key={entry.id} kinds={detail.demos.map((d) => d.kind)} />}
+            {tab === 'try' && detail?.demos && <TryIt key={entry.id} demos={detail.demos} />}
           </div>
 
           <footer className="drawer-foot">
