@@ -145,7 +145,7 @@ export default function SdkRun() {
         reflected on screen. Then add people to the session as live events.
       </p>
       <div className="sdk-grid">
-        <pre className="sdk-code" aria-label="Reference app source">
+        <pre className="sdk-code" aria-label="Reference app source" tabIndex={0}>
           {CODE.map((l, i) => (
             <span key={i} className={hot.includes(i) ? 'ln hot' : 'ln'}>
               <i>{i + 1}</i>

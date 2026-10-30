@@ -1,3 +1,5 @@
+import { NOTES } from './decisions'
+
 // What opens when you click a job or project: an architecture diagram with
 // named flows through it, screens where there's a UI, and hands-on demos.
 
@@ -1112,12 +1114,13 @@ export const DETAILS: Record<string, Detail> = {
   },
 }
 
-export type Tab = 'overview' | 'how' | 'screens' | 'try' | 'code'
+export type Tab = 'overview' | 'how' | 'decisions' | 'screens' | 'try' | 'code'
 
 export function tabsFor(id: string): Tab[] {
   const d = DETAILS[id]
   const tabs: Tab[] = ['overview']
   if (d?.arch) tabs.push('how')
+  if (NOTES[id]) tabs.push('decisions')
   if (d?.screens) tabs.push('screens')
   if (d?.demos?.length) tabs.push('try')
   if (d?.demos?.some((x) => CODE_KINDS.includes(x.kind))) tabs.push('code')

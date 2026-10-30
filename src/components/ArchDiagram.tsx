@@ -270,7 +270,6 @@ export default function ArchDiagram({ arch, flows: given, name, initialPick }: {
                 tabIndex={0}
                 role="button"
                 aria-pressed={on}
-                aria-label={`${node.label}${node.sub ? `, ${node.sub}` : ''}`}
                 onClick={() => {
                   setPlaying(false)
                   setPicked(node.id)

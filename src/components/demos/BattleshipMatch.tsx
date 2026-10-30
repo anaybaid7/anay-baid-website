@@ -120,14 +120,14 @@ export default function BattleshipMatch() {
   }
 
   const board = (ships: Ships, shots: number[], own: boolean) => (
-    <div className={`bs-board ${own ? 'own' : ''}`} role="grid" aria-label={own ? 'Your fleet' : 'Bot’s waters'}>
+    <div className={`bs-board ${own ? 'own' : ''}`} role="group" aria-label={own ? 'Your fleet' : 'Bot’s waters'}>
       {Array.from({ length: N * N }, (_, i) => {
         const fired = shots.includes(i)
         const ship = ships.find((s) => s.cells.includes(i))
         const sunk = ship && ship.cells.every((c) => shots.includes(c))
         const cls = ['bs-cell', fired ? (ship ? 'hit' : 'miss') : '', sunk ? 'sunk' : '', own && ship && !fired ? 'ship' : ''].join(' ')
         return own ? (
-          <span key={i} className={cls} role="gridcell" aria-label={`${name(i)}${ship ? ', your ship' : ''}${fired ? (ship ? ', hit' : ', miss') : ''}`} />
+          <span key={i} className={cls} role="img" aria-label={`${name(i)}${ship ? ', your ship' : ''}${fired ? (ship ? ', hit' : ', miss') : ''}`} />
         ) : (
           <button
             key={i}

@@ -372,3 +372,14 @@ describe('deep links into the work', () => {
     await waitFor(() => expect(drawer.querySelector('.flow-detail h3')).toHaveTextContent('Validate and reconcile against SQL'))
   })
 })
+
+describe('decisions', () => {
+  it('shows what was chosen, over what and why, and what it handles', async () => {
+    history.replaceState(null, '', '/?open=project-starrez-enterprise-automation-suite&tab=decisions')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.dec-list li')).toHaveTextContent('Reading the text already rendered on the page')
+    expect(drawer.querySelector('.dec-list li')).toHaveTextContent('instead of calling the StarRez backend')
+    expect(drawer).toHaveTextContent('What I’d change next')
+  })
+})

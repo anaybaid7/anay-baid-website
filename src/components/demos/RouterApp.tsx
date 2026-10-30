@@ -133,7 +133,7 @@ export default function RouterApp() {
           </label>
           <figure className="store">
             <figcaption>Redux store</figcaption>
-            <pre>{JSON.stringify({ events: store.events, lastAction: store.lastAction }, null, 2)}</pre>
+            <pre tabIndex={0} aria-label="Store state">{JSON.stringify({ events: store.events, lastAction: store.lastAction }, null, 2)}</pre>
           </figure>
           <Log title="Router, socket and actions" lines={actions} />
         </div>
