@@ -23,9 +23,7 @@ export default function Allocation() {
 
   return (
     <div className="demo alloc">
-      <p className="demo-lede">
-        Split a week's parcels across terminals by forecast share without going over capacity. Drag the sliders.
-      </p>
+      <p className="demo-hint">Drag the capacities. Watch the overflow move.</p>
       <label className="demo-field">
         <span>Weekly volume <b>{fmt(volume)}</b></span>
         <input type="range" min={4000} max={14000} step={250} value={volume} onChange={(e) => setVolume(+e.target.value)} />
@@ -71,7 +69,6 @@ export default function Allocation() {
       <p className="demo-legend">
         <i className="k-fill" /> placed <i className="k-target" /> share of the volume <i className="k-cap" /> capacity
       </p>
-      <p className="demo-note">Made-up terminals and numbers, just to show the idea.</p>
     </div>
   )
 }

@@ -160,7 +160,7 @@ export const DETAILS: Record<string, Detail> = {
             from: 'tools',
             to: 'api',
             title: 'A planner raises Cyber week',
-            detail: 'Edits happen in the table. Changing Total keeps PCL plus Agent equal to it by scaling both by the same ratio, and a repeated operation starts from the original forecast so it never stacks.',
+            detail: 'Operations run one after another on the current value, and each week keeps a stack of its previous values so Revert steps back one at a time. Changing Total scales PCL and Agent by the same ratio, so the parts always add back to it.',
             payload: { label: 'ratio_split.js', code: 'const ratio = newTotal / oldTotal\nreturn { overrideA: pcl * ratio, overrideB: agent * ratio }\n// pcl*r + agent*r = oldTotal*r = newTotal' },
           },
           {

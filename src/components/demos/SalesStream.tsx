@@ -57,10 +57,7 @@ export default function SalesStream() {
 
   return (
     <div className="demo sales">
-      <p className="demo-lede">
-        Start the stream to watch sales flow into the dashboard. Turn on bad rows to see validation hold them back before
-        they skew the totals.
-      </p>
+      <p className="demo-hint">Start the stream. Mix in bad rows.</p>
       <div className="demo-actions">
         <button type="button" className="demo-primary" onClick={() => setOn(!on)} aria-pressed={on}>
           {on ? 'Pause the stream' : rows.length ? 'Resume the stream' : 'Start the stream'}
@@ -112,7 +109,6 @@ export default function SalesStream() {
           </ul>
         </div>
       </div>
-      <p className="demo-note">Made-up sales, just to show the idea.</p>
     </div>
   )
 }

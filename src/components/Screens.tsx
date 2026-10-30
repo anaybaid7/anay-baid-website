@@ -68,7 +68,6 @@ function Wireframes({ screens, nodes, onNode }: { screens: Screen[]; nodes: Arch
           ))}
         </ol>
       </div>
-      <p className="metrics-note">Wireframes of the real screens, with made-up data. Pick a number to read about that part.</p>
     </div>
   )
 }
@@ -109,7 +108,21 @@ function ForecastTool({ nodes, onNode }: { nodes: ArchNode[]; onNode: (id: strin
   )
 }
 
+// the forecast tool has real screenshots and my wireframes from its docs
+function ForecastBoth({ nodes, onNode }: { nodes: ArchNode[]; onNode: (id: string) => void }) {
+  const [mode, setMode] = useState<'wire' | 'shot'>('wire')
+  return (
+    <>
+      <div className="mode" role="radiogroup" aria-label="View">
+        <button type="button" role="radio" aria-checked={mode === 'wire'} onClick={() => setMode('wire')}>Wireframes</button>
+        <button type="button" role="radio" aria-checked={mode === 'shot'} onClick={() => setMode('shot')}>Screenshots</button>
+      </div>
+      {mode === 'wire' ? <Wireframes screens={WIREFRAMES.forecast} nodes={nodes} onNode={onNode} /> : <ForecastTool nodes={nodes} onNode={onNode} />}
+    </>
+  )
+}
+
 export default function Screens({ kind, nodes, onNode }: Props) {
-  if (kind === 'forecast-tool') return <ForecastTool nodes={nodes} onNode={onNode} />
+  if (kind === 'forecast-tool') return <ForecastBoth nodes={nodes} onNode={onNode} />
   return <Wireframes key={kind} screens={WIREFRAMES[kind]} nodes={nodes} onNode={onNode} />
 }

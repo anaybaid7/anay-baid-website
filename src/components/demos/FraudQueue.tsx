@@ -78,10 +78,7 @@ export default function FraudQueue() {
 
   return (
     <div className="demo fraud">
-      <p className="demo-lede">
-        Start the feed. Each transaction is scored by the rules and the model together, and anything flagged lands in the
-        review queue with its reasons. Confirm or dismiss to label it.
-      </p>
+      <p className="demo-hint">Start the feed. Review what gets flagged.</p>
       <div className="demo-actions">
         <button type="button" className="demo-primary" onClick={() => setOn(!on)} aria-pressed={on}>
           {on ? 'Pause the feed' : items.length ? 'Resume the feed' : 'Start the feed'}
@@ -156,7 +153,6 @@ export default function FraudQueue() {
           )}
         </div>
       </div>
-      <p className="demo-note">Made-up transactions, rules and weights, just to show the idea.</p>
     </div>
   )
 }

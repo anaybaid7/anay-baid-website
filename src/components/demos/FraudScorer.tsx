@@ -23,9 +23,7 @@ export default function FraudScorer() {
 
   return (
     <div className="demo scorer">
-      <p className="demo-lede">
-        How a transaction gets triaged, with a rule engine and a logistic model side by side. Change the inputs.
-      </p>
+      <p className="demo-hint">Change the inputs.</p>
       <div className="scorer-grid">
         <div className="scorer-inputs">
           <label className="demo-field">
@@ -76,9 +74,6 @@ export default function FraudScorer() {
           <p className="rules">{rules.length ? rules.join(', ') : 'None fired'}</p>
         </div>
       </div>
-      <p className="demo-note">
-        Made-up rules and weights, just to show the idea.
-      </p>
     </div>
   )
 }

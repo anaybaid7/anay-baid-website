@@ -87,10 +87,7 @@ export default function Shelter() {
 
   return (
     <div className="demo shelter">
-      <p className="demo-lede">
-        The shelter from Pashu, running the animals’ state machine. Start the clock and keep the bowls stocked. Each animal
-        heads for food or water on its own once it drops under 50.
-      </p>
+      <p className="demo-hint">Start the clock. Keep the bowls stocked.</p>
       <div className="shelter-hud">
         <span>Level <b>{xp.level}</b></span>
         <span className="xpbar" role="progressbar" aria-label="XP to the next level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={xp.xp}><i style={{ width: `${xp.xp}%` }} /></span>
@@ -142,7 +139,6 @@ export default function Shelter() {
         </div>
       </div>
       <Log title="Events" lines={log} />
-      <p className="demo-note">The rules are the game’s own, ported from AnimalController.cs. One tick here is one second of game time.</p>
     </div>
   )
 }

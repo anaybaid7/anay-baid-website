@@ -213,7 +213,7 @@ export default function Provision() {
   const [mode, setMode] = useState<Mode>('device')
   return (
     <div className="demo prov">
-      <p className="demo-lede">Three pieces of the infrastructure work, each one runnable.</p>
+      
       <div className="sub-tabs" role="tablist" aria-label="Scenarios">
         {MODES.map(([m, label]) => (
           <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>{label}</button>

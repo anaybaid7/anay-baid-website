@@ -25,10 +25,50 @@ export function editTotal(w: Week, next: number, fromOriginal = false): Week {
   return { ...w, pcl: a + (next - old) / 2, agent: b + (next - old) / 2 }
 }
 
-// An operation always starts from the original forecast, so running the
-// same +5% twice gives +5%, not +10.25%.
-export const applyPercent = (weeks: Week[], pick: number[], pct: number) =>
-  weeks.map((w) => (pick.includes(w.week) ? editTotal(w, (w.origPcl + w.origAgent) * (1 + pct / 100), true) : w))
+// From applyOp in app.js. Operations run one after another on the current
+// value, so Set to 500 then Add 500 gives 1,000. Each week keeps a stack of
+// its previous values, so Revert steps back one operation at a time.
+export type Op = '%+' | '%-' | '=' | '+'
+export const OPS: Record<Op, string> = { '%+': '% Increase', '%-': '% Decrease', '=': 'Set to', '+': 'Add' }
+
+export function applyOp(current: number, op: Op, val: number) {
+  const next = op === '%+' ? current * (1 + val / 100) : op === '%-' ? current * (1 - val / 100) : op === '=' ? val : current + val
+  return Math.round(next * 10) / 10
+}
+
+export interface Change {
+  week: number
+  op: string
+  val: number
+  before: number
+  after: number
+}
+
+export function runOp(weeks: Week[], stacks: Record<number, number[]>, pick: number[], op: Op, val: number) {
+  const nextStacks = { ...stacks }
+  const log: Change[] = []
+  const next = weeks.map((w) => {
+    if (!pick.includes(w.week)) return w
+    const before = total(w)
+    const after = applyOp(before, op, val)
+    nextStacks[w.week] = [...(stacks[w.week] ?? []), before]
+    log.push({ week: w.week, op: OPS[op], val, before, after })
+    return editTotal(w, after)
+  })
+  return { weeks: next, stacks: nextStacks, log }
+}
+
+// pop one step off each selected week's stack
+export function revert(weeks: Week[], stacks: Record<number, number[]>, pick: number[]) {
+  const nextStacks = { ...stacks }
+  const next = weeks.map((w) => {
+    const stack = stacks[w.week]
+    if (!pick.includes(w.week) || !stack?.length) return w
+    nextStacks[w.week] = stack.slice(0, -1)
+    return editTotal(w, stack[stack.length - 1])
+  })
+  return { weeks: next, stacks: nextStacks }
+}
 
 export const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 

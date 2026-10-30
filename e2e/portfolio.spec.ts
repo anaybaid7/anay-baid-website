@@ -136,6 +136,8 @@ test('a job opens into a drawer with a working diagram, and Esc closes it', asyn
 
 test('a Battleship round sends shots over the socket and the bot answers', async ({ page }) => {
   await page.goto('/?open=project-battleship-for-purolator&tab=play')
+  await page.getByRole('button', { name: 'Random' }).click()
+  await page.getByRole('button', { name: 'Lock in routes' }).click()
   await page.getByRole('button', { name: 'D4', exact: true }).click()
   const log = page.locator('dialog.drawer .log')
   await expect(log).toContainText('emit fire { index: 27 }')

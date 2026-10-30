@@ -112,6 +112,9 @@ describe('demos', () => {
 
   it('battleship sends the real socket events for a shot and the reply', () => {
     render(<BattleshipMatch />)
+    fireEvent.click(screen.getByRole('button', { name: 'Random' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lock in routes' }))
+    expect(document.querySelector('.log')).toHaveTextContent('placement_confirmed')
     fireEvent.click(screen.getByRole('button', { name: 'A1' }))
     expect(document.querySelector('.log')).toHaveTextContent('emit fire { index: 0 }')
     expect(document.querySelector('.log')).toHaveTextContent('shot_result { index: 0')
@@ -160,5 +163,20 @@ describe('demos', () => {
     expect(document.querySelector('.laptop')).toHaveTextContent('Compliant')
     fireEvent.click(screen.getByRole('button', { name: 'Turn off encryption' }))
     expect(document.querySelector('.laptop')).toHaveTextContent('Not compliant')
+  })
+})
+
+describe('fleet setup', () => {
+  it('places a vehicle, rotates it, and checks the fleet like the server does', async () => {
+    const { validPlacement, cellsAt } = await import('../../battleship')
+    expect(cellsAt(6, 3, true)).toBeNull()
+    expect(cellsAt(0, 3, false)).toEqual([0, 8, 16])
+    expect(validPlacement([{ name: 'x', cells: [0, 1] }])).toMatch(/need 5/)
+    render(<BattleshipMatch />)
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    expect(screen.getByText('Manifest, 1 of 5')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /A1, Air Freighter, click to rotate/ }))
+    expect(screen.getByRole('button', { name: /A2, Air Freighter/ })).toBeInTheDocument()
   })
 })

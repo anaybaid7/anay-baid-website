@@ -57,6 +57,7 @@ function TryIt({ demos }: { demos: { kind: DemoKind; name: string }[] }) {
             ))}
           </div>
         )}
+        <span className="sample">Sample data</span>
         <SpeedPicker />
       </div>
       <Demo key={demos[i].kind} />
@@ -70,8 +71,7 @@ function CodeTab({ kinds }: { kinds: DemoKind[] }) {
   const [i, setI] = useState(0)
   return (
     <div className="code-tab">
-      <p className="demo-lede">The logic behind the demos, exactly as it runs on this page.</p>
-      {files.length > 1 && (
+            {files.length > 1 && (
         <div className="sub-tabs" role="tablist" aria-label="Files">
           {files.map((f, j) => (
             <button key={f.file} type="button" role="tab" aria-selected={i === j} onClick={() => setI(j)}>

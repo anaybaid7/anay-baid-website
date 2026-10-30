@@ -76,9 +76,7 @@ export default function ReleaseRun() {
 
   return (
     <div className="demo release">
-      <p className="demo-lede">
-        Every change runs through the same pipeline. Turn on the regression to see a browser test catch a bug before it ships.
-      </p>
+      <p className="demo-hint">Turn on the regression and run it.</p>
       <div className="demo-actions">
         <button type="button" className="demo-primary" onClick={run} disabled={seq.running}>Run the pipeline</button>
         <label className="demo-check">
