@@ -6,7 +6,7 @@ import { check, merge, runPipeline } from './pipeline'
 import { checkSale, makeSale, rng } from './sales'
 import { findRoom, initials, keyCodes, lockoutEntry, packageEntry, readStudent } from './starrez'
 import { applyXp, tick, type Animal } from './shelter'
-import { applyPercent, editTotal, gapCheck, normalize, splitWeek, sumsTo100 } from './planner'
+import { applyOp, editTotal, gapCheck, normalize, revert, runOp, splitWeek, sumsTo100, total } from './planner'
 import { initial, matchRoute, reducer, validateEvent } from './appStore'
 import { botShot, FLEET, N, placeFleet } from '../../battleship'
 
@@ -205,10 +205,13 @@ describe('forecast planner', () => {
     expect(editTotal({ ...w, pcl: 0, agent: 0, origPcl: 0, origAgent: 0 }, 100)).toMatchObject({ pcl: 50, agent: 50 })
   })
 
-  it('never stacks a repeated operation', () => {
-    const once = applyPercent([w], [48], 10)
-    const twice = applyPercent(once, [48], 10)
-    expect(twice[0].pcl + twice[0].agent).toBeCloseTo(440)
+  it('runs operations in sequence and reverts one step at a time', () => {
+    const a = runOp([w], {}, [48], '=', 500)
+    const b = runOp(a.weeks, a.stacks, [48], '+', 500)
+    expect(total(b.weeks[0])).toBe(1000)
+    const back = revert(b.weeks, b.stacks, [48])
+    expect(total(back.weeks[0])).toBe(500)
+    expect(applyOp(400, '%+', 10)).toBe(440)
   })
 
   it('normalizes to exactly 100 and splits without losing volume', () => {

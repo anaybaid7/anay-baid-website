@@ -1,128 +1,154 @@
 import { useState } from 'react'
-import {
-  applyPercent,
-  DAYS,
-  editTotal,
-  gapCheck,
-  normalize,
-  splitWeek,
-  sumsTo100,
-  total,
-  type DayCheck,
-  type Week,
-} from './planner'
+import { DAYS, gapCheck, normalize, OPS, revert, runOp, splitWeek, sumsTo100, total, type Change, type DayCheck, type Op, type Week } from './planner'
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-CA')
 
-const WEEKS: Week[] = [
-  [44, 12880, 5360],
-  [45, 13120, 5420],
-  [46, 13410, 5510],
-  [47, 14020, 5780],
-  [48, 16950, 6890],
-  [49, 15730, 6410],
-  [50, 14240, 5900],
-].map(([week, pcl, agent]) => ({ week, pcl, agent, origPcl: pcl, origAgent: agent }))
+// weeks 36 to 52 at one terminal: last year's actuals and this year's forecast
+const BASE = [3300, 3240, 3280, 3310, 3270, 3150, 3290, 3320, 3380, 3460, 3620, 4200, 4480, 4310, 3990, 4500, 3100]
+const FC = [3465, 3380, 3410, 3440, 3400, 3200, 3420, 3460, 3520, 3610, 3790, 4550, 4700, 4480, 4150, 4620, 3240]
+const WEEKS: Week[] = FC.map((f, i) => {
+  const pcl = Math.round(f * 0.71)
+  return { week: 36 + i, pcl, agent: f - pcl, origPcl: pcl, origAgent: f - pcl }
+})
+const EVENT: Record<number, string> = { 36: 'Labour Day', 41: 'Thanksgiving', 45: 'Remembrance', 48: 'Cyber', 49: 'Catchup', 51: 'Christmas', 52: 'Christmas' }
+const k = (n: number) => `${Math.round(n).toLocaleString('en-CA')}K`
 
-// the Prophet model's event regressors, from config.py
-const EVENT: Record<number, string> = { 48: 'Cyber', 49: 'Catchup' }
+function Chart({ weeks, pick }: { weeks: Week[]; pick: number[] }) {
+  const W = 640
+  const H = 190
+  const vals = [...BASE, ...weeks.map(total), ...WEEKS.map(total)]
+  const lo = Math.min(...vals) * 0.95
+  const hi = Math.max(...vals) * 1.03
+  const x = (i: number) => 44 + (i * (W - 56)) / (weeks.length - 1)
+  const y = (v: number) => H - 22 - ((v - lo) / (hi - lo)) * (H - 34)
+  const line = (ys: number[]) => ys.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
+  const changed = weeks.some((w, i) => total(w) !== total(WEEKS[i]))
+  return (
+    <svg className="pchart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Forecast against last year">
+      {weeks.map((w, i) => (pick.includes(w.week) ? <rect key={w.week} className="sel" x={x(i) - 14} y={6} width={28} height={H - 28} /> : null))}
+      {[lo, (lo + hi) / 2, hi].map((v) => (
+        <text key={v} className="ax" x={0} y={y(v) + 4}>{k(v)}</text>
+      ))}
+      <path className="base" d={line(BASE)} />
+      {changed && <path className="orig" d={line(WEEKS.map(total))} />}
+      <path className="fc" d={line(weeks.map(total))} />
+      {weeks.map((w, i) => (total(w) !== total(WEEKS[i]) ? <circle key={w.week} className="mod" cx={x(i)} cy={y(total(w))} r={4.5} /> : null))}
+      {weeks.map((w, i) => (i % 2 === 0 ? <text key={w.week} className="ax" x={x(i)} y={H - 4} textAnchor="middle">{w.week}</text> : null))}
+    </svg>
+  )
+}
 
-// Editing a week's total keeps the PCL and Agent split, and an operation on
-// several weeks always starts from the original forecast.
+// The weekly review screen: pick weeks, run operations one after another,
+// step back with Revert, and every change lands in the log.
 function Weekly() {
   const [weeks, setWeeks] = useState(WEEKS)
+  const [stacks, setStacks] = useState<Record<number, number[]>>({})
   const [pick, setPick] = useState<number[]>([48, 49])
-  const [pct, setPct] = useState(5)
-  const [log, setLog] = useState<string[]>([])
-  const max = Math.max(...weeks.map(total), ...WEEKS.map(total)) * 1.05
+  const [anchor, setAnchor] = useState(48)
+  const [op, setOp] = useState<Op>('%+')
+  const [val, setVal] = useState(5)
+  const [log, setLog] = useState<Change[]>([])
 
-  const apply = () => {
-    setWeeks(applyPercent(weeks, pick, pct))
-    setLog((l) => [`Weeks ${pick.join(', ')} set to ${pct >= 0 ? '+' : ''}${pct}% of the original forecast`, ...l].slice(0, 4))
+  const select = (wk: number, shift: boolean, ctrl: boolean) => {
+    if (shift) {
+      const [a, b] = [Math.min(anchor, wk), Math.max(anchor, wk)]
+      setPick(weeks.filter((w) => w.week >= a && w.week <= b).map((w) => w.week))
+      return
+    }
+    setPick(ctrl ? (pick.includes(wk) ? pick.filter((x) => x !== wk) : [...pick, wk]) : [wk])
+    setAnchor(wk)
   }
+  const apply = () => {
+    const r = runOp(weeks, stacks, pick, op, val)
+    setWeeks(r.weeks)
+    setStacks(r.stacks)
+    setLog([...r.log, ...log].slice(0, 30))
+  }
+  const back = (all: boolean) => {
+    if (all) {
+      setWeeks(WEEKS)
+      setStacks({})
+      setLog([])
+      return
+    }
+    const r = revert(weeks, stacks, pick)
+    setWeeks(r.weeks)
+    setStacks(r.stacks)
+  }
+  const sel = weeks.map((w, i) => ({ w, i })).filter(({ w }) => pick.includes(w.week))
+  const selTotal = sel.reduce((a, { w }) => a + total(w), 0)
+  const selBase = sel.reduce((a, { i }) => a + BASE[i], 0)
 
   return (
-    <>
-      <p className="demo-lede">
-        Terminal 412, delivery pieces. Type a new total for any week, or apply a percentage to several weeks. Run the same
-        operation twice and it doesn’t stack.
-      </p>
-      <div className="table-scroll">
-        <table className="plan-table">
-          <thead>
-            <tr>
-              <th>Week</th>
-              <th>PCL</th>
-              <th>Agent</th>
-              <th>Total</th>
-              <th>vs original</th>
-              <th aria-label="Total, as a bar" />
-            </tr>
-          </thead>
-          <tbody>
-            {weeks.map((w, i) => {
-              const orig = WEEKS[i]
-              const d = total(w) - total(orig)
-              return (
-                <tr key={w.week} className={d ? 'changed' : ''}>
-                  <td>
-                    <label className="demo-check tight">
-                      <input
-                        type="checkbox"
-                        checked={pick.includes(w.week)}
-                        onChange={() =>
-                          setPick(pick.includes(w.week) ? pick.filter((x) => x !== w.week) : [...pick, w.week].sort())
-                        }
-                        aria-label={`Select week ${w.week}`}
-                      />
-                      {w.week}
-                    </label>
-                    {EVENT[w.week] && <span className="plan-event">{EVENT[w.week]}</span>}
-                  </td>
-                  <td>{fmt(w.pcl)}</td>
-                  <td>{fmt(w.agent)}</td>
-                  <td>
-                    <input
-                      className="plan-input"
-                      type="number"
-                      value={Math.round(total(w))}
-                      aria-label={`Total for week ${w.week}`}
-                      onChange={(e) => setWeeks(weeks.map((x) => (x.week === w.week ? editTotal(x, +e.target.value) : x)))}
-                    />
-                  </td>
-                  <td className={d > 0 ? 'up' : d < 0 ? 'down' : ''}>{d ? `${d > 0 ? '+' : ''}${fmt(d)}` : '·'}</td>
-                  <td className="plan-bar">
-                    <i style={{ width: `${(total(orig) / max) * 100}%` }} className="orig" />
-                    <i style={{ width: `${(total(w) / max) * 100}%` }} />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div className="demo-actions">
-        <label className="demo-field small inline">
-          <span>
-            Change for the selected weeks{' '}
-            <b>
-              {pct >= 0 ? '+' : ''}
-              {pct}%
-            </b>
+    <div className="plan-grid">
+      <div>
+        <Chart weeks={weeks} pick={pick} />
+        <p className="demo-legend">
+          <i className="k-base" /> 2025 actual <i className="k-fc" /> forecast <i className="k-orig" /> original <i className="k-mod" /> changed
+        </p>
+        <div className="plan-ops" onKeyDown={(e) => e.key === 'Enter' && pick.length && apply()}>
+          <span className="plan-kpi">
+            <b>{pick.length}</b> wk · <b>{k(selTotal)}</b> · YoY{' '}
+            <b>{selBase ? `${selTotal >= selBase ? '+' : ''}${(((selTotal - selBase) / selBase) * 100).toFixed(1)}%` : '·'}</b>
           </span>
-          <input type="range" min={-20} max={20} value={pct} onChange={(e) => setPct(+e.target.value)} />
-        </label>
-        <button type="button" className="demo-primary" onClick={apply} disabled={!pick.length}>
-          Apply
-        </button>
-        <button type="button" onClick={() => (setWeeks(WEEKS), setLog([]))}>
-          Reset
-        </button>
+          <select value={op} onChange={(e) => setOp(e.target.value as Op)} aria-label="Operation">
+            {(Object.keys(OPS) as Op[]).map((o) => <option key={o} value={o}>{OPS[o]}</option>)}
+          </select>
+          <input type="number" value={val} onChange={(e) => setVal(+e.target.value)} aria-label="Value" />
+          <button type="button" className="demo-primary" onClick={apply} disabled={!pick.length}>Apply</button>
+          <button type="button" onClick={() => back(false)} disabled={!pick.some((p) => stacks[p]?.length)}>Revert</button>
+          <button type="button" onClick={() => back(true)} disabled={!log.length}>Revert all</button>
+        </div>
+        <div className="table-scroll">
+          <table className="plan-table">
+            <thead>
+              <tr><th>Wk</th><th>2025</th><th>Forecast</th><th>PCL / Agent</th><th>YoY</th><th /></tr>
+            </thead>
+            <tbody>
+              {weeks.map((w, i) => {
+                const yoy = ((total(w) - BASE[i]) / BASE[i]) * 100
+                const n = stacks[w.week]?.length ?? 0
+                return (
+                  <tr key={w.week} className={[pick.includes(w.week) ? 'picked' : '', n ? 'changed' : ''].join(' ')} onClick={(e) => select(w.week, e.shiftKey, e.ctrlKey || e.metaKey)}>
+                    <td>
+                      <button
+                        type="button"
+                        className="wk"
+                        aria-pressed={pick.includes(w.week)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          select(w.week, e.shiftKey, e.ctrlKey || e.metaKey)
+                        }}
+                      >
+                        {w.week}
+                      </button>
+                      {EVENT[w.week] && <span className="plan-event">{EVENT[w.week]}</span>}
+                    </td>
+                    <td>{k(BASE[i])}</td>
+                    <td><b>{k(total(w))}</b></td>
+                    <td className="split">{k(w.pcl)} / {k(w.agent)}</td>
+                    <td className={yoy >= 0 ? 'up' : 'down'}>{`${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}%`}</td>
+                    <td className="mods">{n ? `${n} op${n > 1 ? 's' : ''}` : ''}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <p className="demo-out" aria-live="polite">
-        {log[0] ?? 'PCL + Agent always equals Total. Editing Total scales both by the same ratio.'}
-      </p>
-    </>
+      <aside className="plan-log">
+        <p className="demo-h">Change log</p>
+        <ol>
+          {log.length === 0 && <li className="none">Nothing yet</li>}
+          {log.map((c, i) => (
+            <li key={i}>
+              <b>W{c.week}</b> {c.op} {c.val}
+              <span>{k(c.before)} → {k(c.after)}</span>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    </div>
   )
 }
 
@@ -141,10 +167,7 @@ function Daily() {
 
   return (
     <>
-      <p className="demo-lede">
-        Week 45 at terminal 412 is {fmt(WEEKLY)} pieces. Each day gets a share of the week. Make Wednesday a holiday and the
-        shares no longer add to 100% until you normalize them.
-      </p>
+      <p className="demo-hint">Make Wednesday a holiday, then normalize.</p>
       <div className="daily">
         {DAYS.map((d, i) => (
           <div key={d} className="daily-col">
@@ -178,8 +201,8 @@ function Daily() {
       </div>
       <p className={`demo-out ${ok ? '' : 'warn'}`} aria-live="polite">
         {ok
-          ? `Shares add to ${sum.toFixed(2)}%. The days add up to ${fmt(days.reduce((a, b) => a + b, 0))}, the same as the week.`
-          : `Shares add to ${sum.toFixed(2)}%, so the days come to ${fmt(WEEKLY - short)}, ${fmt(short)} short of the week. Sum must be 100% before saving. Use Normalize.`}
+          ? `${sum.toFixed(2)}%. Days add back to ${fmt(days.reduce((a, b) => a + b, 0))}.`
+          : `${sum.toFixed(2)}%. ${fmt(short)} pieces missing. Can’t save until it’s 100%.`}
       </p>
     </>
   )
@@ -211,10 +234,7 @@ function Gaps() {
 
   return (
     <>
-      <p className="demo-lede">
-        Every terminal and day is compared with the same weekday over the last four weeks. A day needs a gap of at least 50% and
-        at least 100 pieces to be flagged, so small terminals don’t drown the list.
-      </p>
+      <p className="demo-hint">Toggle the holiday list.</p>
       <div className="table-scroll">
         <table className="plan-table gaps">
           <thead>
@@ -253,9 +273,7 @@ function Gaps() {
         <input type="checkbox" checked={bug} onChange={(e) => setBug(e.target.checked)} /> Run without the holiday list
       </label>
       <p className={`demo-out ${bug ? 'warn' : ''}`} aria-live="polite">
-        {bug
-          ? `${flagged} flagged. With the holiday counted as a zero, both Quebec Wednesday baselines drop by a quarter, and terminal 744 is flagged for a normal week.`
-          : `${flagged} flagged. Terminal 412 is a real drop. Terminal 905 is up ${rows[3].r.pct.toFixed(0)}% but only by ${fmt(rows[3].r.diff)} pieces, so it isn’t flagged.`}
+        {bug ? `${flagged} flagged. The holiday zero drags the baseline down.` : `${flagged} flagged. 905 is +${rows[3].r.pct.toFixed(0)}% but only ${fmt(rows[3].r.diff)} pieces.`}
       </p>
     </>
   )
@@ -281,7 +299,6 @@ export default function Planner() {
       {part === 'weekly' && <Weekly />}
       {part === 'daily' && <Daily />}
       {part === 'gaps' && <Gaps />}
-      <p className="demo-note">Made-up volumes. The rules are the tool’s own, shown in the Code tab as planner.ts.</p>
     </div>
   )
 }

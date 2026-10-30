@@ -28,9 +28,9 @@ export const NOTES: Record<string, Notes> = {
         because: 'A +20% edit to Total should mean +20% to both parts. Scaling keeps the split the forecast already has, and the parts always add back to the edited total exactly.',
       },
       {
-        chose: 'Bulk operations that always start from the original forecast',
-        over: 'applying them on top of the current, already edited numbers',
-        because: 'Running the same +5% twice should give +5%, not +10.25%. Planners repeat operations while they work, so stacking would quietly inflate the forecast.',
+        chose: 'Operations that run in sequence, with a per-week undo stack',
+        over: 'recomputing every edit from the original forecast',
+        because: 'Planners build an adjustment up in steps, so Set to 500 then Add 500 should give 1,000. Each week keeps its previous values, so Revert steps back one operation at a time instead of throwing everything away.',
       },
       {
         chose: 'A MERGE into the state table for reconciliation',
