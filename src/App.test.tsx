@@ -350,3 +350,25 @@ describe('what I work on', () => {
     expect(drawer.querySelector('.arch-node.on')).not.toBeNull()
   })
 })
+
+describe('deep links into the work', () => {
+  it('opens a diagram on the flow and step in the URL, and keeps it there as you step', async () => {
+    history.replaceState(null, '', '/?open=project-battleship-for-purolator&tab=how&flow=2&step=3')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.flow-tabs [aria-selected="true"]')).toHaveTextContent('Setting up a game')
+    expect(drawer.querySelector('.flow-detail h3')).toHaveTextContent('Agree on a board size')
+    fireEvent.click(screen.getByRole('button', { name: 'Next step', hidden: true }))
+    expect(new URL(location.href).searchParams.get('step')).toBe('4')
+  })
+
+  it('finds a payload from search and opens that step', async () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Search/ }))
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'MERGE INTO' } })
+    const hit = await screen.findByText('Validate and reconcile against SQL')
+    fireEvent.click(hit)
+    const drawer = await findDrawer()
+    await waitFor(() => expect(drawer.querySelector('.flow-detail h3')).toHaveTextContent('Validate and reconcile against SQL'))
+  })
+})

@@ -14,7 +14,8 @@ import Shortcuts from './components/Shortcuts'
 import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
-import { tabsFor, type Tab } from './details'
+import { DETAILS, tabsFor, type Tab } from './details'
+import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import MiniArch from './components/MiniArch'
 import type { Action as TermAction } from './terminal'
@@ -350,6 +351,25 @@ function Glance({ onCheck }: { onCheck: () => void }) {
   )
 }
 
+// Every step of every flow is searchable, including the code and payloads
+// it shows, and opens the diagram right on that step.
+function insideCommands(show: (d: Opened) => void): Command[] {
+  return Object.entries(DETAILS).flatMap(([id, d]) => {
+    const title = entryById(id)?.title.replace(/ \(.*\)$/, '') ?? id
+    const label = (n: string) => d.arch.nodes.find((x) => x.id === n)?.label ?? n
+    return (d.flows ?? []).flatMap((fl, fi) =>
+      fl.steps.map((st, si) => ({
+        group: 'Inside the work',
+        label: st.title,
+        hint: `${title}, ${fl.name}, step ${si + 1}`,
+        keywords: `${label(st.from)} ${label(st.to)} ${st.detail} ${st.payload?.label ?? ''} ${st.payload?.code ?? ''}`,
+        deep: true,
+        run: () => show({ id, tab: 'how', at: { flow: fi + 1, step: si + 1 } }),
+      })),
+    )
+  })
+}
+
 // The through-line: what was slow or manual at each place, what I built,
 // and what changed, in the order it happened. Each row opens its drawer.
 const THREAD: [string, string[]][] = [
@@ -462,7 +482,7 @@ export default function App() {
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
   const [termOpen, setTermOpen] = useState(false)
-  const [detail, setDetail] = useState<{ id: string; tab: Tab } | null>(() => {
+  const [detail, setDetail] = useState<Opened | null>(() => {
     const q = new URLSearchParams(location.search)
     const id = q.get('open')
     // tab=play was the old name for the demo tab, so older links still land on it
@@ -471,7 +491,7 @@ export default function App() {
   })
 
   // which drawer is open lives in the URL, so it can be shared or reloaded
-  const showDetail = useCallback((next: { id: string; tab: Tab } | null) => {
+  const showDetail = useCallback((next: Opened | null) => {
     setDetail(next)
     const url = new URL(location.href)
     if (next) {
@@ -481,6 +501,13 @@ export default function App() {
     } else {
       url.searchParams.delete('open')
       url.searchParams.delete('tab')
+    }
+    // a flow and step only make sense for the diagram they were set on
+    url.searchParams.delete('flow')
+    url.searchParams.delete('step')
+    if (next?.at) {
+      url.searchParams.set('flow', String(next.at.flow))
+      url.searchParams.set('step', String(next.at.step))
     }
     history.replaceState(null, '', url)
     if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
@@ -570,7 +597,7 @@ export default function App() {
   const onTermAction = (a: TermAction) => {
     if (a.kind === 'open') {
       const tabs = tabsFor(a.id)
-      showDetail({ id: a.id, tab: a.tab && tabs.includes(a.tab as Tab) ? (a.tab as Tab) : (tabs[1] ?? 'overview') })
+      showDetail({ id: a.id, tab: a.tab && tabs.includes(a.tab as Tab) ? (a.tab as Tab) : (tabs[1] ?? 'overview'), at: a.at })
     }
     if (a.kind === 'filter') applyFilter(a.skills)
     if (a.kind === 'theme') setSettings({ theme: a.value })
@@ -604,6 +631,7 @@ export default function App() {
       { group: 'Hiring', label: 'Save contact card', keywords: 'vcard vcf contacts', run: downloadVcard },
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
       { group: 'Hiring', label: 'Plain text resume', keywords: 'txt ats copy paste', run: () => window.open(FILES.text, '_blank', 'noopener') },
+      ...insideCommands(showDetail),
     ]
   }, [showDetail, showResume, applyFilter])
   return (
@@ -815,7 +843,12 @@ export default function App() {
           <DetailDrawer open={detail} onChange={showDetail} />
         </Suspense>
       )}
-      <Matcher open={matcherOpen} onOpenChange={setMatcherOpen} onFilter={applyFilter} />
+      <Matcher
+        open={matcherOpen}
+        onOpenChange={setMatcherOpen}
+        onFilter={applyFilter}
+        onStep={(id, flow, step) => showDetail({ id, tab: 'how', at: { flow, step } })}
+      />
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
       {termOpen && (
         <Suspense fallback={null}>

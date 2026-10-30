@@ -9,6 +9,8 @@ const SHORTCUTS: [string, string][] = [
   [',', 'Settings'],
   ['/ or Ctrl K', 'Search'],
   ['Esc', 'Clear a filter or close what is open'],
+  ['Space, ← →', 'In a diagram, play or pause, and step through'],
+  ['1 to 9', 'In a diagram, pick a flow'],
   ['?', 'This list'],
 ]
 
