@@ -142,7 +142,8 @@ export function useSettings() {
       return () => listeners.delete(l)
     },
     () => state,
-    () => state,
+    // the prerendered HTML is built with the defaults, so hydrate against them
+    () => DEFAULTS,
   )
 }
 

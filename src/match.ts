@@ -60,3 +60,14 @@ export function matchPosting(posting: string): Match[] {
     })
     .map((skill) => ({ skill, where: whereUsed(skill) }))
 }
+
+// Which area of my work a posting leans toward: each matched skill counts
+// once for every area of every job or project that used it.
+export function leaning(matches: Match[], entries: { title: string; areas: string[]; tech: string[] }[]) {
+  const score = new Map<string, number>()
+  for (const m of matches)
+    for (const e of entries)
+      if (e.tech.some((t) => uses(m.skill, t))) for (const a of e.areas) score.set(a, (score.get(a) ?? 0) + 1)
+  const ranked = [...score.entries()].sort((a, b) => b[1] - a[1])
+  return ranked.length ? ranked[0][0] : null
+}

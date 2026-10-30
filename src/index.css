@@ -5667,3 +5667,95 @@ button.thread-row:hover .thread-where b {
     margin-left: 36px;
   }
 }
+
+/* ---- hiring for: one area of work at a time ---- */
+.lens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+.lens-label {
+  margin-right: 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.lens button {
+  padding: 6px 11px;
+  border: 1.5px solid var(--line);
+  background: none;
+  color: var(--ink-2);
+  font: 600 14px var(--font);
+}
+.lens button span {
+  margin-left: 2px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.lens button:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.lens button[aria-checked="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+.lens button[aria-checked="true"] span {
+  color: inherit;
+  opacity: 0.75;
+}
+.lens-sum {
+  margin: -6px 0 18px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.entry,
+.thread-row {
+  transition: opacity 0.2s ease-out;
+}
+main[data-lens="data"] .entry:not([data-areas~="data"]),
+main[data-lens="data"] .thread-row:not(.head):not([data-areas~="data"]),
+main[data-lens="backend"] .entry:not([data-areas~="backend"]),
+main[data-lens="backend"] .thread-row:not(.head):not([data-areas~="backend"]),
+main[data-lens="infra"] .entry:not([data-areas~="infra"]),
+main[data-lens="infra"] .thread-row:not(.head):not([data-areas~="infra"]),
+main[data-lens="automation"] .entry:not([data-areas~="automation"]),
+main[data-lens="automation"] .thread-row:not(.head):not([data-areas~="automation"]),
+main[data-lens="frontend"] .entry:not([data-areas~="frontend"]),
+main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) {
+  opacity: 0.32;
+}
+/* printing with a lens set prints only that work */
+@media print {
+  main[data-lens="data"] .entry:not([data-areas~="data"]),
+  main[data-lens="data"] .thread-row:not(.head):not([data-areas~="data"]),
+  main[data-lens="backend"] .entry:not([data-areas~="backend"]),
+  main[data-lens="backend"] .thread-row:not(.head):not([data-areas~="backend"]),
+  main[data-lens="infra"] .entry:not([data-areas~="infra"]),
+  main[data-lens="infra"] .thread-row:not(.head):not([data-areas~="infra"]),
+  main[data-lens="automation"] .entry:not([data-areas~="automation"]),
+  main[data-lens="automation"] .thread-row:not(.head):not([data-areas~="automation"]),
+  main[data-lens="frontend"] .entry:not([data-areas~="frontend"]),
+  main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) {
+    display: none;
+  }
+  .lens {
+    display: none;
+  }
+}
+.match-lean {
+  margin: 14px 0 0;
+  font-size: 15.5px;
+}
+.match-lean button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 650 15.5px var(--font);
+  color: var(--cobalt);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -26,6 +26,23 @@ async function loadFormats(server?: ViteDevServer): Promise<Formats> {
 // one data file, every format: the build writes the resume as plain text and
 // JSON Resume, a contact card, and the search engine data in the page head,
 // all from src/data.ts. The dev server serves the same files.
+// Preload the Archivo file the first screen uses, so the text doesn't wait
+// for the stylesheet to be parsed before the font request starts.
+function preloadFont(): Plugin {
+  return {
+    name: 'preload-font',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const font = Object.keys(ctx.bundle ?? {}).find((f) => /archivo-latin-wdth-normal.*\.woff2$/.test(f))
+        if (!font) return html
+        return html.replace('</title>', `</title>\n    <link rel="preload" href="/${font}" as="font" type="font/woff2" crossorigin />`)
+      },
+    },
+  }
+}
+
 function publishResume(): Plugin {
   const files = (f: Formats): Record<string, [string, string]> => ({
     'resume.txt': ['text/plain; charset=utf-8', f.plainText()],
@@ -85,10 +102,12 @@ export default defineConfig({
   },
   plugins: [
     publishResume(),
+    preloadFont(),
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Anay Baid',
