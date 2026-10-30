@@ -55,3 +55,11 @@ describe('terminal, inside the work', () => {
     expect(run('grep repository_dispatch').lines.some((l) => l.includes('flow 1 step'))).toBe(true)
   })
 })
+
+describe('terminal, decisions', () => {
+  it('prints the decisions and opens the tab', () => {
+    const out = run('decisions battleship')
+    expect(out.lines[0]).toBe('1. The server owns the game state and checks every move')
+    expect(out.action).toEqual({ kind: 'open', id: 'project-battleship-for-purolator', tab: 'decisions' })
+  })
+})

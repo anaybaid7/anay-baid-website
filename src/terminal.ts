@@ -2,6 +2,7 @@ import { education, profile, skillLabels, skills } from './data'
 import { ENTRIES, type Entry } from './entries'
 import { whereUsed } from './evidence'
 import { DETAILS } from './details'
+import { NOTES } from './decisions'
 
 // The command language behind the terminal. Pure functions over the same
 // data the page renders, so the UI only has to print lines and run actions.
@@ -35,8 +36,9 @@ const HELP = [
   'whoami              who this is',
   'ls [jobs|projects]  list work',
   'cat <name>          details for one job or project',
-  'open <name> [tab]   open it in the drawer (how, screens, try, code)',
+  'open <name> [tab]   open it in the drawer (how, decisions, screens, try, code)',
   'why <name>          what was manual and what I built',
+  'decisions <name>    what I chose, over what, and why',
   'flows <name>        the flows through a system, step by step',
   'trace <name> [f] [s] open the diagram on flow f, step s',
   'grep <text>         search bullets, stacks, flows and their payloads',
@@ -111,6 +113,18 @@ export function run(input: string): Output {
       if (!e) return { lines: [`why: ${arg || '(nothing)'}: no such job or project, try ls`] }
       return { lines: [e.title, '', `before  ${e.why}`, `built   ${e.built}`, ...(e.highlight ? [`result  ${e.highlight.value} ${e.highlight.label}`] : [])] }
     }
+    case 'decisions': {
+      const e = find(arg)
+      const n = e && NOTES[e.id]
+      if (!e || !n) return { lines: [`decisions: ${arg || '(nothing)'}: no notes for that, try ls`] }
+      return {
+        lines: [
+          ...n.decisions.flatMap((d, i) => [`${i + 1}. ${d.chose}`, `   instead of ${d.over}`, `   ${d.because}`, '']),
+          ...(n.next?.length ? ['next', ...n.next.map((x) => `- ${x}`)] : []),
+        ],
+        action: { kind: 'open', id: e.id, tab: 'decisions' },
+      }
+    }
     case 'flows': {
       const e = find(arg)
       const flows = e && DETAILS[e.id]?.flows
@@ -177,7 +191,7 @@ export function run(input: string): Output {
   }
 }
 
-const COMMANDS = ['help', 'whoami', 'ls', 'cat', 'open', 'why', 'flows', 'trace', 'grep', 'skills', 'filter', 'theme', 'view', 'contact', 'resume', 'clear', 'exit']
+const COMMANDS = ['help', 'whoami', 'ls', 'cat', 'open', 'why', 'decisions', 'flows', 'trace', 'grep', 'skills', 'filter', 'theme', 'view', 'contact', 'resume', 'clear', 'exit']
 
 // tab completion for the command, then for names, skills and options
 export function complete(input: string): string {
@@ -186,8 +200,8 @@ export function complete(input: string): string {
   const pool =
     parts.length === 1
       ? COMMANDS
-      : ['cat', 'open', 'why', 'flows', 'trace'].includes(parts[0])
-        ? parts.length === 2 ? NAMES : parts[0] === 'open' ? ['how', 'screens', 'try', 'code'] : []
+      : ['cat', 'open', 'why', 'decisions', 'flows', 'trace'].includes(parts[0])
+        ? parts.length === 2 ? NAMES : parts[0] === 'open' ? ['how', 'decisions', 'screens', 'try', 'code'] : []
         : parts[0] === 'filter'
           ? ['clear', ...allSkills]
           : parts[0] === 'theme'

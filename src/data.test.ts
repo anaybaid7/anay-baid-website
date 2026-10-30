@@ -158,3 +158,14 @@ describe('drawer details', () => {
     for (const e of ENTRIES.filter((x) => x.kind === 'job')) expect(DETAILS[e.id], e.id).toBeDefined()
   })
 })
+
+describe('decision notes', () => {
+  it('belong to real entries and every decision is complete', async () => {
+    const { NOTES } = await import('./decisions')
+    for (const [id, n] of Object.entries(NOTES)) {
+      expect(ENTRIES.some((e) => e.id === id), id).toBe(true)
+      expect(n.decisions.length, id).toBeGreaterThan(1)
+      for (const d of n.decisions) expect(d.chose && d.over && d.because, id).toBeTruthy()
+    }
+  })
+})

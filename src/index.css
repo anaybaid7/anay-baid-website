@@ -3723,7 +3723,7 @@ label {
   margin-right: 10px;
   text-align: right;
   font-style: normal;
-  color: #5d6a91;
+  color: #8b98c2;
 }
 .sdk-code .ln.hot {
   background: rgba(111, 141, 255, 0.22);
@@ -4762,7 +4762,7 @@ label {
    ===================================================================== */
 .wires {
   --w-ink: #2b2b2b;
-  --w-soft: #8a8a8a;
+  --w-soft: #666;
   --w-fill: #ececec;
   --w-paper: #fbfbf8;
 }
@@ -5591,4 +5591,79 @@ button.thread-row:hover .thread-where b {
 }
 .plan-table.gaps {
   min-width: 620px;
+}
+
+/* ---- decisions ---- */
+.dec-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1.5px solid var(--ink);
+}
+.dec-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 4px 28px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.dec-chose {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.dec-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font-size: 13px;
+}
+.dec-over {
+  grid-column: 1;
+  margin: 0 0 0 36px;
+  font-size: 15px;
+  color: var(--ink-3);
+}
+.dec-over span {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.dec-why {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.dec-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px 32px;
+  margin-top: 24px;
+}
+.dec-cols h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.dec-cols .dashes li {
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .dec-list li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dec-why {
+    grid-column: 1;
+    grid-row: auto;
+    margin-left: 36px;
+  }
 }

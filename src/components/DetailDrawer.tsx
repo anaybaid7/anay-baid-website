@@ -4,6 +4,7 @@ import { ENTRIES, entryById } from '../entries'
 import ArchDiagram from './ArchDiagram'
 import Screens from './Screens'
 import CodeView from './CodeView'
+import Decisions from './Decisions'
 import { SpeedPicker } from './sim/SpeedPicker'
 import { sourcesFor } from './demos/sources'
 import PipelineRun from './demos/PipelineRun'
@@ -87,6 +88,7 @@ function CodeTab({ kinds }: { kinds: DemoKind[] }) {
 const TAB_NAMES: Record<Tab, string> = {
   overview: 'Overview',
   how: 'How it works',
+  decisions: 'Decisions',
   screens: 'Screens',
   try: 'Try it',
   code: 'Code',
@@ -193,7 +195,7 @@ export default function DetailDrawer({ open, onChange }: {
             </div>
           </header>
 
-          <div className="drawer-body" id="drawer-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+          <div className="drawer-body" id="drawer-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={0}>
             {tab === 'overview' && (
               <div className="drawer-overview">
                 <p className="drawer-when">{entry.when}</p>
@@ -238,6 +240,7 @@ export default function DetailDrawer({ open, onChange }: {
                 name={entry.title}
                 initialPick={focusNode}
               />}
+            {tab === 'decisions' && <Decisions id={entry.id} />}
             {tab === 'screens' && detail?.screens && (
               <Screens
                 kind={detail.screens}

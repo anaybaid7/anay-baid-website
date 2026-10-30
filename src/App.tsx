@@ -15,6 +15,7 @@ import { setSettings, useSettings, withTransition, resolvedTheme } from './setti
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type Tab } from './details'
+import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import MiniArch from './components/MiniArch'
@@ -157,7 +158,7 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
-const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', screens: 'screens', try: 'demo', code: 'code' }
+const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', decisions: 'decisions', screens: 'screens', try: 'demo', code: 'code' }
 
 // the button on each row that opens its drawer, named after what's inside
 function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -632,6 +633,16 @@ export default function App() {
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
       { group: 'Hiring', label: 'Plain text resume', keywords: 'txt ats copy paste', run: () => window.open(FILES.text, '_blank', 'noopener') },
       ...insideCommands(showDetail),
+      ...Object.entries(NOTES).flatMap(([id, n]) =>
+        n.decisions.map((d) => ({
+          group: 'Decisions',
+          label: d.chose,
+          hint: `${entryById(id)?.title.replace(/ \(.*\)$/, '')}, instead of ${d.over}`,
+          keywords: d.because,
+          deep: true,
+          run: () => showDetail({ id, tab: 'decisions' }),
+        })),
+      ),
     ]
   }, [showDetail, showResume, applyFilter])
   return (
