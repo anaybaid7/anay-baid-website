@@ -140,10 +140,7 @@ export default function SdkRun() {
 
   return (
     <div className="demo sdk">
-      <p className="demo-lede">
-        A reference app integrating the SDK. Run it to see each call highlighted in the code, sent over the network and
-        reflected on screen. Then add people to the session as live events.
-      </p>
+      <p className="demo-hint">Run the app, then add people.</p>
       <div className="sdk-grid">
         <pre className="sdk-code" aria-label="Reference app source" tabIndex={0}>
           {CODE.map((l, i) => (
@@ -197,7 +194,6 @@ export default function SdkRun() {
         <button type="button" onClick={reset}>Reset</button>
       </div>
       <Log title="Network" lines={net} empty="No requests yet" />
-      <p className="demo-note">SDK method names are simplified for the demo.</p>
     </div>
   )
 }

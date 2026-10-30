@@ -5759,3 +5759,324 @@ main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) 
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ---- weekly forecast review ---- */
+.plan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 18px;
+  align-items: start;
+}
+.pchart {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1.5px solid var(--line);
+  font-family: var(--font);
+}
+.pchart .ax {
+  font-size: 11px;
+  fill: var(--ink-3);
+}
+.pchart .sel {
+  fill: color-mix(in srgb, var(--cobalt) 10%, transparent);
+}
+.pchart path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.pchart .base {
+  stroke: var(--ink-3);
+  stroke-dasharray: 2 4;
+}
+.pchart .orig {
+  stroke: var(--ink-3);
+  stroke-dasharray: 6 4;
+  opacity: 0.6;
+}
+.pchart .fc {
+  stroke: var(--cobalt);
+  stroke-width: 2.5;
+  transition: d 0.25s ease-out;
+}
+.pchart .mod {
+  fill: var(--paper);
+  stroke: var(--cobalt);
+  stroke-width: 2.5;
+}
+.k-base,
+.k-fc,
+.k-orig {
+  height: 0 !important;
+  border-top: 2.5px solid var(--cobalt);
+}
+.k-base {
+  border-top: 2.5px dotted var(--ink-3) !important;
+}
+.k-orig {
+  border-top: 2.5px dashed var(--ink-3) !important;
+}
+.k-mod {
+  width: 10px !important;
+  height: 10px !important;
+  border: 2.5px solid var(--cobalt);
+  border-radius: 50%;
+}
+.plan-ops {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+  padding: 8px;
+  background: var(--card);
+}
+.plan-kpi {
+  margin-right: auto;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.plan-kpi b {
+  color: var(--ink);
+}
+.plan-ops select,
+.plan-ops input {
+  height: 34px;
+  padding: 0 8px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 14px var(--font);
+}
+.plan-ops input {
+  width: 80px;
+  font-family: var(--mono);
+}
+.plan-ops button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font: 650 14px var(--font);
+}
+.plan-table tr {
+  cursor: pointer;
+}
+.plan-table tr.picked td {
+  background: color-mix(in srgb, var(--cobalt) 12%, transparent);
+}
+.plan-table .wk {
+  min-width: 34px;
+  padding: 2px 6px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 650 13px var(--mono);
+}
+.plan-table .wk[aria-pressed="true"] {
+  border-color: var(--cobalt);
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+}
+.plan-table .split,
+.plan-table .mods {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.plan-log {
+  position: sticky;
+  top: 0;
+  border-left: 1.5px solid var(--line);
+  padding-left: 14px;
+}
+.plan-log .demo-h {
+  margin-top: 0;
+}
+.plan-log ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.plan-log li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  animation: rise 0.2s ease-out;
+}
+.plan-log li span {
+  display: block;
+  font: 12.5px var(--mono);
+  color: var(--ink-3);
+}
+@media (max-width: 760px) {
+  .plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-log {
+    position: static;
+    border-left: 0;
+    padding-left: 0;
+  }
+  .plan-kpi {
+    flex-basis: 100%;
+  }
+}
+.demo-hint {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.sample {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.wbars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 110px;
+  padding: 6px 4px 0;
+  border-left: 2px solid var(--w-ink);
+  border-bottom: 2px solid var(--w-ink);
+}
+.wbars i {
+  flex: 1;
+  border: 1.5px solid var(--w-ink);
+  border-bottom: 0;
+  background: repeating-linear-gradient(135deg, transparent 0 4px, #d9d9d9 4px 6px);
+}
+.mode {
+  display: inline-flex;
+  margin-bottom: 14px;
+  border: 1.5px solid var(--ink);
+}
+.mode button {
+  padding: 6px 14px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 650 14px var(--font);
+}
+.mode button[aria-checked="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- fleet setup ---- */
+.phases {
+  list-style: none;
+  display: flex;
+  gap: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  counter-reset: ph;
+}
+.phases li {
+  counter-increment: ph;
+  padding: 6px 14px 6px 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.phases li::before {
+  content: counter(ph);
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 1.5px solid var(--line);
+  font-size: 12px;
+}
+.phases li.on {
+  color: var(--ink);
+}
+.phases li.on::before {
+  border-color: var(--cobalt);
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+}
+.phases li.done::before {
+  border-color: var(--cobalt);
+  color: var(--cobalt);
+}
+.place-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.bs-board.placing .bs-cell {
+  cursor: pointer;
+}
+.bs-cell.pv {
+  background: color-mix(in srgb, var(--cobalt) 35%, var(--card));
+  border-color: var(--cobalt);
+}
+.bs-cell.pv.bad {
+  background: color-mix(in srgb, var(--bad) 30%, var(--card));
+  border-color: var(--bad);
+}
+.manifest {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.manifest li {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.manifest li > button:first-child {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 600 14.5px var(--font);
+  text-align: left;
+}
+.manifest li > button[aria-pressed="true"] {
+  background: var(--tint);
+}
+.manifest li > button:disabled {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  opacity: 1;
+}
+.mf-cells {
+  display: inline-flex;
+  gap: 2px;
+  width: 92px;
+}
+.mf-cells i {
+  width: 16px;
+  height: 12px;
+  background: var(--ink-3);
+}
+.manifest button:disabled .mf-cells i {
+  background: var(--cobalt);
+}
+.mf-x {
+  padding: 2px 10px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 18px;
+}
+@media (max-width: 760px) {
+  .place-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

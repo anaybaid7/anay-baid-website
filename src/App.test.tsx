@@ -217,6 +217,8 @@ describe('App', () => {
     history.replaceState(null, '', '/?open=job-purolator&tab=screens')
     render(<App />)
     const drawer = await findDrawer()
+    expect(drawer.querySelectorAll('.wn').length).toBeGreaterThan(3)
+    fireEvent.click(screen.getByRole('radio', { name: 'Screenshots', hidden: true }))
     const spots = drawer.querySelectorAll('.spot')
     expect(spots.length).toBeGreaterThan(1)
     fireEvent.click(spots[1])

@@ -85,9 +85,7 @@ export default function Reconcile() {
 
   return (
     <div className="demo schema-demo">
-      <p className="demo-lede">
-        The same table in Azure and on-prem. Run the check, apply each fix, then run it again until both sides match.
-      </p>
+      <p className="demo-hint">Run the check, apply the fixes, run it again.</p>
       <div className="schema-pair">
         {table('Azure, box_office', AZURE, ROWS)}
         {table('On-prem, box_office', onprem, rows)}
@@ -117,7 +115,6 @@ export default function Reconcile() {
           <pre>{applied.join('\n\n')}</pre>
         </details>
       )}
-      <p className="demo-note">Made-up table, just to show the idea.</p>
     </div>
   )
 }

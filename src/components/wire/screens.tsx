@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Board, Box, Btn, Img, In, Meter, N, Row, T, Tabs, Tbl, Win } from './kit'
+import { Bars, Board, Box, Btn, Img, In, Meter, N, Row, T, Tabs, Tbl, Win } from './kit'
 
 export interface Note {
   n: number
@@ -289,4 +289,105 @@ const pashu: Screen[] = [
   },
 ]
 
-export const WIREFRAMES = { starrez, battleship, insightvault, pashu }
+
+// ---- Volume Planner, laid out from my own wireframe doc for the tool ----
+const side = (
+  <Box title="Load files">
+    <T>Actual.xlsx loaded</T>
+    <T>Forecast.xlsx loaded</T>
+    <In ph="Daily Dist. (optional)" />
+    <T b>Metric</T>
+    <In ph="Total Del Pieces" />
+    <Row><In ph="Base 2021" /><In ph="Fc 2026" /></Row>
+    <T b>Division</T>
+    <In ph="(ALL)" />
+    <T b>Terminal</T>
+    <In ph="12 Toronto West" />
+    <Btn primary>Export CSV</Btn>
+  </Box>
+)
+const forecast: Screen[] = [
+  {
+    name: 'Where it fits',
+    notes: [
+      { n: 1, title: 'Weekly pull', text: 'Daily volume comes out of Courier Ops every Monday.', node: 'airflow' },
+      { n: 2, title: 'Model', text: 'STL and ARIMA fit the seasonal trend and write a forecast CSV.', node: 'sm' },
+      { n: 3, title: 'The tool', text: 'Planners review, adjust and validate daily shapes here.', node: 'tools' },
+      { n: 4, title: 'Output becomes input', text: 'Every export is what gets loaded next session. State lives in files.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="Volume Planner, pipeline">
+        <Row between>
+          <N n={1}><Box title="01 Courier Ops"><T>QlikView pull</T></Box></N>
+          <T b>→</T>
+          <Box title="02 FMR daily DB"><T>Cleaned history</T></Box>
+          <T b>→</T>
+          <N n={2}><Box title="03 R model"><T>STL + ARIMA</T></Box></N>
+        </Row>
+        <Row between>
+          <N n={3}><Box title="04 Volume Planner"><T>Review and adjust</T></Box></N>
+          <T b>→</T>
+          <N n={4}><Box title="05 Final forecast"><T>CSV to daily model</T></Box></N>
+        </Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Weekly review',
+    notes: [
+      { n: 1, title: 'Filters', text: 'Metric, base year, division and terminal. Every change redraws at once.', node: 'api' },
+      { n: 2, title: 'Chart', text: 'Last year, this year, the forecast, edits, and the Prophet 2027 overlay on the same weeks.', node: 'sm' },
+      { n: 3, title: 'Selection KPIs', text: 'YoY and totals for just the selected weeks.', node: 'tools' },
+      { n: 4, title: 'Operations', text: '% up, % down, set to, add. They run in sequence.', node: 'tools' },
+      { n: 5, title: 'Change log', text: 'Every edit with before and after, one-step revert.', node: 'tools' },
+    ],
+    draw: () => (
+      <Win title="Forecast Tool" url="volume-planner/weekly">
+        <Tabs items={['Weekly Forecast', 'Daily Distribution']} />
+        <Row>
+          <N n={1} block>{side}</N>
+          <Box grow>
+            <N n={2} block><Bars values={[50, 48, 52, 55, 54, 60, 58, 62, 70, 66, 74, 92, 98, 90, 84, 88, 56]} /></N>
+            <N n={3} block><Row between><T b>W36, W41, W47</T><T>YoY +3.2%</T><T>16.8M</T></Row></N>
+            <N n={4} block><Row><In ph="% Increase" /><In ph="5" mono /><Btn primary>Apply</Btn><Btn>Revert</Btn></Row></N>
+            <Tbl cols={['Wk', 'Base', 'Forecast', 'YoY', 'Status']} hot={2} rows={[['36', '3,300K', '3,465K', '+5.0%', 'Mod'], ['41', '3,150K', '3,200K', '+1.6%', 'Mod'], ['47', '4,200K', '4,550K', '+8.3%', 'Mod']]} />
+          </Box>
+          <N n={5} block>
+            <Box title="Change log">
+              <T>W36 % Increase 5%</T>
+              <T>W41 Set to 3200K</T>
+              <T>W47 % Increase 12%</T>
+            </Box>
+          </N>
+        </Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Daily distribution',
+    notes: [
+      { n: 1, title: 'Event week', text: 'Known holidays load their base weeks as overlays automatically.', node: 'sql' },
+      { n: 2, title: 'Overlays', text: 'Past weeks with the same holiday weekday, plus their average.', node: 'sql' },
+      { n: 3, title: 'Edit table', text: 'Sun to Sat shares. Total must be 100% to save.', node: 'api' },
+      { n: 4, title: 'Save', text: 'Writes the change log and downloads the CSV for next session.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="Forecast Tool" url="volume-planner/daily">
+        <Tabs items={['Weekly Forecast', 'Daily Distribution']} on={1} />
+        <N n={1} block><Row between><T b>Week 27</T><Btn>Canada Day</Btn><T>T101, PCL Del Pieces</T></Row></N>
+        <Row>
+          <Box grow>
+            <N n={2} block><Bars values={[4, 14, 92, 86, 80, 76, 58]} /></N>
+            <Row><Btn>2015 W27 ×</Btn><Btn>2020 W28 ×</Btn><Btn>Avg</Btn></Row>
+          </Box>
+          <N n={3} block>
+            <Tbl cols={['Day', 'Now', 'New']} rows={[['Sun', '0.81%', '0.81'], ['Mon', '3.20%', '4.10'], ['Tue', '22.40%', '22.40'], ['Total', '100%', '100.9']]} hot={1} />
+          </N>
+        </Row>
+        <N n={4} block><Row><Btn>Normalize to 100%</Btn><Btn primary>Save and download CSV</Btn><Btn>Reset</Btn></Row></N>
+      </Win>
+    ),
+  },
+]
+
+export const WIREFRAMES = { forecast, starrez, battleship, insightvault, pashu }

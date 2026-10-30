@@ -79,10 +79,7 @@ export default function PipelineRun() {
 
   return (
     <div className="demo pipe">
-      <p className="demo-lede">
-        Trigger the weekly DAG, then click any square to read that task’s log. Add a bad record to see validation stop the run,
-        then fix it and clear the failed task to retry.
-      </p>
+      <p className="demo-hint">Add a bad record, run it, then fix it.</p>
 
       <div className="pipe-bar">
         <button type="button" className="demo-primary" onClick={trigger} disabled={seq.running}>

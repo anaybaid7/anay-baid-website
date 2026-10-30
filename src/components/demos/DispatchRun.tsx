@@ -79,10 +79,7 @@ export default function DispatchRun() {
 
   return (
     <div className="demo build">
-      <p className="demo-lede">
-        The action as the workflow runs it. Clear a required field to see it stop before dispatching, or change the
-        environment to see only that job run on the other side.
-      </p>
+      <p className="demo-hint">Clear a field, or change the environment.</p>
       <div className="build-grid">
         <fieldset className="tree">
           <legend>Workflow env</legend>
@@ -129,7 +126,6 @@ export default function DispatchRun() {
           <pre>{email}</pre>
         </figure>
       )}
-      <p className="demo-note">Same inputs, checks, request and email as gitpython.py, shown in the Code tab.</p>
     </div>
   )
 }

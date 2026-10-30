@@ -111,10 +111,7 @@ export default function RouterApp() {
 
   return (
     <div className="demo router">
-      <p className="demo-lede">
-        A small single page app. Move between pages, turn on live updates, or create an event, and watch the router and the
-        store on the right.
-      </p>
+      <p className="demo-hint">Click around. Turn on live updates.</p>
       <div className="router-grid">
         <Frame title="App" url={`app.local${path}`} className="rf-app">
           <nav className="rf-nav">

@@ -115,10 +115,7 @@ export default function Extension() {
 
   return (
     <div className="demo ext">
-      <p className="demo-lede">
-        A resident profile with the extension running. The outlined buttons are the ones it adds. Click one to see it read
-        the page and copy a finished entry, then switch residents to see it re-inject without a reload.
-      </p>
+      <p className="demo-hint">Click an outlined button.</p>
       <div className="ext-grid">
         <Frame title="StarRez" url="uwaterloo.starrezhousing.com/StarRezWeb/main/directory" className="sr-mock">
           <p className={`sr-crumb ${reading === 'name' ? 'reading' : ''}`}>
@@ -213,7 +210,6 @@ export default function Extension() {
         </label>
       </div>
       <Log title="Content script" lines={log} />
-      <p className="demo-note">Made-up residents. The parsing and formats are the extension’s own, shown in the Code tab.</p>
     </div>
   )
 }
