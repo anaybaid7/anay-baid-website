@@ -22,7 +22,8 @@ export default function MiniArch({ id, name, onOpen }: { id: string; name: strin
   }
 
   return (
-    <button type="button" className="mini-arch" onClick={() => onOpen(id)} aria-label={`Open the system diagram for ${name}`}>
+    <button type="button" className="mini-arch" onClick={() => onOpen(id)}>
+      <span className="sr-only">System diagram for {name}, </span>
       <svg viewBox={`-2 -2 ${cols * (W + GX) - GX + 4} ${rows * (H + GY) - GY + 4}`} aria-hidden="true">
         {d.arch.edges.map((e) => (
           <path key={`${e.from}-${e.to}`} className="ma-wire" d={line(e.from, e.to)} />

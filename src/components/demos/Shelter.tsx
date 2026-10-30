@@ -93,7 +93,7 @@ export default function Shelter() {
       </p>
       <div className="shelter-hud">
         <span>Level <b>{xp.level}</b></span>
-        <span className="xpbar" aria-label={`XP ${xp.xp} of 100`}><i style={{ width: `${xp.xp}%` }} /></span>
+        <span className="xpbar" role="progressbar" aria-label="XP to the next level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={xp.xp}><i style={{ width: `${xp.xp}%` }} /></span>
         <span>Animals <b>{alive}</b></span>
         <span>Food bowls <b>{bowls.food}</b></span>
         <span>Water bowls <b>{bowls.water}</b></span>
