@@ -383,3 +383,16 @@ describe('decisions', () => {
     expect(drawer).toHaveTextContent('What I’d change next')
   })
 })
+
+describe('hiring for', () => {
+  it('reads the lens from the URL, dims other work and keeps the choice in the URL', () => {
+    history.replaceState(null, '', '/?for=data')
+    render(<App />)
+    expect(document.querySelector('main')).toHaveAttribute('data-lens', 'data')
+    expect(document.querySelector('.lens-sum')).toHaveTextContent('Purolator')
+    fireEvent.click(screen.getByRole('radio', { name: /^Testing and automation/ }))
+    expect(new URL(location.href).searchParams.get('for')).toBe('automation')
+    fireEvent.click(screen.getByRole('radio', { name: 'Anything' }))
+    expect(new URL(location.href).searchParams.get('for')).toBeNull()
+  })
+})

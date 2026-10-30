@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { profile, experience, projects, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import GithubActivity from './components/GithubActivity'
@@ -19,6 +19,7 @@ import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import MiniArch from './components/MiniArch'
+import { prerendered, useHydrated } from './hydrated'
 import type { Action as TermAction } from './terminal'
 
 // the drawer and its demos load the first time someone opens one
@@ -86,9 +87,9 @@ function CopyEmail() {
       <button type="button" className="copy" onClick={copy}>
         {copied ? 'Copied' : 'Copy address'}
       </button>
-      <div className="toast" role="status" aria-live="polite" data-show={copied}>
+      <span className="toast" role="status" aria-live="polite" data-show={copied}>
         {copied && <>Copied {profile.email} to your clipboard</>}
-      </div>
+      </span>
     </>
   )
 }
@@ -105,7 +106,27 @@ function Bullets({ items }: { items: string[] }) {
   )
 }
 
-const thisMonth = monthIndex(new Date().getFullYear(), new Date().getMonth())
+function detailFromUrl(): Opened | null {
+  const q = new URLSearchParams(location.search)
+  const id = q.get('open')
+  // tab=play was the old name for the demo tab, so older links still land on it
+  const tab = q.get('tab') === 'play' ? 'try' : (q.get('tab') as Tab)
+  return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview' } : null
+}
+
+// ?for=data shows the page through one area of work, for a role hiring for it
+const lensFromUrl = (): Area | null => {
+  const a = new URLSearchParams(location.search).get('for')
+  return a && a in AREAS ? (a as Area) : null
+}
+
+const filterFromUrl = () =>
+  (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+
+// The month the page counts up to. Prerendered HTML uses the build month so
+// hydration matches, then App moves it to the real month once it's running.
+const monthOf = (d: Date) => monthIndex(d.getFullYear(), d.getMonth())
+let thisMonth = prerendered ? monthOf(new Date(__BUILD_DATE__)) : monthOf(new Date())
 const monthsIn = (period: string) => {
   const span = parsePeriod(period)
   return span ? span.end - span.start + 1 : 0
@@ -120,7 +141,7 @@ const isCurrent = (period: string) => {
   return !!span && span.start <= thisMonth && span.end >= thisMonth
 }
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
-const totalMonths = experience.reduce((sum, e) => sum + monthsSoFar(e.period), 0)
+const totalMonths = () => experience.reduce((sum, e) => sum + monthsSoFar(e.period), 0)
 
 const SHORT_MONTH = /(January|February|March|April|May|June|July|August|September|October|November|December)/g
 const shortPeriod = (period: string) => period.replace(SHORT_MONTH, (m) => m.slice(0, 3))
@@ -198,7 +219,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
     <div className="timeline" aria-label="Co-op terms on a timeline" onMouseLeave={() => setHover(null)}>
       <p className="tl-sum" aria-live="polite">
         {shown === null ? (
-          <>{plural(experience.length, 'co-op term')}, {totalMonths} months of full-time work so far</>
+          <>{plural(experience.length, 'co-op term')}, {totalMonths()} months of full-time work so far</>
         ) : (
           <>
             <b>{shortOrg(experience[shown].org)}</b>, {experience[shown].role}, {shortPeriod(experience[shown].period)}
@@ -261,6 +282,7 @@ function Experience({ active, onPick, filter, onOpen }: { active: number; onPick
             <li
               key={e.org}
               className={entryClass(i === active, !fits(e.tech, filter))}
+              data-areas={e.areas.join(' ')}
               id={`job-${slug(shortOrg(e.org))}`}
             >
               <p className="entry-when">
@@ -327,7 +349,7 @@ function Glance({ onCheck }: { onCheck: () => void }) {
           <div>
             <dt>Co-op</dt>
             <dd>
-              {plural(experience.length, 'term')}, {totalMonths} months, at {listFormat(experience.map((e) => shortOrg(e.org)))}
+              {plural(experience.length, 'term')}, {totalMonths()} months, at {listFormat(experience.map((e) => shortOrg(e.org)))}
             </dd>
           </div>
           <div>
@@ -380,7 +402,7 @@ const THREAD: [string, string[]][] = [
   ['2026', ['project-starrez-enterprise-automation-suite', 'job-purolator', 'project-battleship-for-purolator', 'project-insightvault']],
 ]
 
-function Thread({ onOpen }: { onOpen: (id: string, tab?: Tab) => void }) {
+function Thread({ onOpen, lens, onLens }: { onOpen: (id: string, tab?: Tab) => void; lens: Area | null; onLens: (a: Area | null) => void }) {
   return (
     <section className="section thread" aria-labelledby="thread" data-part="thread">
       <h2 id="thread">What I work on</h2>
@@ -390,6 +412,21 @@ function Thread({ onOpen }: { onOpen: (id: string, tab?: Tab) => void }) {
           that does it reliably. Each term added a layer: data at Cineplex, infrastructure at Nationwide, testing at
           Iotum, and all of it together at Purolator.
         </p>
+        <div className="lens" role="radiogroup" aria-label="Show what is relevant to a role">
+          <span className="lens-label">Hiring for</span>
+          <button type="button" role="radio" aria-checked={lens === null} onClick={() => onLens(null)}>Anything</button>
+          {(Object.keys(AREAS) as Area[]).map((a) => (
+            <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)}>
+              {AREAS[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
+            </button>
+          ))}
+        </div>
+        {lens && (
+          <p className="lens-sum" aria-live="polite">
+            {listFormat(ENTRIES.filter((e) => e.areas.includes(lens)).map((e) => e.title.replace(/ \(.*\)$/, '')))} involve{' '}
+            {AREAS[lens].toLowerCase()}. The rest of the page dims everything else.
+          </p>
+        )}
         <div className="thread-table">
           <div className="thread-row head" aria-hidden="true">
             <span>Where</span>
@@ -403,7 +440,7 @@ function Thread({ onOpen }: { onOpen: (id: string, tab?: Tab) => void }) {
               {ids.map((id) => {
                 const e = entryById(id)!
                 return (
-                  <button key={id} type="button" className="thread-row" onClick={() => onOpen(id, 'overview')}>
+                  <button key={id} type="button" className="thread-row" data-areas={e.areas.join(' ')} onClick={() => onOpen(id, 'overview')}>
                     <span className="thread-where">
                       <b>{e.title.replace(/ \(.*\)$/, '')}</b>
                       <small>{e.kind === 'job' ? e.sub : 'Project'}</small>
@@ -423,21 +460,6 @@ function Thread({ onOpen }: { onOpen: (id: string, tab?: Tab) => void }) {
             </div>
           ))}
         </div>
-        <dl className="areas">
-          {(Object.keys(AREAS) as Area[]).map((a) => (
-            <div key={a}>
-              <dt>{AREAS[a]}</dt>
-              <dd>
-                {ENTRIES.filter((e) => e.areas.includes(a)).map((e, i, all) => (
-                  <span key={e.id}>
-                    <button type="button" onClick={() => onOpen(e.id, 'overview')}>{e.title.replace(/ \(.*\)$/, '')}</button>
-                    {i < all.length - 1 && ', '}
-                  </span>
-                ))}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </div>
     </section>
   )
@@ -483,13 +505,27 @@ export default function App() {
   const [matcherOpen, setMatcherOpen] = useState(false)
   const [keysOpen, setKeysOpen] = useState(false)
   const [termOpen, setTermOpen] = useState(false)
-  const [detail, setDetail] = useState<Opened | null>(() => {
-    const q = new URLSearchParams(location.search)
-    const id = q.get('open')
-    // tab=play was the old name for the demo tab, so older links still land on it
-    const tab = q.get('tab') === 'play' ? 'try' : (q.get('tab') as Tab)
-    return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview' } : null
-  })
+  const hydrated = useHydrated()
+  const [, setMonthTick] = useState(0)
+  const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
+  const [filter, setFilter] = useState<string[]>(() => (prerendered ? [] : filterFromUrl()))
+  const [lens, setLens] = useState<Area | null>(() => (prerendered ? null : lensFromUrl()))
+
+  // after hydrating prerendered HTML, pick up what the URL and the clock say
+  // This has to be an effect: hydration must first match the HTML exactly.
+  /* eslint-disable react/set-state-in-effect */
+  useLayoutEffect(() => {
+    if (!prerendered) return
+    setDetail(detailFromUrl())
+    setFilter(filterFromUrl())
+    setLens(lensFromUrl())
+    const real = monthOf(new Date())
+    if (real !== thisMonth) {
+      thisMonth = real
+      setMonthTick((n) => n + 1)
+    }
+  }, [])
+  /* eslint-enable react/set-state-in-effect */
 
   // which drawer is open lives in the URL, so it can be shared or reloaded
   const showDetail = useCallback((next: Opened | null) => {
@@ -517,10 +553,16 @@ export default function App() {
     (id: string, tab?: Tab) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview' }),
     [showDetail],
   )
-  const [filter, setFilter] = useState<string[]>(() =>
-    (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
-  )
   const settings = useSettings()
+
+  // the lens lives in the URL, so a recruiter can share the view they used
+  const applyLens = useCallback((next: Area | null) => {
+    withTransition(() => setLens(next))
+    const url = new URL(location.href)
+    if (next) url.searchParams.set('for', next)
+    else url.searchParams.delete('for')
+    history.replaceState(history.state, '', url)
+  }, [])
 
   // the filter lives in the URL too, so a filtered view can be shared
   const applyFilter = useCallback((next: string[]) => {
@@ -632,6 +674,16 @@ export default function App() {
       { group: 'Hiring', label: 'Save contact card', keywords: 'vcard vcf contacts', run: downloadVcard },
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
       { group: 'Hiring', label: 'Plain text resume', keywords: 'txt ats copy paste', run: () => window.open(FILES.text, '_blank', 'noopener') },
+      { group: 'Hiring', label: 'Show everything', keywords: 'lens all clear hiring for', run: () => applyLens(null) },
+      ...(Object.keys(AREAS) as Area[]).map((k) => ({
+        group: 'Hiring',
+        label: `Hiring for ${AREAS[k].toLowerCase()}`,
+        keywords: 'lens role focus relevant',
+        run: () => {
+          applyLens(k)
+          goTo('thread')
+        },
+      })),
       ...insideCommands(showDetail),
       ...Object.entries(NOTES).flatMap(([id, n]) =>
         n.decisions.map((d) => ({
@@ -644,17 +696,17 @@ export default function App() {
         })),
       ),
     ]
-  }, [showDetail, showResume, applyFilter])
+  }, [showDetail, showResume, applyFilter, applyLens])
   return (
     <>
       <div className="progress" aria-hidden="true" />
       <a className="skip" href="#experience">Skip to experience</a>
       <header className="top wrap">
         <span className="top-name">Anay Baid</span>
-        <span className="top-time">Toronto, {time}</span>
+        <span className="top-time">Toronto{hydrated && `, ${time}`}</span>
         <nav aria-label="Contact">
           <button type="button" className="search" onClick={() => setMenuOpen(true)}>
-            Search <kbd>{navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>
+            Search <kbd>{hydrated && navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
           <a href={`mailto:${profile.email}`}>Email</a>
           <button type="button" onClick={showResume}>Resume</button>
@@ -664,7 +716,7 @@ export default function App() {
       </header>
 
       <Minimap version={`${settings.lead}|${settings.hide.join()}|${settings.view}|${filter.join()}`} />
-      <main className="wrap">
+      <main className="wrap" data-lens={lens ?? undefined}>
         <section className="hero" data-part="hero">
           <h1>
             <span>Anay</span> <span>Baid</span>
@@ -700,7 +752,7 @@ export default function App() {
           </div>
         </section>
 
-        <Thread onOpen={openDetail} />
+        <Thread onOpen={openDetail} lens={lens} onLens={applyLens} />
 
         <Glance onCheck={() => setMatcherOpen(true)} />
 
@@ -727,7 +779,7 @@ export default function App() {
           <div className="section-body">
             <ol className="entries">
               {projects.map((p) => (
-                <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} id={`project-${slug(p.title)}`}>
+                <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} data-areas={p.areas.join(' ')} id={`project-${slug(p.title)}`}>
                   <p className="entry-when">
                     {p.period}
                     <MiniArch id={`project-${slug(p.title)}`} name={p.title} onOpen={(id) => openDetail(id, 'how')} />
@@ -818,7 +870,7 @@ export default function App() {
             <CopyEmail />
             <button type="button" onClick={showResume}>Read resume</button>
             <a className="button" href={FILES.vcard} download>Save contact card</a>
-            {typeof navigator.share === 'function' && (
+            {hydrated && typeof navigator.share === 'function' && (
               <button
                 type="button"
                 onClick={() => navigator.share({ title: 'Anay Baid', url: location.href }).catch(() => {})}
@@ -828,7 +880,13 @@ export default function App() {
             )}
           </p>
           <p className="foot-note">
-            {replyNote(hour, weekend)} It's {time} in Toronto{visitorTime && <>, {visitorTime} where you are</>}.
+            {hydrated ? (
+              <>
+                {replyNote(hour, weekend)} It's {time} in Toronto{visitorTime && <>, {visitorTime} where you are</>}.
+              </>
+            ) : (
+              'I usually reply within a day.'
+            )}
           </p>
           <div className="foot-row">
             <span className="foot-links">
@@ -859,6 +917,10 @@ export default function App() {
         onOpenChange={setMatcherOpen}
         onFilter={applyFilter}
         onStep={(id, flow, step) => showDetail({ id, tab: 'how', at: { flow, step } })}
+        onLens={(a) => {
+          applyLens(a)
+          setTimeout(() => goTo('thread'), 0)
+        }}
       />
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
       {termOpen && (

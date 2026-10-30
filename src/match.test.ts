@@ -32,3 +32,12 @@ describe('matchPosting', () => {
     expect(matchPosting('   ')).toEqual([])
   })
 })
+
+describe('posting leaning', () => {
+  it('picks the area of work a posting asks about most', async () => {
+    const { matchPosting, leaning } = await import('./match')
+    const { ENTRIES } = await import('./entries')
+    expect(leaning(matchPosting('Terraform, Docker, AWS, ECS on Fargate'), ENTRIES)).toBe('infra')
+    expect(leaning([], ENTRIES)).toBeNull()
+  })
+})

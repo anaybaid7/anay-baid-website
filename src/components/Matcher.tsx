@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { matchPosting } from '../match'
+import { leaning, matchPosting } from '../match'
+import { ENTRIES } from '../entries'
+import { AREAS, type Area } from '../data'
 import { stepsUsing } from '../flowEvidence'
 
 const list = (items: string[]) => new Intl.ListFormat('en-CA', { type: 'conjunction' }).format(items)
@@ -7,17 +9,19 @@ const list = (items: string[]) => new Intl.ListFormat('en-CA', { type: 'conjunct
 // Paste a job posting, see which parts of my stack it asks for and where I've
 // used each one. Plain matching against the tech on this page, all in the
 // browser, nothing is sent anywhere.
-export default function Matcher({ open, onOpenChange, onFilter, onStep }: {
+export default function Matcher({ open, onOpenChange, onFilter, onStep, onLens }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onFilter: (skills: string[]) => void
   onStep: (id: string, flow: number, step: number) => void
+  onLens: (a: Area) => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [text, setText] = useState('')
   const matches = useMemo(() => matchPosting(text), [text])
   const used = matches.filter((m) => m.where.length > 0)
   const listed = matches.filter((m) => m.where.length === 0)
+  const lean = useMemo(() => leaning(used, ENTRIES) as Area | null, [used])
   const places = Array.from(new Set(used.flatMap((m) => m.where.map((w) => w.label))))
 
   useEffect(() => {
@@ -92,6 +96,20 @@ export default function Matcher({ open, onOpenChange, onFilter, onStep }: {
                   </li>
                 ))}
               </ul>
+              {lean && (
+                <p className="match-lean">
+                  This posting leans toward <b>{AREAS[lean].toLowerCase()}</b>.{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onLens(lean)
+                      onOpenChange(false)
+                    }}
+                  >
+                    View the page for that
+                  </button>
+                </p>
+              )}
               {used.length > 0 && (
                 <p className="sheet-actions">
                   <button
