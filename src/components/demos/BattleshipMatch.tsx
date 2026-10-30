@@ -1,17 +1,24 @@
 import { useRef, useState } from 'react'
-import { N, botShot, placeFleet } from '../../battleship'
+import { N, botShot, placeFleet, validPlacement, type Placed } from '../../battleship'
+import Placement from './Placement'
 import { Log, type LogLine } from '../sim/Log'
 import { useSequence } from '../sim/useSequence'
 
 const name = (i: number) => `${'ABCDEFGH'[i % N]}${Math.floor(i / N) + 1}`
 type Ships = ReturnType<typeof placeFleet>
 const ROOM = 'K7QX2'
-const OPENING: LogLine[] = [
-  { src: 'server', text: `both_connected { room: "${ROOM}", boardDim: 8 }` },
-  { src: 'you', text: 'emit place_ships { ships: [5 vehicles] }' },
-  { src: 'server', text: 'placement_confirmed, waiting for the bot' },
-  { src: 'server', text: 'game_start { turn: "you" }, coin flip went your way', tone: 'ok' },
-]
+const OPENING: LogLine[] = [{ src: 'server', text: `both_connected { room: "${ROOM}", boardDim: 8 }` }]
+const locked = (ships: Placed[]): LogLine[] => {
+  const err = validPlacement(ships)
+  return [
+    { src: 'you', text: `emit place_ships { ships: [${ships.map((s) => s.cells.length).join(', ')}] }` },
+    err
+      ? { src: 'server', text: `rejected, ${err}`, tone: 'err' }
+      : { src: 'server', text: 'isValidPlacement: count, bounds, overlap ok → placement_confirmed', tone: 'ok' },
+    { src: 'bot', text: 'emit place_ships, placement_confirmed' },
+    { src: 'server', text: 'game_start { turn: "you" }, coin flip went your way', tone: 'ok' },
+  ]
+}
 
 function result(ships: Ships, shots: number[], cell: number) {
   const ship = ships.find((s) => s.cells.includes(cell))
@@ -30,6 +37,7 @@ export default function BattleshipMatch() {
   const [turn, setTurn] = useState<'you' | 'bot' | 'over'>('you')
   const [online, setOnline] = useState(true)
   const [log, setLog] = useState<LogLine[]>(OPENING)
+  const [phase, setPhase] = useState<'place' | 'battle'>('place')
   const [msg, setMsg] = useState('Your turn. Fire at the right board.')
   const bot = useRef<number[]>([])
   const seq = useSequence()
@@ -49,7 +57,11 @@ export default function BattleshipMatch() {
         () => say({ src: 'bot', text: `emit fire { index: ${cell} }  (${name(cell)})` }),
         () => {
           setBotShots(next)
-          say({ src: 'server', text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "you" }`, tone: r.hit ? 'warn' : undefined })
+          say({
+            src: 'server',
+            text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "you" }`,
+            tone: r.hit ? 'warn' : undefined,
+          })
           if (r.over) {
             setTurn('over')
             setMsg('The bot cleared your fleet. New game?')
@@ -67,7 +79,10 @@ export default function BattleshipMatch() {
   const fire = (cell: number) => {
     if (!online || turn === 'over' || myShots.includes(cell)) return
     if (turn !== 'you') {
-      say({ src: 'you', text: `emit fire { index: ${cell} }  (${name(cell)})` }, { src: 'server', text: 'dropped, room.turn is not your socket', tone: 'err' })
+      say(
+        { src: 'you', text: `emit fire { index: ${cell} }  (${name(cell)})` },
+        { src: 'server', text: 'dropped, room.turn is not your socket', tone: 'err' },
+      )
       return
     }
     const next = [...myShots, cell]
@@ -75,7 +90,11 @@ export default function BattleshipMatch() {
     setMyShots(next)
     say(
       { src: 'you', text: `emit fire { index: ${cell} }  (${name(cell)})` },
-      { src: 'server', text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "bot" }`, tone: r.hit ? 'ok' : undefined },
+      {
+        src: 'server',
+        text: `shot_result { index: ${cell}, result: "${r.hit ? 'hit' : 'miss'}"${r.sunk ? `, sunk: "${r.sunk}"` : ''}, nextTurn: "bot" }`,
+        tone: r.hit ? 'ok' : undefined,
+      },
     )
     if (r.over) {
       setTurn('over')
@@ -116,6 +135,7 @@ export default function BattleshipMatch() {
     setTurn('you')
     setOnline(true)
     setLog(OPENING)
+    setPhase('place')
     setMsg('Your turn. Fire at the right board.')
   }
 
@@ -125,9 +145,19 @@ export default function BattleshipMatch() {
         const fired = shots.includes(i)
         const ship = ships.find((s) => s.cells.includes(i))
         const sunk = ship && ship.cells.every((c) => shots.includes(c))
-        const cls = ['bs-cell', fired ? (ship ? 'hit' : 'miss') : '', sunk ? 'sunk' : '', own && ship && !fired ? 'ship' : ''].join(' ')
+        const cls = [
+          'bs-cell',
+          fired ? (ship ? 'hit' : 'miss') : '',
+          sunk ? 'sunk' : '',
+          own && ship && !fired ? 'ship' : '',
+        ].join(' ')
         return own ? (
-          <span key={i} className={cls} role="img" aria-label={`${name(i)}${ship ? ', your ship' : ''}${fired ? (ship ? ', hit' : ', miss') : ''}`} />
+          <span
+            key={i}
+            className={cls}
+            role="img"
+            aria-label={`${name(i)}${ship ? ', your ship' : ''}${fired ? (ship ? ', hit' : ', miss') : ''}`}
+          />
         ) : (
           <button
             key={i}
@@ -146,28 +176,49 @@ export default function BattleshipMatch() {
 
   return (
     <div className="demo match">
-      <p className="demo-lede">
-        A full round against a bot, with the Socket.IO events the real game sends for every move. Try firing during the
-        bot’s turn, or drop your connection mid-game.
-      </p>
-      <div className="match-boards">
-        <figure>
-          <figcaption>Your fleet</figcaption>
-          {board(mine, botShots, true)}
-        </figure>
-        <figure>
-          <figcaption>Bot’s waters, {left} of 5 left</figcaption>
-          {board(theirs, myShots, false)}
-        </figure>
-      </div>
-      <p className="bs-msg" aria-live="polite">
-        {!online ? 'Reconnecting…' : msg}
-      </p>
-      <div className="demo-actions">
-        <button type="button" onClick={drop} disabled={!online || turn !== 'you'}>Drop my connection</button>
-        <button type="button" onClick={reset}>New game</button>
-      </div>
-      <Log title="Socket.IO events" lines={log} />
+      <ol className="phases" aria-label="Stage">
+        <li className={phase === 'place' ? 'on' : 'done'}>Fleet setup</li>
+        <li className={phase === 'battle' ? 'on' : ''}>Battle</li>
+      </ol>
+      {phase === 'place' ? (
+        <>
+          <p className="demo-hint">Pick a vehicle, click to place, click again to rotate.</p>
+          <Placement
+            onLock={(ships) => {
+              setMine(ships)
+              setLog((l) => [...l, ...locked(ships)])
+              setPhase('battle')
+            }}
+          />
+          <Log title="Socket.IO events" lines={log} />
+        </>
+      ) : (
+        <>
+          <p className="demo-hint">Fire at the right board.</p>
+          <div className="match-boards">
+            <figure>
+              <figcaption>Your fleet</figcaption>
+              {board(mine, botShots, true)}
+            </figure>
+            <figure>
+              <figcaption>Bot’s waters, {left} of 5 left</figcaption>
+              {board(theirs, myShots, false)}
+            </figure>
+          </div>
+          <p className="bs-msg" aria-live="polite">
+            {!online ? 'Reconnecting…' : msg}
+          </p>
+          <div className="demo-actions">
+            <button type="button" onClick={drop} disabled={!online || turn !== 'you'}>
+              Drop my connection
+            </button>
+            <button type="button" onClick={reset}>
+              New game
+            </button>
+          </div>
+          <Log title="Socket.IO events" lines={log} />
+        </>
+      )}
     </div>
   )
 }
