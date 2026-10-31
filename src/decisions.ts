@@ -20,22 +20,22 @@ export const NOTES: Record<string, Notes> = {
       {
         chose: 'Prophet with the Cyber week and Amazon volume regressors, one setup for every series',
         over: 'porting the R model’s per-series ARIMA tuning one to one',
-        because: 'PCL and Agent pieces have stable history back to 2018, so they don’t need the per-series start years and special cases the R script carried for other commodities. All tunables live in one config file, so the next forecast cycle only edits that.',
+        because: 'PCL and Agent pieces have stable history back to 2018, so they don’t need the per-series start years and special cases the R script carried for other commodities.',
       },
       {
         chose: 'Scaling PCL and Agent by the same ratio when a planner edits Total',
         over: 're-splitting the new total with another year’s PCL to Agent mix',
-        because: 'A +20% edit to Total should mean +20% to both parts. Scaling keeps the split the forecast already has, and the parts always add back to the edited total exactly.',
+        because: 'A +20% edit to Total should mean +20% to both parts.',
       },
       {
         chose: 'Operations that run in sequence, with a per-week undo stack',
         over: 'recomputing every edit from the original forecast',
-        because: 'Planners build an adjustment up in steps, so Set to 500 then Add 500 should give 1,000. Each week keeps its previous values, so Revert steps back one operation at a time instead of throwing everything away.',
+        because: 'Planners build an adjustment up in steps, so Set to 500 then Add 500 should give 1,000.',
       },
       {
         chose: 'A MERGE into the state table for reconciliation',
         over: 'appending each run’s rows',
-        because: 'Pipelines get rerun after a failure. Updating rows that already exist means a rerun replaces the week instead of counting it twice.',
+        because: 'A rerun after a failure updates the week instead of counting it twice.',
       },
     ],
     handles: [
@@ -56,17 +56,17 @@ export const NOTES: Record<string, Notes> = {
       {
         chose: 'Reading the text already rendered on the page',
         over: 'calling the StarRez backend',
-        because: 'The extension only sees what the logged-in staff member already sees, needs no new access, and that is what made IT approval possible. StarRez’s integration API would be better if it were offered through an official route.',
+        because: 'The extension only sees what the logged-in staff member already sees, needs no new access, and that is what made IT approval possible.',
       },
       {
         chose: 'Manifest V3 with the narrowest permissions',
         over: 'broader host or tab access',
-        because: 'It runs only on the StarRez domain and asks for clipboard, storage and the active tab. It can’t see history, other sites or network traffic, which is what a university IT review looks for.',
+        because: 'It runs only on the StarRez domain and asks for clipboard, storage and the active tab.',
       },
       {
         chose: 'A debounced MutationObserver keyed on the breadcrumb',
         over: 'running once on page load',
-        because: 'StarRez is a single page app and swaps profiles without reloading. Watching for a new resident name and re-injecting is the only way the buttons stay correct.',
+        because: 'StarRez is a single page app and swaps profiles without reloading.',
       },
       {
         chose: 'Keeping the activity log in the browser on that machine',
@@ -93,17 +93,17 @@ export const NOTES: Record<string, Notes> = {
       {
         chose: 'Keeping rooms, rankings and history in memory',
         over: 'a database',
-        because: 'It is played at events, a reset between events is the point, and Render’s free plan sleeps anyway. It kept hosting free and setup to zero for whoever runs it after me.',
+        because: 'It is played at events, a reset between events is the point, and Render’s free plan sleeps anyway.',
       },
       {
         chose: 'A board size both players have to agree to',
         over: 'letting the room creator pick',
-        because: 'Either player can propose a size and the other accepts. It locks once a fleet is placed, so nobody can resize a board the other has already planned on.',
+        because: 'Nobody can resize a board the other player already planned on.',
       },
       {
         chose: 'A reset key compared in constant time',
         over: 'an open reset endpoint',
-        because: 'Anyone at an event could otherwise end every game. The key comes from an environment variable and only people who opened the site with it see the button.',
+        because: 'Anyone at an event could otherwise end every game.',
       },
     ],
     handles: [
@@ -177,7 +177,7 @@ export const NOTES: Record<string, Notes> = {
       {
         chose: 'Evaluating on a time-based split',
         over: 'a random split',
-        because: 'A random split lets the model learn from transactions that come after the ones it is tested on. Splitting by date matches how it would be used.',
+        because: 'A random split lets the model learn from transactions that come after the ones it is tested on.',
       },
       {
         chose: 'Exporting the trained weights to a dependency-free Java inference layer',

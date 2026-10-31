@@ -39,7 +39,7 @@ describe('terminal', () => {
 describe('terminal, inside the work', () => {
   it('explains why an entry exists', () => {
     const out = run('why starrez').lines.join('\n')
-    expect(out).toContain('before  I worked the front desk')
+    expect(out).toContain('before  At the front desk')
     expect(out).toContain('result  80%')
   })
 

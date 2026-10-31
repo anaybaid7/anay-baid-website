@@ -98,6 +98,33 @@ const starrez: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Popup, staff stats',
+    notes: [
+      { n: 1, title: 'Per staff member', text: 'Counts grouped by who logged them, busiest first.', node: 'log' },
+      { n: 2, title: 'Same data', text: 'Built from the same local activity log as the list.', node: 'sw' },
+    ],
+    draw: () => (
+      <Win title="StarRez Logger v3.1">
+        <Tabs items={['Activity Log', 'Staff Stats']} on={1} />
+        <N n={1} block>
+          {[['Baid, Anay', '12', '3', '4', '19'], ['Lee, Jordan', '8', '1', '2', '11']].map(([who, p, l, b, t]) => (
+            <Box key={who} title={who}>
+              <Row between>
+                <T>{p} Packages</T>
+                <T>{l} Lockouts</T>
+                <T>{b} Labels</T>
+                <T b>{t} Total</T>
+              </Row>
+            </Box>
+          ))}
+        </N>
+        <N n={2} block>
+          <Row><Btn>Export CSV</Btn><Btn>Refresh</Btn><Btn>Clear All</Btn></Row>
+        </N>
+      </Win>
+    ),
+  },
 ]
 
 // ---- Battleship, from public/index.html ----
@@ -201,6 +228,36 @@ const battleship: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Match report',
+    notes: [
+      { n: 1, title: 'Result', text: 'Winner, and a rematch without going back to the lobby.', node: 'server' },
+      { n: 2, title: 'Side by side', text: 'Shots, hits, accuracy, first hit, best streak, ships lost.', node: 'rooms' },
+      { n: 3, title: 'Final boards', text: 'The loser sees where the winner’s vehicles were.', node: 'rooms' },
+    ],
+    draw: () => (
+      <Win title="Purolator Battleship">
+        {nav(2)}
+        <N n={1} block>
+          <Row between><T b>Thunder_YYZ wins</T><Row><Btn primary>Request rematch</Btn><Btn>Return to lobby</Btn></Row></Row>
+        </N>
+        <Row>
+          <N n={2} block>
+            <Tbl
+              cols={['', 'You', 'Maple']}
+              rows={[['Shots', '31', '38'], ['Hits', '17', '14'], ['Accuracy', '55%', '37%'], ['First hit', '#3', '#6'], ['Best hit streak', '4', '3'], ['Ships lost', '3', '5']]}
+            />
+          </N>
+          <N n={3} block>
+            <Row>
+              <Box title="Your board"><Board n={8} ships={[9, 10, 11, 33, 41]} hits={[9, 10, 41, 50]} misses={[2, 20, 55, 60]} /></Box>
+              <Box title="Theirs"><Board n={8} ships={[26, 27, 28]} hits={[18, 19, 44, 45]} misses={[3, 30, 50, 61]} /></Box>
+            </Row>
+          </N>
+        </Row>
+      </Win>
+    ),
+  },
 ]
 
 // ---- InsightVault review dashboard ----
@@ -284,6 +341,33 @@ const pashu: Screen[] = [
             <Btn primary>Pay bills</Btn>
           </Box>
         </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Building',
+    notes: [
+      { n: 1, title: 'Radial menu', text: 'Pick what to build from a pie menu.', node: 'build' },
+      { n: 2, title: 'Preview', text: 'A ghost follows the cursor until you place it.', node: 'build' },
+      { n: 3, title: 'Bowls', text: 'Food and water bowls are what hungry animals walk to.', node: 'res' },
+    ],
+    draw: () => (
+      <Win title="Pashu">
+        <Row between><T b>$ 2,400</T><T>Level 3</T><T>14 MAR</T></Row>
+        <Box>
+          <Row between>
+            <Img h={170} label="Shelter floor" />
+            <N n={1}>
+              <span className="wpie">
+                <i>Food</i><i>Water</i><i>Wall</i><i>Decor</i>
+              </span>
+            </N>
+          </Row>
+          <Row>
+            <N n={2}><Btn added>Water bowl, click to place</Btn></N>
+            <N n={3}><Btn>2 food bowls out</Btn></N>
+          </Row>
+        </Box>
       </Win>
     ),
   },
