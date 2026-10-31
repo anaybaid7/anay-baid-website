@@ -1869,7 +1869,6 @@ main.wrap > * {
 }
 :root[data-hide~="education"] [data-part="education"],
 :root[data-hide~="skills"] [data-part="skills"],
-:root[data-hide~="github"] [data-part="github"],
 :root[data-hide~="colophon"] [data-part="colophon"] {
   display: none;
 }
@@ -7417,4 +7416,62 @@ button:focus-visible > .shot {
   .cards {
     display: block;
   }
+}
+
+/* ---- about: education, skills and the site in one block ---- */
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 34px 44px;
+}
+.about-block h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--ink-3);
+  font-weight: 650;
+}
+.about-block p {
+  margin: 0 0 6px;
+}
+.about-lead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+}
+.skills-block {
+  grid-row: span 2;
+}
+.skills-block .skill-list {
+  margin: 0;
+}
+.about .colophon {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.cards > .entry.in-featured {
+  display: none;
+}
+@media (max-width: 760px) {
+  .about-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .skills-block {
+    grid-row: auto;
+  }
+}
+@media print {
+  .cards > .entry.in-featured {
+    display: block;
+  }
+}
+.skills-block .skill-list > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 10px 0;
+}
+.skills-block .skill-list dt {
+  padding-top: 0;
+  font-size: 14px;
+  color: var(--ink-2);
 }

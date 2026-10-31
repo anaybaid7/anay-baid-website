@@ -17,7 +17,7 @@ export const OPTIONS = {
 } as const
 
 // sections a visitor can switch off. Experience and projects always stay.
-export const HIDEABLE = ['education', 'skills', 'github', 'colophon'] as const
+export const HIDEABLE = ['education', 'skills', 'colophon'] as const
 export type Hideable = (typeof HIDEABLE)[number]
 
 type Choices = { [K in keyof typeof OPTIONS]: (typeof OPTIONS)[K][number] }
@@ -37,7 +37,7 @@ export const DEFAULTS: Settings = {
 
 // ready-made combinations for the two most common visits
 export const PRESETS: { name: string; settings: Partial<Settings> }[] = [
-  { name: 'Quick scan', settings: { view: 'skim', lead: 'projects', hide: ['github', 'colophon'] } },
+  { name: 'Quick scan', settings: { view: 'skim', lead: 'projects', hide: ['colophon'] } },
   { name: 'Everything', settings: { view: 'full', lead: 'experience', hide: [] } },
 ]
 

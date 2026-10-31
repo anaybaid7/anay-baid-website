@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('loads with every section', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  for (const name of ['Experience', 'Projects', 'Education', 'Skills', 'Code']) {
+  for (const name of ['Featured', 'Experience', 'More projects', 'About']) {
     await expect(page.getByRole('heading', { level: 2, name })).toBeVisible()
   }
 })
@@ -104,11 +104,11 @@ test('clicking a skill filters the page', async ({ page }) => {
 })
 
 test('a shared view link reorders and hides sections', async ({ page }) => {
-  await page.goto('/?lead=projects&hide=github,colophon')
+  await page.goto('/?lead=projects&hide=skills,colophon')
   const projectsTop = await page.locator('#projects').evaluate((el) => el.getBoundingClientRect().top)
   const experienceTop = await page.locator('#experience').evaluate((el) => el.getBoundingClientRect().top)
   expect(projectsTop).toBeLessThan(experienceTop)
-  await expect(page.locator('[data-part="github"]')).toBeHidden()
+  await expect(page.locator('[data-part="skills"]')).toBeHidden()
   await expect(page.locator('[data-part="colophon"]')).toBeHidden()
 })
 

@@ -13,14 +13,14 @@ describe('settings links', () => {
   })
 
   it('carry every changed setting, hidden sections included', () => {
-    const url = new URL(linkWithSettings({ ...DEFAULTS, view: 'skim', width: 'narrow', hide: ['github', 'colophon'] }))
+    const url = new URL(linkWithSettings({ ...DEFAULTS, view: 'skim', width: 'narrow', hide: ['skills', 'colophon'] }))
     expect(url.searchParams.get('view')).toBe('skim')
     expect(url.searchParams.get('width')).toBe('narrow')
-    expect(url.searchParams.get('hide')).toBe('github,colophon')
+    expect(url.searchParams.get('hide')).toBe('skills,colophon')
   })
 
   it('compares hidden sections by value', () => {
-    expect(sameSettings({ ...DEFAULTS, hide: ['github'] }, { ...DEFAULTS, hide: ['github'] })).toBe(true)
-    expect(sameSettings({ ...DEFAULTS, hide: ['github'] }, DEFAULTS)).toBe(false)
+    expect(sameSettings({ ...DEFAULTS, hide: ['skills'] }, { ...DEFAULTS, hide: ['skills'] })).toBe(true)
+    expect(sameSettings({ ...DEFAULTS, hide: ['skills'] }, DEFAULTS)).toBe(false)
   })
 })
