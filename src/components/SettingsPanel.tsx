@@ -32,8 +32,6 @@ const GROUPS: [string, Choice[]][] = [
 ]
 
 const SECTION_NAMES: Record<Hideable, string> = {
-  thread: 'What I work on',
-  glance: 'At a glance',
   education: 'Education',
   skills: 'Skills',
   github: 'Code',

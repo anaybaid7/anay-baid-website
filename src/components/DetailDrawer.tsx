@@ -62,8 +62,8 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
 }
 
 // the demos for one entry, with a row of sub-tabs when there is more than one
-function TryIt({ demos }: { demos: { kind: DemoKind; name: string }[] }) {
-  const [i, setI] = useState(0)
+function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string }[]; first?: DemoKind }) {
+  const [i, setI] = useState(() => Math.max(0, demos.findIndex((d) => d.kind === first)))
   const Demo = DEMOS[demos[i].kind]
   return (
     <div className="try">
@@ -122,6 +122,8 @@ export interface Opened {
   id: string
   tab: Tab
   at?: { flow: number; step: number }
+  // which demo to start on, for links straight to one
+  demo?: DemoKind
 }
 
 export default function DetailDrawer({ open, onChange }: {
@@ -272,7 +274,7 @@ export default function DetailDrawer({ open, onChange }: {
               />
             )}
             {tab === 'code' && detail?.demos && <CodeTab key={entry.id} kinds={detail.demos.map((d) => d.kind)} />}
-            {tab === 'try' && detail?.demos && <TryIt key={entry.id} demos={detail.demos} />}
+            {tab === 'try' && detail?.demos && <TryIt key={`${entry.id}-${open?.demo ?? ''}`} demos={detail.demos} first={open?.demo} />}
           </div>
 
           <footer className="drawer-foot">
