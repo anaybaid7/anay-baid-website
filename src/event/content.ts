@@ -6,7 +6,9 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
-//   visual  'map' draws the terminal map (optional)
+//   visual  'map' draws the terminal map, 'impact' the forecast slider,
+//           'qr' a code that opens these slides on a phone (optional)
+//   time    about how many seconds to spend on the slide, for the presenter timer
 //   points  a short list shown on the slide itself, each opening a visual (optional)
 //   thumbs  small screenshots shown next to the points (optional)
 //   notes   talking points, shown when you click the slide
@@ -63,28 +65,47 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map'
+  visual?: 'map' | 'impact' | 'qr'
   points?: Point[]
   thumbs?: string[]
   notes: string[]
   spots?: Spot[]
+  time: number
 }
+
+// The forecast slider on the why it matters slide, mock numbers for one
+// terminal on one day
+export const impact = { pieces: 4200, perRoute: 150, range: 20 }
 
 export const deck = {
   title: 'Forecasting the network',
   kicker: "Let's Connect",
-  mockNote: 'Numbers in the screenshots are mock data.',
+  mockNote: 'Numbers in the screenshots are mock data',
+  url: 'https://a2baid.netlify.app/purolator-intern-event',
 }
 
 export const slides: Slide[] = [
   {
     label: 'Network Engineering, Purolator',
     title: 'Forecasting parcel volume',
-    line: 'Every week our team forecasts how many parcels each of our 135 terminals will see, for pickup and delivery.',
+    line: 'Every week our team works out how many parcels each of our 135 terminals will get, for pickup and delivery',
     visual: 'map',
+    time: 30,
     notes: [
-      'Ops uses that number to decide how many couriers and trucks to send out.',
-      "If we're too low, parcels sit at the terminal. If we're too high, we pay for trucks we didn't need.",
+      "I'm on co-op with this team, working on the tools we use to do it",
+      'Pick a division on the map to light up its terminals',
+    ],
+  },
+  {
+    label: 'Why it matters',
+    title: 'One number sets up the whole day',
+    line: 'Our forecast tells a terminal how many routes to run, so being off in either direction costs something',
+    visual: 'impact',
+    time: 45,
+    notes: [
+      'Drag the forecast down and parcels wait a day',
+      'Drag it up and vans go out half empty',
+      'A few percent either way adds up fast across 135 terminals',
     ],
   },
   {
@@ -94,7 +115,7 @@ export const slides: Slide[] = [
       {
         label: "Last week's numbers come in",
         title: 'The daily numbers',
-        text: 'Every terminal reports pieces and stops for each day. We pull a fresh copy at the start of the week.',
+        text: 'Every terminal reports its pieces and stops for each day, and we pull a fresh copy at the start of every week',
         visual: {
           kind: 'table',
           columns: ['Day', 'Delivery pieces', 'Pickup pieces', 'Stops'],
@@ -108,13 +129,13 @@ export const slides: Slide[] = [
             ['Sat', 380, 61, 154],
           ],
           bars: 1,
-          caption: 'One terminal, one week. Mock numbers.',
+          caption: 'One terminal, one week, mock numbers',
         },
       },
       {
         label: 'We clean them up',
         title: 'Cleaning the history',
-        text: 'A short week is scaled up to a full week of working days, and one-off spikes are taken out, so the model learns the normal pattern.',
+        text: 'A short holiday week gets scaled up to a full one and one-off spikes come out, so the model learns what a normal week looks like',
         visual: {
           kind: 'lines',
           alt: 'Weekly volume before and after cleaning',
@@ -132,7 +153,7 @@ export const slides: Slide[] = [
       {
         label: 'The model runs',
         title: 'What goes into the model',
-        text: 'Our model in R looks at years of history plus what we know is coming, and forecasts every terminal for the rest of the year.',
+        text: 'Our model in R takes years of history plus what we know is coming and forecasts every terminal for the rest of the year',
         visual: {
           kind: 'flow',
           alt: 'Inputs flowing into the R model and out as a forecast',
@@ -144,7 +165,7 @@ export const slides: Slide[] = [
       {
         label: 'We adjust it',
         title: 'Adding what the model can\'t know',
-        text: 'Pick the weeks, type the change and a reason. Every change is saved with who made it.',
+        text: 'Pick the weeks, type the change and why, and the app keeps a record of who made it',
         visual: {
           kind: 'wireframe',
           alt: 'Wireframe of the weeks table with four weeks selected and raised by 5%',
@@ -192,7 +213,7 @@ export const slides: Slide[] = [
       {
         label: 'It gets split into days',
         title: 'Splitting the week',
-        text: "Each terminal's week is split by the share each day usually gets, taken from recent weeks with no holidays. Here a week of 98,400 pieces.",
+        text: "Each terminal's week gets split by the share each day usually gets, shown here for a week of 98,400 pieces",
         visual: {
           kind: 'bars',
           alt: 'Share of the week by day',
@@ -206,7 +227,7 @@ export const slides: Slide[] = [
       {
         label: 'Ops and the hubs use it',
         title: 'Where it goes',
-        text: 'Once it is published, ops plans each day from it, the hubs see it in Power BI, and every day gets checked against what came in.',
+        text: 'Once we publish it, ops plans each day from it, the hubs see it in Power BI and every day gets checked against what came in',
         visual: {
           kind: 'flow',
           alt: 'The published forecast going to ops, the hubs and the accuracy check',
@@ -216,91 +237,98 @@ export const slides: Slide[] = [
         },
       },
     ],
+    time: 75,
     notes: [
-      "It starts with last week's actual volume.",
-      'Our model in R forecasts each terminal for the rest of the year.',
-      "Then we adjust for things the model can't know, and split it into days.",
+      "Last week's real numbers go in, a forecast for the rest of the year comes out",
+      'Most of the work is the cleaning and checking in between',
+      'Click any step to open it up',
     ],
   },
   {
     label: 'The forecast tool',
     title: 'This year next to last year',
     image: '/event-shots/weekly-chart.webp',
+    time: 35,
     notes: [
-      'Red is this year, blue is last year, and the dashed line is where we think the rest of the year goes.',
+      'Red is this year, blue is last year, the dashed line is our forecast',
     ],
     spots: [
-      { x: 0.006, y: 0.197, w: 0.596, h: 0.138, title: 'The year so far', text: 'Our forecast for the rest of the year, what came in so far, and how both compare to last year.' },
-      { x: 0.514, y: 0.42, w: 0.222, h: 0.35, title: 'Summer', text: 'Volume dips in July and August, then picks back up in September.' },
-      { x: 0.743, y: 0.38, w: 0.23, h: 0.4, title: 'Peak', text: 'Late November to December is the busiest part of the year. These are the weeks that matter most to get right.' },
+      { x: 0.006, y: 0.197, w: 0.596, h: 0.138, title: 'The year so far', text: 'Our forecast for the rest of the year, what came in so far and how both compare to last year' },
+      { x: 0.514, y: 0.42, w: 0.222, h: 0.35, title: 'Summer', text: 'Volume dips in July and August and comes back in September' },
+      { x: 0.743, y: 0.38, w: 0.23, h: 0.4, title: 'Peak', text: 'Late November into December is the busiest stretch of the year, so these are the weeks we work hardest to get right' },
     ],
   },
   {
     label: 'The forecast tool',
     title: "Adding what the model can't see",
     image: '/event-shots/weekly-grid.webp',
+    time: 30,
     notes: [
-      'The model only knows the past.',
-      'We know about things like a new client starting or a sale date moving, so we adjust those weeks.',
+      'The model only knows the past',
+      'We know when a new client is starting or a sale date moves, so we adjust those weeks by hand',
     ],
     spots: [
-      { x: 0.02, y: 0.3, w: 0.6, h: 0.055, title: 'Making a change', text: 'Pick the weeks, type the change and a reason. Here Cyber week goes up 5%.' },
-      { x: 0.02, y: 0.655, w: 0.58, h: 0.16, title: 'Cyber week', text: 'The busiest weeks of the year, so they get the closest look.' },
-      { x: 0.7, y: 0.355, w: 0.135, h: 0.56, title: 'What changed', text: 'Shows what moved since the last forecast we sent out.' },
+      { x: 0.02, y: 0.3, w: 0.6, h: 0.055, title: 'Making a change', text: 'Pick the weeks, type the change and a reason, here Cyber week goes up 5%' },
+      { x: 0.02, y: 0.655, w: 0.58, h: 0.16, title: 'Cyber week', text: 'The busiest weeks of the year, so they get the closest look' },
+      { x: 0.7, y: 0.355, w: 0.135, h: 0.56, title: 'What changed', text: 'Shows what moved since the last forecast we sent out' },
     ],
   },
   {
     label: 'The forecast tool',
     title: 'Turning a week into days',
     image: '/event-shots/shape-edit.webp',
+    time: 30,
     notes: [
-      "Ops works day to day, so each terminal's week gets split into days.",
-      'The split comes from recent normal weeks, with no holidays in them.',
+      "Ops works day by day, so each terminal's week gets split into days",
+      'The split comes from recent normal weeks with no holidays in them',
     ],
     spots: [
-      { x: 0.17, y: 0.36, w: 0.65, h: 0.24, title: 'A normal week', text: 'Monday to Friday each take about 20%. Sunday is close to nothing.' },
-      { x: 0.78, y: 0.38, w: 0.2, h: 0.27, title: 'Changing a day', text: 'Here Saturday goes up to 6%, and the other days drop a little so the week still adds up.' },
-      { x: 0.55, y: 0.64, w: 0.43, h: 0.26, title: 'What it changes', text: 'Before saving, you can see it in pieces. Saturday picks up about 20,000 across Quebec.' },
+      { x: 0.17, y: 0.36, w: 0.65, h: 0.24, title: 'A normal week', text: 'Monday to Friday each get about 20% and Sunday gets almost nothing' },
+      { x: 0.78, y: 0.38, w: 0.2, h: 0.27, title: 'Changing a day', text: 'Here Saturday goes up to 6% and the other days give a little back so the week still adds up' },
+      { x: 0.55, y: 0.64, w: 0.43, h: 0.26, title: 'What it changes', text: 'Before saving you see it in pieces, Saturday picks up about 20,000 across Quebec' },
     ],
   },
   {
     label: 'The forecast tool',
     title: 'How close we got',
     image: '/event-shots/accuracy.webp',
+    time: 30,
     notes: [
-      'Every day, we check what came in against what we forecast.',
+      'Every day we check what actually came in against what we forecast',
     ],
     spots: [
-      { x: 0.118, y: 0.405, w: 0.28, h: 0.17, title: 'Delivery stops', text: 'Red is what came in, blue is last year, dashed is the forecast.' },
-      { x: 0.25, y: 0.6, w: 0.085, h: 0.17, title: 'Holidays', text: 'The drops to zero are holidays. Missing one means a terminal is staffed on a day with no parcels.' },
-      { x: 0.694, y: 0.405, w: 0.3, h: 0.17, title: 'Agent terminals', text: 'These are smaller, so a few parcels move the line a lot.' },
+      { x: 0.118, y: 0.405, w: 0.28, h: 0.17, title: 'Delivery stops', text: 'Red is what came in, blue is last year and dashed is the forecast' },
+      { x: 0.25, y: 0.6, w: 0.085, h: 0.17, title: 'Holidays', text: 'The drops to zero are holidays, and missing one means a terminal is staffed on a day with no parcels' },
+      { x: 0.694, y: 0.405, w: 0.3, h: 0.17, title: 'Agent terminals', text: 'These are smaller, so a handful of parcels moves the line a lot' },
     ],
   },
   {
     label: 'Hub Reporting',
     title: 'The same for the hubs',
     image: '/event-shots/powerbi-overview.webp',
+    time: 30,
     notes: [
-      'Hubs sort parcels between terminals, so they need a forecast too.',
-      'I built this report in Power BI so each hub can see its volume next to the forecast.',
+      'Hubs sort parcels between terminals, so they need a forecast too',
+      'I built this report in Power BI so each hub can see its volume next to the forecast',
     ],
     spots: [
-      { x: 0, y: 0.16, w: 0.69, h: 0.44, title: 'Day by day', text: 'Each wave is a week, busy midweek and quiet on weekends. Red is actual, black is forecast.' },
-      { x: 0.69, y: 0.02, w: 0.31, h: 0.5, title: 'Week by week', text: "How far off each week was. Here they're all within about 3%." },
-      { x: 0, y: 0.61, w: 0.31, h: 0.39, title: 'Parcel types', text: 'Con, NonCon, mail and dangerous goods get handled differently, so the mix matters.' },
+      { x: 0, y: 0.16, w: 0.69, h: 0.44, title: 'Day by day', text: 'Each wave is a week, busy midweek and quiet on weekends, red is actual and black is forecast' },
+      { x: 0.69, y: 0.02, w: 0.31, h: 0.5, title: 'Week by week', text: "How far off each week was, and here they're all within about 3%" },
+      { x: 0, y: 0.61, w: 0.31, h: 0.39, title: 'Parcel types', text: 'Con, NonCon, mail and dangerous goods are handled differently, so the mix matters as much as the total' },
     ],
   },
   {
     label: 'Hub Reporting',
     title: 'Week over week at a hub',
     image: '/event-shots/powerbi-weekly-comparison.webp',
+    time: 20,
     notes: [
-      'Pick any two weeks and see what changed for each type of parcel.',
+      'Pick any two weeks at a hub and see what changed for each type of parcel',
     ],
     spots: [
-      { x: 0.64, y: 0, w: 0.36, h: 0.15, title: 'Picking weeks', text: 'Choose a hub and any two weeks.' },
-      { x: 0.57, y: 0.15, w: 0.43, h: 0.34, title: 'The total', text: 'Daily volume went up about 1.3% from one week to the next.' },
-      { x: 0, y: 0.5, w: 0.47, h: 0.5, title: 'By type', text: 'Con and Mail went up the most. NonCon and Other dropped a little.' },
+      { x: 0.64, y: 0, w: 0.36, h: 0.15, title: 'Picking weeks', text: 'Choose a hub and any two weeks' },
+      { x: 0.57, y: 0.15, w: 0.43, h: 0.34, title: 'The total', text: 'Daily volume went up about 1.3% from one week to the next' },
+      { x: 0, y: 0.5, w: 0.47, h: 0.5, title: 'By type', text: 'Con and Mail went up the most while NonCon and Other dropped a little' },
     ],
   },
   {
@@ -310,7 +338,7 @@ export const slides: Slide[] = [
       {
         label: 'The web app the team runs the forecast in',
         title: 'The forecast app',
-        text: 'One place for the whole week, from loading the data to publishing. Python and Flask, built on top of our model.',
+        text: 'One place for the whole week, from loading the data to publishing, built in Python and Flask on top of our model',
         visual: {
           kind: 'flow',
           alt: 'Data going into the forecast app and what the app does with it',
@@ -322,7 +350,7 @@ export const slides: Slide[] = [
       {
         label: 'The Hub Reporting dashboard in Power BI',
         title: 'Hub Reporting',
-        text: 'Two pages. One puts each hub\'s volume next to the forecast, the other compares any two weeks by type of parcel.',
+        text: "Two pages, one puts each hub's volume next to its forecast and the other compares any two weeks by parcel type",
         visual: {
           kind: 'wireframe',
           alt: 'Wireframe of the two report pages',
@@ -363,7 +391,7 @@ export const slides: Slide[] = [
       {
         label: 'Automating the manual steps in between',
         title: 'Steps the app runs now',
-        text: 'Each of these is a button in the app, in the order the week goes.',
+        text: 'Each of these is a button in the app now, in the order the week runs',
         visual: {
           kind: 'table',
           columns: ['Step', 'In the app'],
@@ -379,14 +407,25 @@ export const slides: Slide[] = [
       {
         label: 'Demoing the app to our VP with my manager',
         title: 'The demo',
-        text: 'My manager and I walked our VP through the app.',
+        text: 'My manager and I walked our VP through the app',
         visual: { kind: 'image', src: '/event-shots/weekly-chart.webp', alt: 'The weekly forecast screen of the app' },
       },
     ],
     thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/powerbi-overview.webp'],
+    time: 45,
     notes: [
-      'The app is Python and Flask, built on top of our model.',
-      'The dashboard pulls hub volume and forecast into one place.',
+      'Click a line to open it up',
+      'Happy to show any of these properly after',
+    ],
+  },
+  {
+    label: 'Thanks',
+    title: 'Thanks for listening',
+    line: 'Scan to open these slides on your phone and click through anything I skipped',
+    visual: 'qr',
+    time: 10,
+    notes: [
+      'Happy to take questions',
     ],
   },
 ]

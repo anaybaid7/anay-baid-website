@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import EventPage from './EventPage'
-import { slides } from './content'
+import { deck, slides } from './content'
 
 describe('EventPage', () => {
   it('shows the notes on the first click and moves on with the second', () => {
@@ -42,5 +42,25 @@ describe('EventPage', () => {
       unmount()
     }
     window.location.hash = ''
+  })
+
+  it('has no full stops in any text on the slides', () => {
+    const found: string[] = []
+    const walk = (v: unknown, key = ''): void => {
+      if (typeof v === 'string') {
+        // paths and links are fine, sentences are not
+        if (!['src', 'image', 'url'].includes(key) && !v.startsWith('/') && /\.(\s|$)/.test(v)) found.push(v)
+      } else if (Array.isArray(v)) v.forEach((x) => walk(x, key))
+      else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => walk(x, k))
+    }
+    walk(slides)
+    walk(deck)
+    expect(found).toEqual([])
+  })
+
+  it('fits a five to seven minute talk', () => {
+    const total = slides.reduce((n, s) => n + s.time, 0)
+    expect(total).toBeGreaterThanOrEqual(300)
+    expect(total).toBeLessThanOrEqual(420)
   })
 })

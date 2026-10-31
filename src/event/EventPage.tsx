@@ -4,6 +4,11 @@ import { profile } from '../data'
 import { deck, slides, type Point, type Slide, type Spot, type Step } from './content'
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
+import Impact from './impact'
+import Qr from './qr'
+import Presenter from './presenter'
+import { openChannel, openPresenter, type DeckMsg } from './channel'
+import { Keys, Pointer, SlideGrid } from './tools'
 
 // Which slide the address points at: /purolator-intern-event#3 opens slide 3.
 const fromHash = () => {
@@ -289,19 +294,28 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
     <div className="deck-visual">
       {slide.steps && <Steps steps={slide.steps} spot={spot} setSpot={setSpot} />}
       {slide.visual === 'map' && <TerminalMap />}
+      {slide.visual === 'impact' && <Impact />}
+      {slide.visual === 'qr' && <Qr />}
       {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
   )
 }
 
+// /purolator-intern-event?presenter opens the presenter view instead
 export default function EventPage() {
+  return new URLSearchParams(location.search).has('presenter') ? <Presenter /> : <Deck />
+}
+
+function Deck() {
   const [at, setAt] = useState(fromHash)
   const [notes, setNotes] = useState(false)
   const [spot, setSpot] = useState<number | null>(null)
+  const [panel, setPanel] = useState<'grid' | 'keys' | null>(null)
+  const [pointer, setPointer] = useState(false)
+  const channel = useRef<BroadcastChannel | null>(null)
   const stage = useRef<HTMLDivElement>(null)
   const slide = slides[at]
   const last = slides.length - 1
-  // the parts a click steps through: zoom spots on a screenshot, or steps
   // the parts a click steps through: zoom spots, steps, or points
   const spots = slide.spots ?? slide.steps ?? slide.points ?? []
 
@@ -332,8 +346,16 @@ export default function EventPage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const k = e.key
+      const t = e.target instanceof Element ? e.target : null
+      // the slider and other fields keep their own keys
+      if (t?.closest('input, textarea, select')) return
       // a focused button already handles its own space and enter
-      if ((k === ' ' || k === 'Enter') && (e.target as HTMLElement).closest('button')) return
+      if ((k === ' ' || k === 'Enter') && t?.closest('button')) return
+      if (k === 'g' || k === 'G') { setPanel((p) => (p === 'grid' ? null : 'grid')); return }
+      if (k === '?') { setPanel((p) => (p === 'keys' ? null : 'keys')); return }
+      if (panel) { if (k === 'Escape') setPanel(null); return }
+      if (k === 'p' || k === 'P') { openPresenter(); return }
+      if (k === 'l' || k === 'L') { setPointer((v) => !v); return }
       if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(at + 1) }
       else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(at - 1) }
       else if (k === ' ' || k === 'Enter') { e.preventDefault(); advance() }
@@ -351,7 +373,34 @@ export default function EventPage() {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('hashchange', onHash)
     }
-  }, [at, last, go, advance, spot, spots.length])
+  }, [at, last, go, advance, spot, spots.length, panel])
+
+  // keep the presenter window in step, and let it move the slides
+  useEffect(() => {
+    const ch = openChannel()
+    channel.current = ch
+    return () => {
+      ch?.close()
+      channel.current = null
+    }
+  }, [])
+  useEffect(() => {
+    channel.current?.postMessage({ type: 'state', at, spot, notes } satisfies DeckMsg)
+  }, [at, spot, notes])
+  useEffect(() => {
+    const ch = channel.current
+    if (!ch) return
+    const onMsg = (e: MessageEvent<DeckMsg>) => {
+      const m = e.data
+      if (m.type === 'hello') ch.postMessage({ type: 'state', at, spot, notes } satisfies DeckMsg)
+      else if (m.type === 'goto') go(m.at)
+      else if (m.type === 'cmd' && m.cmd === 'next') go(at + 1)
+      else if (m.type === 'cmd' && m.cmd === 'prev') go(at - 1)
+      else if (m.type === 'cmd') advance()
+    }
+    ch.addEventListener('message', onMsg)
+    return () => ch.removeEventListener('message', onMsg)
+  }, [at, spot, notes, go, advance])
 
   // Load the next screenshot early so it doesn't pop in while presenting.
   useEffect(() => {
@@ -432,11 +481,18 @@ export default function EventPage() {
               <span className="deck-count">{at + 1} / {slides.length}</span>
             </span>
             <button type="button" onClick={() => setNotes((v) => !v)} aria-pressed={notes}>Notes</button>
+            <button type="button" onClick={() => setPanel('grid')}>Slides</button>
+            <button type="button" onClick={openPresenter} title="Notes, next slide and a timer in a new window">Presenter</button>
             <button type="button" onClick={fullscreen}>Full screen</button>
             <button type="button" className="deck-arrow" onClick={() => go(at + 1)} disabled={at === last} aria-label="Next slide">→</button>
           </div>
         </div>
-        <p className="ev-note">{deck.mockNote}</p>
+        {pointer && <Pointer stage={stage} />}
+        {panel === 'grid' && <SlideGrid at={at} onPick={(i) => { go(i); setPanel(null) }} onClose={() => setPanel(null)} />}
+        {panel === 'keys' && <Keys onClose={() => setPanel(null)} />}
+        <p className="ev-note">
+          {deck.mockNote}, press <button type="button" onClick={() => setPanel('keys')}>?</button> for keys
+        </p>
       </main>
 
       <footer className="foot ev-foot">
