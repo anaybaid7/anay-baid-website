@@ -123,7 +123,7 @@ test('the page map jumps to a project', async ({ page }) => {
 
 test('a job opens into a drawer with a working diagram, and Esc closes it', async ({ page }) => {
   await page.goto('/')
-  await page.locator('#job-purolator .open-detail').click()
+  await page.locator('#job-purolator .entry-tabs').getByRole('button', { name: 'How it works' }).click()
   const drawer = page.locator('dialog.drawer')
   await expect(drawer).toBeVisible()
   await expect(page).toHaveURL(/open=job-purolator/)

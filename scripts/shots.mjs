@@ -1,4 +1,4 @@
-// Screenshots each showcase demo, in light and dark, into public/shots.
+// Screenshots every demo, in light and dark, into public/shots.
 // Run against a built preview: npm run build && npx vite preview, then
 // node scripts/shots.mjs [base url]. Needs ImageMagick for the webp step.
 import { chromium } from 'playwright'
@@ -17,6 +17,16 @@ const click = (sel) => async (p) => {
 }
 const SETUP = {
   pipeline: click('.demo .demo-primary'),
+  release: click('.demo .demo-primary'),
+  fraud: click('.demo .demo-primary'),
+  build: click('.demo .demo-primary'),
+  stream: click('.demo .demo-primary'),
+  dataval: click('.demo .demo-primary'),
+  sequence: click('.demo .demo-primary'),
+  terraform: click('.demo .demo-primary'),
+  shift: click('.demo .demo-primary'),
+  drift: click('.demo .demo-primary'),
+  provision: click('.demo .demo-primary'),
   network: click('.demo .demo-primary'),
   graph: click('.demo .demo-primary'),
   sdk: click('.demo .demo-primary'),
@@ -41,6 +51,10 @@ const FOCUS = {
   graph: '.jobs',
   showtime: '.pchart.st',
   fsm: '.shelter-grid',
+  drift: '.drift-grid',
+  observer: '.obs',
+  terraform: '.tfg',
+  sequence: '.seq',
 }
 
 // grow a box to 8:5 around its centre, kept inside the demo
@@ -62,13 +76,22 @@ function crop(f, d) {
   return { x, y, width: w, height: h }
 }
 
-// read the tile list straight from src/showcase.ts
-const tiles = [...readFileSync('src/showcase.ts', 'utf8').matchAll(/id: '([^']+)', kind: '([^']+)'/g)].map(([, id, kind]) => ({ id, kind }))
+// every demo of every entry, read from src/details.ts
+const tiles = []
+let entry = null
+for (const line of readFileSync('src/details.ts', 'utf8').split('\n')) {
+  const id = line.match(/^  '([a-z0-9-]+)': \{/)
+  if (id) entry = id[1]
+  const demo = line.match(/\{ kind: '([a-z]+)', name: '/)
+  if (demo && entry) tiles.push({ id: entry, kind: demo[1] })
+}
+
 
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
 for (const theme of ['light', 'dark']) {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 1400 }, colorScheme: theme, deviceScaleFactor: 2, reducedMotion: 'reduce' })
-  for (const t of tiles) {
+  // ONLY=planner,sdk reshoots just those
+  for (const t of tiles.filter((x) => !process.env.ONLY || process.env.ONLY.split(',').includes(x.kind))) {
     const p = await ctx.newPage()
     await p.goto(`${base}/?open=${t.id}&tab=try&demo=${t.kind}`)
     await p.locator('.demo').first().waitFor()

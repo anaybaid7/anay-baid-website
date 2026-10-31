@@ -11,7 +11,7 @@ describe('prerendering', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
     history.replaceState(null, '', '/')
     const html = renderToString(<App />)
-    expect(html).toContain('What I work on')
+    expect(html).toContain('Featured')
     expect(html).toContain('Software &amp; Network Optimization Engineer')
     const root = document.createElement('div')
     root.innerHTML = html

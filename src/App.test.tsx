@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react'
 import App from './App'
 import { __resetForTests, setSettings } from './settings'
 import { DETAILS } from './details'
 import { experience, projects, profile, repos } from './data'
 
-const SECTIONS = ['What I work on', 'Experience', 'Projects', 'Education', 'Skills', 'Code']
+const SECTIONS = ['Featured', 'Experience', 'Projects', 'Education', 'Skills', 'Code']
 
 beforeEach(() => {
   history.replaceState(null, '', '/')
@@ -99,10 +99,10 @@ describe('App', () => {
 
   it('answers the recruiter basics up front', () => {
     render(<App />)
-    const glance = document.querySelector('.glance')!
-    expect(glance).toHaveTextContent('April 2027')
-    expect(glance).toHaveTextContent(`${experience.length} terms`)
-    expect(glance).toHaveTextContent('2 wins')
+    const facts = document.querySelector('.hero-facts')!
+    expect(facts).toHaveTextContent('April 2027')
+    expect(facts).toHaveTextContent(`${experience.length} co-op terms`)
+    expect(facts).toHaveTextContent('2 hackathon wins')
   })
 
   it('copies the email address', async () => {
@@ -193,7 +193,7 @@ describe('App', () => {
   it('opens a drawer for a project, with tabs, and keeps it in the URL', async () => {
     render(<App />)
     const row = document.getElementById('project-insightvault')!
-    fireEvent.click(row.querySelector('.open-detail')!)
+    fireEvent.click(within(row.querySelector<HTMLElement>('.entry-tabs')!).getByRole('button', { name: 'How it works' }))
     const drawer = await findDrawer()
     expect(drawer).toHaveTextContent('InsightVault')
     expect(new URL(location.href).searchParams.get('open')).toBe('project-insightvault')
@@ -335,16 +335,22 @@ describe('App', () => {
   })
 })
 
-describe('what I work on', () => {
-  it('lists each step with its problem and result, and opens the entry', async () => {
+describe('featured and per-entry work', () => {
+  it('opens a featured piece straight on its demo', async () => {
     render(<App />)
-    const section = document.querySelector('[data-part="thread"]')!
-    expect(section).toHaveTextContent('At the front desk, every package')
-    expect(section).toHaveTextContent('10-20×')
-    fireEvent.click(screen.getByRole('button', { name: /^PurolatorSoftware & Network/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Try Fraud alerts that explain themselves' }))
     const drawer = await findDrawer()
-    expect(drawer.querySelector('#drawer-title')).toHaveTextContent('Purolator')
-    expect(drawer.querySelector('.entry-why')).toHaveTextContent('The problem')
+    expect(drawer.querySelector('#drawer-title')).toHaveTextContent('InsightVault')
+    expect(new URL(location.href).searchParams.get('demo')).toBe('evaluate')
+  })
+
+  it('gives every job and project the same row of drawer parts', () => {
+    render(<App />)
+    for (const row of document.querySelectorAll('.entries .entry-tabs')) {
+      const names = [...row.querySelectorAll('button')].map((b) => b.textContent)
+      expect(names[0]).toBe('Try it')
+      expect(names).toContain('How it works')
+    }
   })
 
   it('links a wireframe note to its part of the diagram', async () => {

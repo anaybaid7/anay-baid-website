@@ -15,7 +15,7 @@ import { setSettings, useSettings, withTransition, resolvedTheme } from './setti
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
-import { SHOWCASE, thumb } from './showcase'
+import { FEATURED, thumb } from './showcase'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
@@ -183,16 +183,37 @@ function CopyLink({ id, name }: { id: string; name: string }) {
   )
 }
 
-const OPEN_LABEL: Record<Tab, string> = { overview: '', how: 'diagram', decisions: 'decisions', screens: 'screens', try: 'demo', code: 'code' }
+const TAB_LABEL: Record<Tab, string> = { overview: 'Overview', how: 'How it works', decisions: 'Decisions', screens: 'Screens', try: 'Try it', code: 'Code' }
+const TAB_ORDER: Tab[] = ['try', 'how', 'screens', 'decisions', 'code']
 
-// the button on each row that opens its drawer, named after what's inside
-function OpenDetail({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
-  const extra = tabsFor(id).slice(1).map((t) => OPEN_LABEL[t])
-  if (extra.length === 0) return null
+type OpenFn = (id: string, tab?: Tab, demo?: DemoKind) => void
+
+// the same row on every job and project: its demos as pictures, then the
+// parts of its drawer, always in the same order
+function EntryWork({ id, onOpen, children }: { id: string; onOpen: OpenFn; children?: React.ReactNode }) {
+  const demos = DETAILS[id]?.demos ?? []
+  const tabs = TAB_ORDER.filter((t) => tabsFor(id).includes(t))
   return (
-    <button type="button" className="open-detail" onClick={() => onOpen(id)}>
-      Open details <span className="open-what">{listFormat(extra)}</span> <span aria-hidden="true">→</span>
-    </button>
+    <div className="entry-work">
+      {demos.length > 0 && (
+        <ul className="demo-strip" aria-label="Demos">
+          {demos.map((d) => (
+            <li key={d.kind}>
+              <button type="button" onClick={() => onOpen(id, 'try', d.kind)}>
+                <Shot kind={d.kind} />
+                <span>{d.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="entry-tabs">
+        {tabs.map((t) => (
+          <button key={t} type="button" onClick={() => onOpen(id, t)}>{TAB_LABEL[t]}</button>
+        ))}
+        {children}
+      </p>
+    </div>
   )
 }
 
@@ -275,11 +296,12 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter, onOpen }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: (id: string, tab?: Tab) => void }) {
+function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
   return (
     <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
       <div className="section-body">
+        <Lens lens={lens} onLens={onLens} />
         <Timeline active={active} onPick={onPick} filter={filter} />
         <ol className="entries">
           {experience.map((e, i) => (
@@ -305,7 +327,7 @@ function Experience({ active, onPick, filter, onOpen }: { active: number; onPick
                 <p className="entry-why"><span>The problem</span> {e.why}</p>
                 <Bullets items={e.bullets} />
                 <p className="stack">{e.tech.join(', ')}</p>
-                <OpenDetail id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
+                <EntryWork id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
               </div>
             </li>
           ))}
@@ -330,54 +352,9 @@ function ProjectLinks({ p }: { p: (typeof projects)[number] }) {
   )
 }
 
-const allSkills = [...skills.languages, ...skills.frameworks, ...skills.devops]
-const strongest = allSkills
-  .map((sk) => ({ sk, n: whereUsed(sk).length }))
-  .filter((x) => x.n > 0)
-  .sort((a, b) => b.n - a.n)
-  .slice(0, 6)
-  .map((x) => x.sk)
 const wins = projects.filter((p) => p.award?.toLowerCase().includes('winner'))
 
 // the five things a recruiter checks first, answered before they scroll
-function Glance({ onCheck }: { onCheck?: () => void }) {
-  return (
-    <section className="section glance" aria-labelledby="glance" data-part="glance">
-      <h2 id="glance">At a glance</h2>
-      <div className="section-body">
-        <dl className="facts">
-          <div>
-            <dt>Graduating</dt>
-            <dd>April 2027, Honours Computer Science, University of Waterloo</dd>
-          </div>
-          <div>
-            <dt>Co-op</dt>
-            <dd>
-              {plural(experience.length, 'term')}, {totalMonths()} months, at {listFormat(experience.map((e) => shortOrg(e.org)))}
-            </dd>
-          </div>
-          <div>
-            <dt>Used the most</dt>
-            <dd>{strongest.join(', ')}</dd>
-          </div>
-          <div>
-            <dt>Hackathons</dt>
-            <dd>{wins.length > 0 ? `${plural(wins.length, 'win')}, at ${wins.map((w) => w.period.split(',')[0]).join(' and ')}` : 'A few a year'}</dd>
-          </div>
-          <div>
-            <dt>Based in</dt>
-            <dd>{profile.location.replace(', ON', ', Ontario')}</dd>
-          </div>
-        </dl>
-        {onCheck && (
-          <p className="glance-check">
-            <button type="button" onClick={onCheck}>Check a posting</button>
-          </p>
-        )}
-      </div>
-    </section>
-  )
-}
 
 // Every step of every flow is searchable, including the code and payloads
 // it shows, and opens the diagram right on that step.
@@ -398,106 +375,70 @@ function insideCommands(show: (d: Opened) => void): Command[] {
   })
 }
 
-// The through-line: what was slow or manual at each place, what I built,
-// and what changed, in the order it happened. Each row opens its drawer.
-const THREAD: [string, string[]][] = [
-  ['2023', ['project-ci-cd-build-automation-tool']],
-  ['2024', ['job-cineplex-entertainment', 'job-nationwide-appraisals']],
-  ['2025', ['job-iotum']],
-  ['2026', ['project-starrez-enterprise-automation-suite', 'job-purolator', 'project-battleship-for-purolator', 'project-insightvault']],
-]
 
-function Thread({ onOpen, lens, onLens }: { onOpen: (id: string, tab?: Tab) => void; lens: Area | null; onLens: (a: Area | null) => void }) {
+// a demo's picture, in the current theme
+function Shot({ kind }: { kind: DemoKind }) {
   return (
-    <section className="section thread" aria-labelledby="thread" data-part="thread">
-      <h2 id="thread">What I work on</h2>
+    <span className="shot">
+      <img className="lt" src={thumb(kind, 'light')} alt="" width={640} height={400} loading="lazy" decoding="async" />
+      <img className="dk" src={thumb(kind, 'dark')} alt="" width={640} height={400} loading="lazy" decoding="async" />
+    </span>
+  )
+}
+
+// The three pieces of work to look at first, each with the same parts
+function Featured({ onOpen }: { onOpen: OpenFn }) {
+  return (
+    <section className="section featured" aria-labelledby="featured" data-part="featured">
+      <h2 id="featured">Featured</h2>
       <div className="section-body">
-        <p className="thread-lede">
-          I take work people do by hand and build the system that does it. Each term added a layer.
-        </p>
-        <div className="lens" role="radiogroup" aria-label="Show what is relevant to a role">
-          <span className="lens-label">Hiring for</span>
-          <button type="button" role="radio" aria-checked={lens === null} onClick={() => onLens(null)}>Anything</button>
-          {(Object.keys(AREAS) as Area[]).map((a) => (
-            <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)}>
-              {AREAS[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
-            </button>
-          ))}
-        </div>
-        {lens && (
-          <p className="lens-sum" aria-live="polite">
-            {ENTRIES.filter((e) => e.areas.includes(lens)).length} of {ENTRIES.length} match
-          </p>
-        )}
-        <div className="thread-table">
-          <div className="thread-row head" aria-hidden="true">
-            <span>Where</span>
-            <span>What was slow or manual</span>
-            <span>What I built</span>
-            <span>Result</span>
-          </div>
-          {THREAD.map(([year, ids]) => (
-            <div key={year} className="thread-year">
-              <p className="thread-y" aria-hidden="true">{year}</p>
-              {ids.map((id) => {
-                const e = entryById(id)!
-                return (
-                  <button key={id} type="button" className="thread-row" data-areas={e.areas.join(' ')} onClick={() => onOpen(id, 'overview')}>
-                    <span className="thread-where">
-                      <b>{e.title.replace(/ \(.*\)$/, '')}</b>
-                      <small>{e.kind === 'job' ? e.sub : 'Project'}</small>
-                    </span>
-                    <span>{e.why}</span>
-                    <span>{e.built}</span>
-                    <span className="thread-result">
-                      {e.highlight && (
-                        <>
-                          <b>{e.highlight.value}</b> {e.highlight.label}
-                        </>
-                      )}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+        <ol className="feature-list">
+          {FEATURED.map((f) => {
+            const e = entryById(f.id)!
+            return (
+              <li key={f.id} className="feature" data-areas={e.areas.join(' ')}>
+                <button type="button" className="feature-shot" onClick={() => onOpen(f.id, 'try', f.kind)} aria-label={`Try ${f.title}`}>
+                  <Shot kind={f.kind} />
+                </button>
+                <div className="feature-text">
+                  <p className="feature-where">{e.kind === 'job' ? `${e.title}, ${e.sub}` : 'Project'}</p>
+                  <h3>{f.title}</h3>
+                  {e.highlight && <p className="entry-result"><b>{e.highlight.value}</b> {e.highlight.label}</p>}
+                  <p className="feature-built">{e.built}</p>
+                  <p className="entry-tabs">
+                    <button type="button" className="primary" onClick={() => onOpen(f.id, 'try', f.kind)}>Try it</button>
+                    <button type="button" onClick={() => onOpen(f.id, 'how')}>How it works</button>
+                    <button type="button" onClick={() => onOpen(f.id, 'code')}>Code</button>
+                  </p>
+                </div>
+              </li>
+            )
+          })}
+        </ol>
       </div>
     </section>
   )
 }
 
-// The demos up front, as pictures, so the work shows before any reading.
-// Each opens its drawer on that demo.
-const demoCount = Object.values(DETAILS).reduce((n, d) => n + (d.demos?.length ?? 0), 0)
-
-function Showcase({ onOpen }: { onOpen: (id: string, tab: Tab, demo: DemoKind) => void }) {
+// show the page through one area of work, for a role hiring for it
+function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) => void }) {
   return (
-    <section className="section showcase" aria-labelledby="try-work" data-part="showcase">
-      <h2 id="try-work">Try the work</h2>
-      <div className="section-body">
-        <p className="showcase-sum">
-          {demoCount} working demos and {Object.keys(DETAILS).length} system diagrams, running in your browser on sample data.
-        </p>
-        <ul className="shots">
-          {SHOWCASE.map((t) => {
-            const e = entryById(t.id)!
-            return (
-              <li key={t.kind} className="shot-tile" data-areas={e.areas.join(' ')}>
-                <button type="button" onClick={() => onOpen(t.id, 'try', t.kind)}>
-                  <span className="shot">
-                    <img className="lt" src={thumb(t, 'light')} alt="" width={640} height={400} loading="lazy" decoding="async" />
-                    <img className="dk" src={thumb(t, 'dark')} alt="" width={640} height={400} loading="lazy" decoding="async" />
-                  </span>
-                  <span className="shot-title">{t.title}</span>
-                  <span className="shot-where">{shortOrg(e.title.replace(/ \(.*\)$/, ''))}</span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+    <div className="lens-bar">
+      <div className="lens" role="radiogroup" aria-label="Show what is relevant to a role">
+        <span className="lens-label">Hiring for</span>
+        <button type="button" role="radio" aria-checked={lens === null} onClick={() => onLens(null)}>Anything</button>
+        {(Object.keys(AREAS) as Area[]).map((a) => (
+          <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)}>
+            {AREAS[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
+          </button>
+        ))}
       </div>
-    </section>
+      {lens && (
+        <p className="lens-sum" aria-live="polite">
+          {ENTRIES.filter((e) => e.areas.includes(lens)).length} of {ENTRIES.length} match
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -722,7 +663,7 @@ export default function App() {
         keywords: 'lens role focus relevant',
         run: () => {
           applyLens(k)
-          goTo('thread')
+          goTo('experience')
         },
       })),
       ...insideCommands(showDetail),
@@ -775,26 +716,27 @@ export default function App() {
             />
             <div className="hero-copy">
               <p className="lede">
-                I build backend services and data pipelines. Right now I'm on co-op with Purolator's Network
-                Engineering team, working on the forecasting pipeline and planning tools and the AWS infrastructure
-                they run on.
+                Software engineer for backend services and data pipelines. On co-op at Purolator, building the
+                forecasting pipeline, the planning tools on top of it and the AWS stack they run on.
               </p>
-              <p className="sub">Fourth-year Computer Science at Waterloo, graduating April 2027.</p>
+              <p className="sub hero-facts">
+                <span>Waterloo CS, graduating April 2027</span>
+                <span>{plural(experience.length, 'co-op term')}, {totalMonths()} months</span>
+                {wins.length > 0 && <span>{plural(wins.length, 'hackathon win')}</span>}
+                <span>{profile.location.replace(', ON', '')}</span>
+              </p>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>
                 <button type="button" onClick={showResume}>Read resume</button>
                 <a href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
                 <a href={profile.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+                {owner && <button type="button" onClick={() => setMatcherOpen(true)}>Check a posting</button>}
               </p>
             </div>
           </div>
         </section>
 
-        <Showcase onOpen={openDetail} />
-
-        <Thread onOpen={openDetail} lens={lens} onLens={applyLens} />
-
-        <Glance onCheck={owner ? () => setMatcherOpen(true) : undefined} />
+        <Featured onOpen={openDetail} />
 
         {filter.length > 0 && (
           <div className="filterbar" role="status" data-part="filter">
@@ -812,7 +754,7 @@ export default function App() {
           </div>
         )}
 
-        <Experience active={activeJob} onPick={openJob} filter={filter} onOpen={openDetail} />
+        <Experience active={activeJob} onPick={openJob} filter={filter} onOpen={openDetail} lens={lens} onLens={applyLens} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">Projects</h2>
@@ -835,10 +777,9 @@ export default function App() {
                     <p className="entry-why"><span>Why I built it</span> {p.why}</p>
                     <Bullets items={p.bullets} />
                     <p className="stack">{p.tech.join(', ')}</p>
-                    <div className="entry-actions">
-                      <OpenDetail id={`project-${slug(p.title)}`} onOpen={openDetail} />
+                    <EntryWork id={`project-${slug(p.title)}`} onOpen={openDetail}>
                       <ProjectLinks p={p} />
-                    </div>
+                    </EntryWork>
                   </div>
                 </li>
               ))}
@@ -963,7 +904,7 @@ export default function App() {
         onStep={(id, flow, step) => showDetail({ id, tab: 'how', at: { flow, step } })}
         onLens={(a) => {
           applyLens(a)
-          setTimeout(() => goTo('thread'), 0)
+          setTimeout(() => goTo('experience'), 0)
         }}
       />}
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
