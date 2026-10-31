@@ -6214,3 +6214,101 @@ main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) 
 .demo .bs-board .bs-cell:disabled {
   opacity: 1;
 }
+
+/* ---- iotum host app ---- */
+.host-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -4px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.host-bar b {
+  color: var(--ink);
+}
+.host-chat {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.host-chat em {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--bad);
+  color: #fff;
+  font: 700 11.5px var(--font);
+  animation: rise 0.2s ease-out;
+}
+.room {
+  display: grid;
+  min-height: 190px;
+  background: #11182b;
+  color: #dfe5f5;
+}
+.room-msg {
+  place-self: center;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+}
+.room-msg p {
+  margin: 0 0 10px;
+}
+.room-msg.bad {
+  color: #ff8a80;
+}
+.room-msg .demo-primary {
+  padding: 6px 14px;
+  border: 0;
+  font: 650 14px var(--font);
+}
+.tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+}
+.tiles-grid[data-n="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 86px;
+  background: #1d2742;
+  outline: 3px solid transparent;
+  outline-offset: -3px;
+  transition: outline-color 0.15s ease-out;
+  animation: rise 0.25s ease-out;
+}
+.tile.speaking {
+  outline-color: #6f8dff;
+}
+.tile-face {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #34446f;
+  font: 700 17px var(--font);
+}
+.tile-name {
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  font-size: 12px;
+}
+.tile.muted .tile-name::after {
+  content: " · muted";
+  color: #ff8a80;
+}
+.wire-src { margin: 0 0 8px; }
