@@ -19,7 +19,6 @@ import { FEATURED, thumb } from './showcase'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
-import MiniArch from './components/MiniArch'
 import { prerendered, useHydrated } from './hydrated'
 import type { Action as TermAction } from './terminal'
 
@@ -297,41 +296,75 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
 }
 
 function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
+  // one job at a time, picked from the list on the left or the timeline
+  const shown = active >= 0 ? active : 0
+  const id = (i: number) => `job-${slug(shortOrg(experience[i].org))}`
+  const onKey = (e: React.KeyboardEvent) => {
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]
+    if (!step) return
+    e.preventDefault()
+    const next = (shown + step + experience.length) % experience.length
+    onPick(next)
+    document.getElementById(`tab-${id(next)}`)?.focus()
+  }
   return (
     <section className="section" aria-labelledby="experience" data-part="experience">
       <h2 id="experience">Experience</h2>
       <div className="section-body">
         <Lens lens={lens} onLens={onLens} />
-        <Timeline active={active} onPick={onPick} filter={filter} />
-        <ol className="entries">
-          {experience.map((e, i) => (
-            <li
-              key={e.org}
-              className={entryClass(i === active, !fits(e.tech, filter))}
-              data-areas={e.areas.join(' ')}
-              id={`job-${slug(shortOrg(e.org))}`}
-            >
-              <p className="entry-when">
-                {shortPeriod(e.period)}
-                <span>{isCurrent(e.period) ? 'Current role' : plural(monthsIn(e.period), 'month')}</span>
-                <MiniArch id={`job-${slug(shortOrg(e.org))}`} name={shortOrg(e.org)} onOpen={(id) => onOpen(id, 'how')} />
-              </p>
-              <div className="entry-main">
-                <h3 className="entry-title">
-                  <img src={e.logo} alt="" width={28} height={28} />
-                  <a href={e.orgUrl} target="_blank" rel="noreferrer">{shortOrg(e.org)}</a>
-                  <CopyLink id={`job-${slug(shortOrg(e.org))}`} name={shortOrg(e.org)} />
-                </h3>
-                <p className="entry-sub">{e.role}</p>
-                <Result h={e.highlight} />
-                <p className="entry-why"><span>The problem</span> {e.why}</p>
-                <Bullets items={e.bullets} />
-                <p className="stack">{e.tech.join(', ')}</p>
-                <EntryWork id={`job-${slug(shortOrg(e.org))}`} onOpen={onOpen} />
+        <Timeline active={shown} onPick={onPick} filter={filter} />
+        <div className="xp">
+          <div className="xp-tabs" role="tablist" aria-label="Jobs" aria-orientation="vertical" onKeyDown={onKey}>
+            {experience.map((e, i) => (
+              <button
+                key={e.org}
+                id={`tab-${id(i)}`}
+                type="button"
+                role="tab"
+                aria-selected={i === shown}
+                aria-controls={id(i)}
+                tabIndex={i === shown ? 0 : -1}
+                className={fits(e.tech, filter) ? '' : 'dim'}
+                data-areas={e.areas.join(' ')}
+                onClick={() => onPick(i)}
+              >
+                <img src={e.logo} alt="" width={22} height={22} />
+                <span>
+                  <b>{shortOrg(e.org)}</b>
+                  <small>{shortPeriod(e.period)}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="entries xp-panels">
+            {experience.map((e, i) => (
+              <div
+                key={e.org}
+                role="tabpanel"
+                aria-labelledby={`tab-${id(i)}`}
+                className={[entryClass(i === shown, !fits(e.tech, filter)), i === shown ? '' : 'off'].join(' ')}
+                data-areas={e.areas.join(' ')}
+                id={id(i)}
+              >
+                <div className="entry-main">
+                  <h3 className="entry-title">
+                    <img src={e.logo} alt="" width={28} height={28} />
+                    <a href={e.orgUrl} target="_blank" rel="noreferrer">{shortOrg(e.org)}</a>
+                    <CopyLink id={id(i)} name={shortOrg(e.org)} />
+                  </h3>
+                  <p className="entry-sub">
+                    {e.role}, {shortPeriod(e.period)}, {isCurrent(e.period) ? 'current role' : plural(monthsIn(e.period), 'month')}
+                  </p>
+                  <Result h={e.highlight} />
+                  <p className="entry-why"><span>The problem</span> {e.why}</p>
+                  <Bullets items={e.bullets} />
+                  <p className="stack">{e.tech.join(', ')}</p>
+                  <EntryWork id={id(i)} onOpen={onOpen} />
+                </div>
               </div>
-            </li>
-          ))}
-        </ol>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -563,7 +596,7 @@ export default function App() {
       const t = e.target
       if (t instanceof HTMLElement && t.closest('input, textarea, select, [contenteditable], dialog[open]')) return
       const step = (dir: 1 | -1) => {
-        const rows = Array.from(document.querySelectorAll<HTMLElement>('.entries > .entry:not(.dim)'))
+        const rows = Array.from(document.querySelectorAll<HTMLElement>('.entries > .entry:not(.dim):not(.off)'))
         const line = 80
         const at = rows.findIndex((r) => r.getBoundingClientRect().top > line + 4)
         const current = at === -1 ? rows.length : at
@@ -595,6 +628,10 @@ export default function App() {
     setActiveJob(i)
     history.replaceState(null, '', `#${id}`)
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [])
+  const selectJob = useCallback((i: number) => {
+    setActiveJob(i)
+    history.replaceState(null, '', `#job-${slug(shortOrg(experience[i].org))}`)
   }, [])
   const openProject = useCallback((s: string) => {
     const el = document.getElementById(`project-${s}`)
@@ -685,7 +722,12 @@ export default function App() {
       <a className="skip" href="#experience">Skip to experience</a>
       <header className="top wrap">
         <span className="top-name">Anay Baid</span>
-        <span className="top-time">Toronto{hydrated && `, ${time}`}</span>
+        <nav className="top-sections" aria-label="Sections">
+          <a href="#featured">Featured</a>
+          <a href="#experience">Experience</a>
+          <a href="#projects">Projects</a>
+          <a href="#contact">Contact</a>
+        </nav>
         <nav aria-label="Contact">
           <button type="button" className="search" onClick={() => setMenuOpen(true)}>
             Search <kbd>{hydrated && navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>
@@ -754,35 +796,45 @@ export default function App() {
           </div>
         )}
 
-        <Experience active={activeJob} onPick={openJob} filter={filter} onOpen={openDetail} lens={lens} onLens={applyLens} />
+        <Experience active={activeJob} onPick={selectJob} filter={filter} onOpen={openDetail} lens={lens} onLens={applyLens} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">Projects</h2>
           <div className="section-body">
-            <ol className="entries">
-              {projects.map((p) => (
-                <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} data-areas={p.areas.join(' ')} id={`project-${slug(p.title)}`}>
-                  <p className="entry-when">
-                    {p.period}
-                    <MiniArch id={`project-${slug(p.title)}`} name={p.title} onOpen={(id) => openDetail(id, 'how')} />
-                  </p>
-                  <div className="entry-main">
-                    <h3 className="entry-title">
-                      {p.link ? <a href={p.link} target="_blank" rel="noreferrer">{p.title}</a> : p.title}
-                      <CopyLink id={`project-${slug(p.title)}`} name={p.title} />
-                    </h3>
-                    {p.award && p.highlight?.value !== 'Won' && <p className="entry-sub">{p.award}</p>}
-                    <Result h={p.highlight} />
-                    <p className="entry-desc">{p.description}</p>
-                    <p className="entry-why"><span>Why I built it</span> {p.why}</p>
-                    <Bullets items={p.bullets} />
-                    <p className="stack">{p.tech.join(', ')}</p>
-                    <EntryWork id={`project-${slug(p.title)}`} onOpen={openDetail}>
-                      <ProjectLinks p={p} />
-                    </EntryWork>
-                  </div>
-                </li>
-              ))}
+            <ol className="entries cards">
+              {projects.map((p) => {
+                const id = `project-${slug(p.title)}`
+                const first = DETAILS[id]?.demos?.[0]
+                return (
+                  <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} data-areas={p.areas.join(' ')} id={id}>
+                    {first && (
+                      <button type="button" className="card-shot" onClick={() => openDetail(id, 'try', first.kind)} aria-label={`Try ${p.title}`}>
+                        <Shot kind={first.kind} />
+                      </button>
+                    )}
+                    <div className="entry-main">
+                      <p className="card-when">{p.period}</p>
+                      <h3 className="entry-title">
+                        {p.link ? <a href={p.link} target="_blank" rel="noreferrer">{p.title}</a> : p.title}
+                        <CopyLink id={id} name={p.title} />
+                      </h3>
+                      {p.award && p.highlight?.value !== 'Won' && <p className="entry-sub">{p.award}</p>}
+                      <Result h={p.highlight} />
+                      <p className="entry-desc">{p.description}</p>
+                      <div className="card-more">
+                        <p className="entry-why"><span>Why I built it</span> {p.why}</p>
+                        <Bullets items={p.bullets} />
+                      </div>
+                      <p className="stack">{p.tech.join(', ')}</p>
+                      <p className="entry-tabs">
+                        {first && <button type="button" onClick={() => openDetail(id, 'try', first.kind)}>Try it</button>}
+                        <button type="button" onClick={() => openDetail(id, 'how')}>How it works</button>
+                        <ProjectLinks p={p} />
+                      </p>
+                    </div>
+                  </li>
+                )
+              })}
             </ol>
           </div>
         </section>
