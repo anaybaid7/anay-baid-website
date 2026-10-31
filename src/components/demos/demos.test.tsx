@@ -149,12 +149,20 @@ describe('demos', () => {
     expect(document.querySelector('.log')).toHaveTextContent('release blocked')
   })
 
-  it('sdk demo walks the integration and reacts to live events', () => {
+  it('sdk demo joins through the real widget events and handles blocked cookies', () => {
     render(<SdkRun />)
-    fireEvent.click(screen.getByRole('button', { name: 'Run the app' }))
-    expect(document.querySelector('.log')).toHaveTextContent('POST /v1/sessions 201')
+    fireEvent.click(screen.getByRole('button', { name: 'Join' }))
+    expect(document.querySelector('.log')).toHaveTextContent('room.READY')
+    expect(document.querySelectorAll('.tile')).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: 'Someone joins' }))
-    expect(document.querySelector('.sdk-people')).toHaveTextContent('Priya')
+    expect(document.querySelectorAll('.tile')).toHaveLength(3)
+    fireEvent.click(screen.getByRole('button', { name: 'Chat message' }))
+    expect(screen.getByLabelText('2 unread')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText(/Safari/))
+    fireEvent.click(screen.getByRole('button', { name: 'Rejoin' }))
+    expect(screen.getByText('Allow the meeting to use cookies')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Allow' }))
+    expect(document.querySelectorAll('.tile')).toHaveLength(1)
   })
 
   it('provisioning shows a device become compliant', () => {

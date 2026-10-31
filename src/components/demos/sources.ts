@@ -1,3 +1,4 @@
+import callbridge from './callbridge.ts?raw'
 import pipeline from './pipeline.ts?raw'
 import planner from './planner.ts?raw'
 import allocate from './allocate.ts?raw'
@@ -18,6 +19,7 @@ export interface Source {
 
 // the logic behind each demo, shown as is in the drawer's Code tab
 export const SOURCES: Partial<Record<DemoKind, Source>> = {
+  sdk: { file: 'callbridge.ts', source: callbridge },
   pipeline: { file: 'pipeline.ts', source: pipeline },
   planner: { file: 'planner.ts', source: planner },
   allocation: { file: 'allocate.ts', source: allocate },
