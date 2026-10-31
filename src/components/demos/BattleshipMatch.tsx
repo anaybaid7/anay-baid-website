@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { N, botShot, placeFleet, validPlacement, type Placed } from '../../battleship'
+import { useEffect, useRef, useState } from 'react'
+import { N, botShot, openHits, placeFleet, report, validPlacement, type Placed } from '../../battleship'
 import Placement from './Placement'
 import { Log, type LogLine } from '../sim/Log'
 import { useSequence } from '../sim/useSequence'
@@ -40,6 +40,7 @@ export default function BattleshipMatch() {
   const [phase, setPhase] = useState<'place' | 'battle'>('place')
   const [msg, setMsg] = useState('Your turn. Fire at the right board.')
   const bot = useRef<number[]>([])
+  const [auto, setAuto] = useState(false)
   const seq = useSequence()
   const say = (...l: LogLine[]) => setLog((x) => [...x, ...l].slice(-40))
 
@@ -136,6 +137,7 @@ export default function BattleshipMatch() {
     setOnline(true)
     setLog(OPENING)
     setPhase('place')
+    setAuto(false)
     setMsg('Your turn. Fire at the right board.')
   }
 
@@ -150,6 +152,7 @@ export default function BattleshipMatch() {
           fired ? (ship ? 'hit' : 'miss') : '',
           sunk ? 'sunk' : '',
           own && ship && !fired ? 'ship' : '',
+          !own && turn === 'over' && ship && !fired ? 'reveal' : '',
         ].join(' ')
         return own ? (
           <span
@@ -172,6 +175,16 @@ export default function BattleshipMatch() {
     </div>
   )
 
+  // auto-fire uses the same hunt and target strategy as the bot
+  useEffect(() => {
+    if (!auto || turn !== 'you' || phase !== 'battle' || !online || seq.running) return
+    const t = window.setTimeout(() => fire(botShot(myShots, openHits(myShots, theirs))), 260)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, turn, phase, online, seq.running, myShots])
+
+  const me = report(myShots, theirs)
+  const them = report(botShots, mine)
   const left = theirs.filter((s) => !s.cells.every((c) => myShots.includes(c))).length
 
   return (
@@ -208,12 +221,34 @@ export default function BattleshipMatch() {
           <p className="bs-msg" aria-live="polite">
             {!online ? 'Reconnecting…' : msg}
           </p>
+          {turn === 'over' && (
+            <table className="report">
+              <thead>
+                <tr><th /><th>You</th><th>Bot</th></tr>
+              </thead>
+              <tbody>
+                {([
+                  ['Shots', me.shots, them.shots],
+                  ['Hits', me.hits, them.hits],
+                  ['Accuracy', me.accuracy, them.accuracy],
+                  ['First hit', me.firstHit, them.firstHit],
+                  ['Best hit streak', me.bestStreak, them.bestStreak],
+                  ['Ships lost', them.sunk, me.sunk],
+                ] as const).map(([k, a, b]) => (
+                  <tr key={k}><td>{k}</td><td>{a}</td><td>{b}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
           <div className="demo-actions">
+            <button type="button" className="demo-primary" aria-pressed={auto} onClick={() => setAuto(!auto)} disabled={turn === 'over'}>
+              {auto ? 'Stop auto-fire' : 'Auto-fire'}
+            </button>
             <button type="button" onClick={drop} disabled={!online || turn !== 'you'}>
               Drop my connection
             </button>
             <button type="button" onClick={reset}>
-              New game
+              {turn === 'over' ? 'Rematch' : 'New game'}
             </button>
           </div>
           <Log title="Socket.IO events" lines={log} />
