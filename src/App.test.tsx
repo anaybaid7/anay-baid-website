@@ -105,6 +105,13 @@ describe('App', () => {
     expect(facts).toHaveTextContent('2 hackathon wins')
   })
 
+  it('quotes and links the CS 445 reference letter', () => {
+    render(<App />)
+    const link = screen.getByRole('link', { name: 'Read the CS\u00a0445 reference letter' })
+    expect(link).toHaveAttribute('href', '/letters/Anay_Baid_CS445_Reference_Letter.pdf')
+    expect(document.querySelector('.letter blockquote')).toHaveTextContent('flawless across all eight deliverables')
+  })
+
   it('copies the email address', async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
     render(<App />)

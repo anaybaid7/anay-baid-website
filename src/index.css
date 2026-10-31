@@ -7688,3 +7688,31 @@ dd {
 :root[data-motion="reduced"] .xp-panels > .entry:not(.off) {
   animation: none;
 }
+
+/* the reference letter, quoted under education */
+.letter {
+  margin: 18px 0 0;
+  padding: 0 0 0 16px;
+  border-left: 3px solid var(--cobalt);
+}
+.letter blockquote {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.letter figcaption {
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.letter a {
+  color: var(--ink);
+  font-weight: 650;
+}
+@media print {
+  .letter a::after {
+    content: " (a2baid.netlify.app" attr(href) ")";
+    font-weight: 400;
+  }
+}
