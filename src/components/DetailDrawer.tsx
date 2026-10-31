@@ -66,6 +66,13 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
 // the demos for one entry, with a row of sub-tabs when there is more than one
 function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string }[]; first?: DemoKind }) {
   const [i, setI] = useState(() => Math.max(0, demos.findIndex((d) => d.kind === first)))
+  // the link keeps which demo is showing, so a copied link opens on it
+  const pick = (j: number) => {
+    setI(j)
+    const url = new URL(location.href)
+    url.searchParams.set('demo', demos[j].kind)
+    history.replaceState(history.state, '', url)
+  }
   const Demo = DEMOS[demos[i].kind]
   return (
     <div className="try">
@@ -73,7 +80,7 @@ function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string }[]; fi
         {demos.length > 1 && (
           <div className="sub-tabs" role="tablist" aria-label="Demos">
             {demos.map((d, j) => (
-              <button key={d.kind} type="button" role="tab" aria-selected={i === j} onClick={() => setI(j)}>
+              <button key={d.kind} type="button" role="tab" aria-selected={i === j} onClick={() => pick(j)}>
                 {d.name}
               </button>
             ))}
@@ -114,6 +121,24 @@ const TAB_NAMES: Record<Tab, string> = {
   screens: 'Screens',
   try: 'Try it',
   code: 'Code',
+}
+
+// copies the address, which already says which entry, tab and demo are open
+function ShareLink() {
+  const [done, setDone] = useState(false)
+  const copy = () =>
+    navigator.clipboard?.writeText(location.href).then(
+      () => {
+        setDone(true)
+        setTimeout(() => setDone(false), 1600)
+      },
+      () => {},
+    )
+  return (
+    <button type="button" className="drawer-share" onClick={copy}>
+      {done ? 'Copied' : 'Copy link'}
+    </button>
+  )
 }
 
 // The first tab: the work in motion, then the problem, one decision and the
@@ -265,9 +290,12 @@ export default function DetailDrawer({ open, onChange }: {
             </p>
             <h2 id="drawer-title">{entry.title}</h2>
             <p className="drawer-sub">{entry.sub}</p>
-            <button type="button" className="drawer-close" onClick={() => onChange(null)} aria-label="Close">
-              Close
-            </button>
+            <span className="drawer-actions">
+              <ShareLink />
+              <button type="button" className="drawer-close" onClick={() => onChange(null)} aria-label="Close" autoFocus>
+                Close
+              </button>
+            </span>
             <div className="drawer-tabs" role="tablist" aria-label="Sections" onKeyDown={onTabKey}>
               {tabs.map((t) => (
                 <button

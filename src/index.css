@@ -2138,10 +2138,26 @@ label {
   color: var(--ink-2);
   font-weight: 550;
 }
-.drawer-close {
+.drawer-actions {
   position: absolute;
   top: 22px;
   right: 26px;
+  display: flex;
+  gap: 8px;
+}
+.drawer-share {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--line);
+  background: none;
+  color: var(--ink-2);
+  font: 600 14.5px var(--font);
+}
+.drawer-share:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.drawer-close {
   min-height: 36px;
   padding: 6px 12px;
   border: 1.5px solid var(--line);
@@ -2558,7 +2574,7 @@ label {
   .drawer-foot {
     padding: 12px 18px;
   }
-  .drawer-close {
+  .drawer-actions {
     top: 16px;
     right: 14px;
   }
@@ -7584,4 +7600,91 @@ button:focus-visible > .shot {
   text-decoration-color: var(--cobalt);
   text-decoration-thickness: 2px;
   text-underline-offset: 6px;
+}
+
+/* ---- craft: motion and type details ---- */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+/* a small press on buttons, so a click feels received */
+.entry-tabs button,
+.hero-links a,
+.hero-links button,
+.demo-actions button,
+.demo-primary,
+.foot-actions button,
+.foot-actions .button,
+.xp-tabs button,
+.lens button,
+.drawer-tabs button,
+.sub-tabs button {
+  transition-property: color, background-color, border-color, transform;
+  transition-duration: 0.16s;
+  transition-timing-function: var(--ease-out);
+}
+.entry-tabs button:active,
+.hero-links a:active,
+.hero-links button:active,
+.demo-actions button:active:not(:disabled),
+.demo-primary:active:not(:disabled),
+.foot-actions button:active,
+.foot-actions .button:active,
+.xp-tabs button:active,
+.lens button:active {
+  transform: scale(0.97);
+}
+/* switching jobs eases the new one in */
+.xp-panels > .entry:not(.off) {
+  animation: rise 0.22s var(--ease-out);
+}
+/* the featured and drawer clips say they can be tried */
+.feature-shot {
+  position: relative;
+}
+.feature-shot::after {
+  content: "Try it →";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 6px 10px;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font: 650 13.5px var(--font);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s var(--ease-out), transform 0.18s var(--ease-out);
+}
+.feature-shot:hover::after,
+.feature-shot:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .feature-shot::after {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* no single words stranded on the last line */
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry-tabs button:active,
+  .hero-links a:active,
+  .demo-actions button:active,
+  .demo-primary:active,
+  .foot-actions button:active,
+  .xp-tabs button:active,
+  .lens button:active {
+    transform: none;
+  }
+  .xp-panels > .entry:not(.off) {
+    animation: none;
+  }
+}
+:root[data-motion="reduced"] .xp-panels > .entry:not(.off) {
+  animation: none;
 }

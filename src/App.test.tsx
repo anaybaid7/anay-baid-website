@@ -329,6 +329,18 @@ describe('App', () => {
     expect(new URL(location.href).searchParams.get('tab')).toBe('try')
   })
 
+  it('keeps the demo in the link and copies it from the drawer', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    history.replaceState(null, '', '/?open=job-purolator&tab=try')
+    render(<App />)
+    const drawer = (await findDrawer()) as HTMLElement
+    fireEvent.click(within(drawer).getByRole('tab', { name: 'Allocate volume' }))
+    expect(new URL(location.href).searchParams.get('demo')).toBe('allocation')
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Copy link' }))
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('demo=allocation'))
+  })
+
   it('gives every job and project the same row of drawer parts', () => {
     render(<App />)
     for (const row of document.querySelectorAll('.entries .entry-tabs')) {
