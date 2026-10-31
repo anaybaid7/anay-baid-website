@@ -177,7 +177,7 @@ export const projects: ProjectEntry[] = [
   },
   {
     title: 'StarRez Enterprise Automation Suite',
-    award: 'Approved by University IST Management',
+    award: 'IST-approved, live across Campus Housing',
     status: 'Shipped',
     period: 'February 2026',
     description:
