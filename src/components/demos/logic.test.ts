@@ -6,7 +6,7 @@ import { check, merge, runPipeline } from './pipeline'
 import { checkSale, makeSale, rng } from './sales'
 import { findRoom, initials, keyCodes, lockoutEntry, packageEntry, readStudent } from './starrez'
 import { applyXp, tick, type Animal } from './shelter'
-import { applyOp, editTotal, gapCheck, normalize, revert, runOp, splitWeek, sumsTo100, total } from './planner'
+import { averageShape, applyOp, editTotal, gapCheck, normalize, revert, runOp, splitWeek, sumsTo100, total } from './planner'
 import { initial, matchRoute, reducer, validateEvent } from './appStore'
 import { botShot, FLEET, N, placeFleet } from '../../battleship'
 
@@ -214,6 +214,12 @@ describe('forecast planner', () => {
     expect(applyOp(400, '%+', 10)).toBe(440)
   })
 
+  it('averages overlay weeks into a shape that sums to 100', () => {
+    const a = averageShape([[10, 20, 70], [20, 20, 60]])!
+    expect(a).toEqual([15, 20, 65])
+    expect(averageShape([])).toBeNull()
+  })
+
   it('normalizes to exactly 100 and splits without losing volume', () => {
     const n = normalize([0.4, 20.6, 20.1, 0, 19.7, 18.9, 0.5])
     expect(n.reduce((a, b) => a + b, 0)).toBeCloseTo(100, 6)
@@ -226,5 +232,29 @@ describe('forecast planner', () => {
     expect(gapCheck(quebec).check).toBe(false)
     expect(gapCheck(quebec, false)).toMatchObject({ baseline: 450, check: true })
     expect(gapCheck({ terminal: 1, day: 'Fri', forecast: 140, history: [{ value: 80 }, { value: 90 }, { value: 70 }, { value: 85 }] }).check).toBe(false)
+  })
+})
+
+describe('battleship match report', () => {
+  it('counts hits, accuracy, first hit, best streak and sunk vehicles', async () => {
+    const { report, openHits } = await import('../../battleship')
+    const fleet = [{ name: 'Scooter', cells: [0, 1] }, { name: 'Van', cells: [10, 11, 12] }]
+    const r = report([5, 0, 1, 10, 7], fleet)
+    expect(r).toEqual({ shots: 5, hits: 3, accuracy: '60%', firstHit: '#2', bestStreak: 3, sunk: 1 })
+    expect(openHits([0, 1, 10], fleet)).toEqual([10])
+  })
+})
+
+describe('callbridge host state', () => {
+  it('tracks people, the speaker and unread counts from widget events', async () => {
+    const { initialHost, onEvent } = await import('./callbridge')
+    let s = onEvent(initialHost, { type: 'room.READY' })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 1, name: 'A', isCurrent: true, isMuted: false, isLeft: false })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 2, name: 'B', isCurrent: false, isMuted: false, isLeft: false })
+    s = onEvent(s, { type: 'conference.SPEAKER', speakerId: 2 })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 2, name: 'B', isCurrent: false, isMuted: false, isLeft: true })
+    expect(s.people.map((p) => p.id)).toEqual([1])
+    expect(s.speaker).toBeNull()
+    expect(onEvent(s, { type: 'dashboard.UNREAD_MESSAGES', rooms: { a: 2, b: 3 } }).unread).toBe(5)
   })
 })

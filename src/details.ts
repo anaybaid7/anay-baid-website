@@ -49,7 +49,7 @@ export interface Flow {
   steps: FlowStep[]
 }
 
-export type ScreenKind = 'forecast-tool' | 'insightvault' | 'starrez' | 'battleship' | 'pashu'
+export type ScreenKind = 'forecast-tool' | 'insightvault' | 'starrez' | 'battleship' | 'pashu' | 'iotum' | 'nationwide' | 'cineplex' | 'cicd' | 'routing'
 
 export type DemoKind =
   | 'pipeline'
@@ -257,60 +257,81 @@ export const DETAILS: Record<string, Detail> = {
   'job-iotum': {
     arch: {
       nodes: [
-        { id: 'devs', label: 'Client developer', kind: 'person', col: 0, row: 0, note: 'An engineer at a customer building on Iotum’s SDK.' },
-        { id: 'app', label: 'Reference app', sub: 'Full-stack React', kind: 'client', col: 1, row: 0, note: 'Working React applications that show a full SDK integration, from auth to live events, so client teams start from a pattern that already works.' },
-        { id: 'sdk', label: 'Iotum SDK', sub: 'JavaScript', kind: 'code', col: 2, row: 0, note: 'The client library the reference apps integrate.' },
-        { id: 'platform', label: 'Platform APIs', sub: 'REST and events', kind: 'service', col: 3, row: 0, note: 'Iotum’s backend that the SDK talks to.' },
-        { id: 'tests', label: 'Test suite', sub: 'Selenium, Mocha', kind: 'job', col: 1, row: 1, note: 'Browser tests that drive the apps the way a user would. This is where code coverage went up 85%.' },
-        { id: 'ci', label: 'CI/CD pipeline', sub: 'Runs on every change', kind: 'job', col: 2, row: 1, note: 'Lint, unit and browser tests run on each change before anything ships.' },
-        { id: 'release', label: 'Release', kind: 'cloud', col: 3, row: 1, note: 'Builds that pass go out, and failures stop before they reach users.' },
+        { id: 'devs', label: 'Client developer', kind: 'person', col: 0, row: 0, note: 'An engineer at a customer embedding Iotum video and chat in their own product.' },
+        { id: 'app', label: 'Reference app', sub: 'Full-stack React', kind: 'client', col: 1, row: 0, note: 'A working host app that shows the integration end to end, so client teams start from a pattern that already works.' },
+        { id: 'sdk', label: 'callbridge-js', sub: 'Meeting, Dashboard', kind: 'code', col: 2, row: 0, note: 'Iotum’s JavaScript SDK. Each widget is an iframe the host page controls through methods and events.' },
+        { id: 'platform', label: 'Callbridge', sub: 'Meetings and chat', kind: 'service', col: 3, row: 0, note: 'Iotum’s platform the widgets connect to.' },
+        { id: 'backend', label: 'App backend', sub: 'Issues SSO tokens', kind: 'service', col: 1, row: 1, note: 'The host app’s own server gets an SSO token and host id, so no credentials sit in the browser.' },
+        { id: 'tests', label: 'Test suite', sub: 'Selenium, Mocha', kind: 'job', col: 2, row: 1, note: 'Browser tests that drive the apps the way a user would. This is where code coverage went up 85%.' },
+        { id: 'ci', label: 'CI/CD pipeline', sub: 'Runs on every change', kind: 'job', col: 3, row: 1, note: 'Lint, unit and browser tests run on each change before anything ships.' },
       ],
       edges: [
         { from: 'devs', to: 'app' },
+        { from: 'app', to: 'backend' },
         { from: 'app', to: 'sdk' },
         { from: 'sdk', to: 'platform' },
         { from: 'tests', to: 'app' },
         { from: 'tests', to: 'ci' },
-        { from: 'ci', to: 'release' },
       ],
     },
     flows: [
       {
-        name: 'Integrating the SDK',
-        summary: 'What a client team copies from the reference app, step by step.',
+        name: 'Joining a meeting',
         steps: [
           {
-            from: 'devs',
-            to: 'app',
-            title: 'Start from the reference app',
-            detail: 'Instead of reading docs and guessing, a client developer clones an app where auth, session setup and event handling already work.',
+            from: 'app',
+            to: 'backend',
+            title: 'Get an SSO token',
+            detail: 'The host app asks its own backend for a token and host id.',
+            payload: { label: 'HTTP', code: 'POST /api/sso-token\n200 { "token": "…", "hostId": 12345 }' },
           },
           {
             from: 'app',
             to: 'sdk',
-            title: 'Initialize the SDK',
-            detail: 'The app creates one SDK client at start-up and signs in with a short-lived token from its own backend, so the API key never reaches the browser.',
-            payload: { label: 'TypeScript', code: "const client = createClient({ region: 'ca' })\nawait client.auth.signIn(await fetchTokenFromBackend())" },
+            title: 'Create the Meeting widget',
+            detail: 'One constructor call with the domain, the SSO token and a container.',
+            payload: { label: 'TypeScript', code: "const meeting = new Meeting(\n  { domain, sso: { token, hostId }, container: '#meeting' },\n  accessCode,\n  { skipJoin: true },\n)" },
           },
           {
             from: 'sdk',
             to: 'platform',
-            title: 'Create a session',
-            detail: 'The SDK calls the platform API and returns a typed session object the app renders.',
-            payload: { label: 'HTTP', code: 'POST /v1/sessions\n201 Created\n{ "id": "s_4821", "host": "user_19", "status": "open" }' },
+            title: 'The widget loads the room',
+            detail: 'widget.LOAD, then room.READY once controls like setMute can be called.',
+            payload: { label: 'Events', code: "widget.LOAD\nroom.READY" },
           },
           {
             from: 'platform',
             to: 'sdk',
-            title: 'Events stream back',
-            detail: 'Participants joining or leaving arrive as events over a persistent connection.',
-            payload: { label: 'Event', code: "client.on('participant.joined', (p) => setPeople((all) => [...all, p]))" },
+            title: 'People come and go',
+            detail: 'participant.CHANGE and conference.SPEAKER keep the host’s own UI in sync.',
+            payload: { label: 'TypeScript', code: "meeting.on('participant.CHANGE', ({ id, name, isLeft }) => update(id, name, isLeft))\nmeeting.on('conference.SPEAKER', ({ speakerId }) => highlight(speakerId))" },
           },
           {
             from: 'sdk',
             to: 'app',
-            title: 'The UI updates from events',
-            detail: 'React state updates from the event handlers, so the screen always matches the session without polling.',
+            title: 'Unload on teardown',
+            detail: 'The component cleans the widget up when it unmounts.',
+            payload: { label: 'React', code: 'useEffect(() => () => meeting.unload(), [])' },
+          },
+        ],
+      },
+      {
+        name: 'Blocked cookies',
+        summary: 'Safari blocks the widget’s cookie inside an iframe.',
+        steps: [
+          {
+            from: 'sdk',
+            to: 'app',
+            title: 'The widget asks for storage access',
+            detail: 'The host has to make the widget visible and clickable.',
+            payload: { label: 'Event', code: "widget.STORAGE_ACCESS_REQUIRED { step: 'request' }" },
+          },
+          {
+            from: 'app',
+            to: 'sdk',
+            title: 'The user allows it',
+            detail: 'Granted is not signed in yet, so the app waits for room.READY.',
+            payload: { label: 'Events', code: 'widget.STORAGE_ACCESS_GRANTED\nwidget.LOAD\nroom.READY' },
           },
         ],
       },
@@ -320,28 +341,23 @@ export const DETAILS: Record<string, Detail> = {
           {
             from: 'tests',
             to: 'app',
-            title: 'Selenium drives the app in a browser',
-            detail: 'Each test opens the app in a real browser, clicks through a flow and asserts on what the user sees.',
-            payload: { label: 'Mocha spec', code: "it('joins a session from the invite link', async () => {\n  await driver.get(`${BASE}/join/s_4821`)\n  await driver.wait(until.elementLocated(By.css('[data-test=room]')))\n})" },
+            title: 'Selenium drives the app',
+            detail: 'Each spec clicks through a flow in a real browser.',
+            payload: { label: 'Mocha spec', code: "it('joins a meeting from the access code', async () => {\n  await driver.get(`${BASE}/meeting`)\n  await driver.findElement(By.name('accessCode')).sendKeys('1234567', Key.ENTER)\n  await driver.wait(until.elementLocated(By.css('iframe')))\n})" },
           },
           {
             from: 'tests',
             to: 'ci',
-            title: 'Tests run on every change',
-            detail: 'The pipeline installs, lints, runs unit tests, then the browser suite. A failure blocks the merge.',
+            title: 'Every change runs the suite',
+            detail: 'A failing spec blocks the merge.',
             payload: { label: 'Pipeline', code: 'install → lint → unit → e2e (selenium) → build → release' },
-          },
-          {
-            from: 'ci',
-            to: 'release',
-            title: 'Green builds release',
-            detail: 'With the browser suite catching regressions early, releases went out faster and with fewer rollbacks.',
           },
         ],
       },
     ],
+    screens: 'iotum',
     demos: [
-      { kind: 'sdk', name: 'Integrate the SDK' },
+      { kind: 'sdk', name: 'Embed a meeting' },
       { kind: 'release', name: 'Run the test suite' },
     ],
   },
@@ -432,6 +448,7 @@ export const DETAILS: Record<string, Detail> = {
         ],
       },
     ],
+    screens: 'nationwide',
     demos: [{ kind: 'provision', name: 'Provision a device' }],
   },
 
@@ -517,6 +534,7 @@ export const DETAILS: Record<string, Detail> = {
         ],
       },
     ],
+    screens: 'cineplex',
     demos: [
       { kind: 'stream', name: 'Stream sales' },
       { kind: 'dataval', name: 'Reconcile two copies' },
@@ -955,6 +973,7 @@ export const DETAILS: Record<string, Detail> = {
         ],
       },
     ],
+    screens: 'cicd',
     demos: [{ kind: 'build', name: 'Run the action' }],
   },
 
@@ -1110,6 +1129,7 @@ export const DETAILS: Record<string, Detail> = {
         ],
       },
     ],
+    screens: 'routing',
     demos: [{ kind: 'router', name: 'Use the app' }],
   },
 }
@@ -1128,4 +1148,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router']
