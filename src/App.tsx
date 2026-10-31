@@ -408,9 +408,7 @@ function Thread({ onOpen, lens, onLens }: { onOpen: (id: string, tab?: Tab) => v
       <h2 id="thread">What I work on</h2>
       <div className="section-body">
         <p className="thread-lede">
-          Most of what I build starts with work someone is doing by hand. I turn it into a pipeline, a service or a tool
-          that does it reliably. Each term added a layer: data at Cineplex, infrastructure at Nationwide, testing at
-          Iotum, and all of it together at Purolator.
+          I take work people do by hand and build the system that does it. Each term added a layer.
         </p>
         <div className="lens" role="radiogroup" aria-label="Show what is relevant to a role">
           <span className="lens-label">Hiring for</span>
@@ -423,8 +421,7 @@ function Thread({ onOpen, lens, onLens }: { onOpen: (id: string, tab?: Tab) => v
         </div>
         {lens && (
           <p className="lens-sum" aria-live="polite">
-            {listFormat(ENTRIES.filter((e) => e.areas.includes(lens)).map((e) => e.title.replace(/ \(.*\)$/, '')))} involve{' '}
-            {AREAS[lens].toLowerCase()}. The rest of the page dims everything else.
+            {ENTRIES.filter((e) => e.areas.includes(lens)).length} of {ENTRIES.length} match
           </p>
         )}
         <div className="thread-table">
@@ -738,10 +735,7 @@ export default function App() {
                 Engineering team, working on the forecasting pipeline and planning tools and the AWS infrastructure
                 they run on.
               </p>
-              <p className="sub">
-                Fourth-year Computer Science at Waterloo, graduating in April 2027. Each co-op term has taken work people
-                were doing by hand and turned it into a system that does it reliably.
-              </p>
+              <p className="sub">Fourth-year Computer Science at Waterloo, graduating April 2027.</p>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>
                 <button type="button" onClick={showResume}>Read resume</button>

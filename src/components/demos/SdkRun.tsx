@@ -1,148 +1,121 @@
 import { useState } from 'react'
+import { initialHost, onEvent, type HostState, type WidgetEvent } from './callbridge'
 import { Frame } from '../sim/Frame'
 import { Log, type LogLine } from '../sim/Log'
 import { useSequence } from '../sim/useSequence'
 
 const CODE = [
-  "import { createClient } from '@iotum/sdk'",
+  "import { Meeting } from '@iotum/callbridge-js'",
   '',
-  "const client = createClient({ region: 'ca' })",
-  'await client.auth.signIn(await getToken())',
+  'const meeting = new Meeting(',
+  "  { domain, sso: { token, hostId }, container: '#meeting' },",
+  '  accessCode,',
+  '  { skipJoin: true },',
+  ')',
+  "meeting.on('room.READY', () => setReady(true))",
+  "meeting.on('participant.CHANGE', updatePeople)",
+  "meeting.on('conference.SPEAKER', ({ speakerId }) => highlight(speakerId))",
+  "meeting.on('widget.STORAGE_ACCESS_REQUIRED', showWidget)",
+  "meeting.on('widget.ERROR', showError)",
   '',
-  'const session = await client.sessions.create({ title })',
-  "client.on('participant.joined', (p) => addPerson(p))",
-  "client.on('participant.left', (p) => removePerson(p.id))",
-  '',
-  'return <Room session={session} people={people} />',
+  'return () => meeting.unload()',
 ]
 
-interface Ui {
-  status: string
-  user?: string
-  room?: string
-  people: string[]
-  live: boolean
+// which code line handles each event
+const LINE: Partial<Record<WidgetEvent['type'], number>> = {
+  'room.READY': 7,
+  'participant.CHANGE': 8,
+  'conference.SPEAKER': 9,
+  'widget.STORAGE_ACCESS_REQUIRED': 10,
+  'widget.STORAGE_ACCESS_GRANTED': 10,
+  'widget.ERROR': 11,
+  'conference.CONFERENCE_CALL_EXIT': 13,
 }
-
-interface Step {
-  lines: number[]
-  say: string
-  net: LogLine[]
-  ui: (u: Ui) => Ui
-}
-
-const STEPS: Step[] = [
-  {
-    lines: [2],
-    say: 'One client for the whole app, created once at start-up.',
-    net: [{ src: 'sdk', text: 'client ready, region ca' }],
-    ui: (u) => ({ ...u, status: 'Starting' }),
-  },
-  {
-    lines: [3],
-    say: 'The app’s own backend mints a short-lived token, so the API key never reaches the browser.',
-    net: [
-      { src: 'app', text: 'POST /api/token  200  (your backend)' },
-      { src: 'sdk', text: 'POST /v1/auth/token-exchange  200', tone: 'ok' },
-    ],
-    ui: (u) => ({ ...u, status: 'Signed in', user: 'Anay' }),
-  },
-  {
-    lines: [5],
-    say: 'Creating a session returns a typed object the UI renders directly.',
-    net: [{ src: 'sdk', text: 'POST /v1/sessions  201  { id: "s_4821" }', tone: 'ok' }],
-    ui: (u) => ({ ...u, status: 'Session open', room: 'Design review', people: ['Anay'] }),
-  },
-  {
-    lines: [6, 7],
-    say: 'Events arrive over one persistent connection, and handlers update React state.',
-    net: [{ src: 'sdk', text: 'WSS /v1/events  open, subscribed to participant.*', tone: 'ok' }],
-    ui: (u) => ({ ...u, live: true }),
-  },
-  {
-    lines: [9],
-    say: 'The screen renders from state, so it always matches the session without polling.',
-    net: [{ src: 'app', text: 'rendered <Room> with 1 participant' }],
-    ui: (u) => u,
-  },
-]
 
 const GUESTS = ['Priya', 'Marco', 'Lena', 'Kofi']
+const payload = (e: WidgetEvent) => {
+  const { type, ...rest } = e
+  return Object.keys(rest).length ? `${type} ${JSON.stringify(rest)}` : type
+}
 
-// A reference app integrating the SDK, line by line. Run it to watch each
-// call light up in the code, go out on the network, and change the screen.
-// After that, people join and leave as live events.
+// A host page embedding the Iotum meeting widget. Join a room, bring people
+// in and out, switch speakers, and hit the two failure cases the SDK
+// documents: Safari blocking the widget's cookie, and an error loading it.
 export default function SdkRun() {
-  const [at, setAt] = useState(-1)
-  const [ui, setUi] = useState<Ui>({ status: 'Not started', people: [], live: false })
-  const [net, setNet] = useState<LogLine[]>([])
-  const [online, setOnline] = useState(true)
-  const [evLine, setEvLine] = useState<number | null>(null)
+  const [s, setS] = useState<HostState>(initialHost)
+  const [log, setLog] = useState<LogLine[]>([])
+  const [hot, setHot] = useState<number[]>([])
+  const [safari, setSafari] = useState(false)
   const seq = useSequence()
-  const step = at >= 0 ? STEPS[at] : null
-  const done = at >= STEPS.length - 1
+  const nextId = s.people.reduce((m, p) => Math.max(m, p.id), 100) + 1
 
-  const apply = (i: number) => {
-    setAt(i)
-    setEvLine(null)
-    setUi((u) => STEPS[i].ui(u))
-    setNet((n) => [...n, ...STEPS[i].net])
+  const emit = (e: WidgetEvent) => {
+    setS((x) => onEvent(x, e))
+    setLog((l) => [...l, { src: 'widget', text: payload(e), tone: e.type === 'widget.ERROR' ? 'err' : e.type.startsWith('widget.STORAGE') ? 'warn' : undefined } as LogLine].slice(-40))
+    setHot(LINE[e.type] !== undefined ? [LINE[e.type]!] : [])
   }
-  const reset = () => {
-    seq.stop()
-    setAt(-1)
-    setUi({ status: 'Not started', people: [], live: false })
-    setNet([])
-    setOnline(true)
-    setEvLine(null)
-  }
-  const runAll = () => {
-    reset()
-    seq.run(STEPS.map((_, i) => () => apply(i)), 1400)
+  const host = (text: string, lines: number[]) => {
+    setLog((l) => [...l, { src: 'host', text }].slice(-40))
+    setHot(lines)
   }
 
-  const join = () => {
-    const name = GUESTS.find((g) => !ui.people.includes(g))
-    if (!name) return
-    setUi((u) => ({ ...u, people: [...u.people, name] }))
-    setNet((n) => [...n, { src: 'event', text: `participant.joined  { name: "${name}" }`, tone: 'info' }])
-    setEvLine(6)
+  const join = (bad = false) => {
+    setS(initialHost)
+    setLog([])
+    const steps: (() => void)[] = [
+      () => host('POST /api/sso-token → { token, hostId } from your backend', []),
+      () => host("new Meeting({ domain: 'acme.callbridge.com', sso, container }, '1234567', { skipJoin: true })", [2, 3, 4, 5, 6]),
+      () => emit({ type: 'widget.LOAD' }),
+    ]
+    if (bad) steps.push(() => emit({ type: 'widget.ERROR', message: 'access code 1234567 not found' }))
+    else if (safari) steps.push(() => emit({ type: 'widget.STORAGE_ACCESS_REQUIRED', step: 'request' }))
+    else
+      steps.push(
+        () => emit({ type: 'room.READY' }),
+        () => emit({ type: 'participant.CHANGE', id: 101, name: 'Anay', isCurrent: true, isMuted: false, isLeft: false }),
+        () => emit({ type: 'participant.CHANGE', id: 102, name: 'Jordan', isCurrent: false, isMuted: true, isLeft: false }),
+        () => emit({ type: 'conference.SPEAKER', speakerId: 101 }),
+      )
+    seq.run(steps, 650)
   }
-  const leave = () => {
-    const name = ui.people.at(-1)
-    if (!name || ui.people.length < 2) return
-    setUi((u) => ({ ...u, people: u.people.slice(0, -1) }))
-    setNet((n) => [...n, { src: 'event', text: `participant.left  { name: "${name}" }`, tone: 'info' }])
-    setEvLine(7)
-  }
-  const drop = () => {
-    setOnline(false)
-    setNet((n) => [...n, { src: 'sdk', text: 'connection lost, retrying in 1s', tone: 'warn' }])
+
+  const grant = () =>
     seq.run(
       [
-        () => {},
-        () => {
-          setOnline(true)
-          setNet((n) => [
-            ...n,
-            { src: 'sdk', text: 'WSS /v1/events  reconnected, resubscribed', tone: 'ok' },
-            { src: 'sdk', text: `GET /v1/sessions/s_4821  200  (state resynced)`, tone: 'ok' },
-          ])
-        },
+        () => host('user clicks inside the widget, browser grants access', [10]),
+        () => emit({ type: 'widget.STORAGE_ACCESS_GRANTED' }),
+        () => emit({ type: 'room.READY' }),
+        () => emit({ type: 'participant.CHANGE', id: 101, name: 'Anay', isCurrent: true, isMuted: false, isLeft: false }),
       ],
-      1200,
+      600,
     )
+
+  const add = () => {
+    const name = GUESTS.find((g) => !s.people.some((p) => p.name === g))
+    if (name) emit({ type: 'participant.CHANGE', id: nextId, name, isCurrent: false, isMuted: false, isLeft: false })
+  }
+  const remove = () => {
+    const p = [...s.people].reverse().find((x) => !x.isCurrent)
+    if (p) emit({ type: 'participant.CHANGE', id: p.id, name: p.name, isCurrent: false, isMuted: p.isMuted, isLeft: true })
+  }
+  const speak = () => {
+    const ids = s.people.map((p) => p.id)
+    if (ids.length) emit({ type: 'conference.SPEAKER', speakerId: ids[(ids.indexOf(s.speaker ?? -1) + 1) % ids.length] })
+  }
+  const message = () => emit({ type: 'dashboard.UNREAD_MESSAGES', rooms: { general: s.unread + 1, design: 1 } })
+  const leave = () => {
+    emit({ type: 'conference.CONFERENCE_CALL_EXIT' })
+    host('meeting.unload()', [13])
   }
 
-  // a joined or left event highlights the handler that ran
-  const hot = evLine !== null ? [evLine] : (step?.lines ?? [])
-  const full = GUESTS.every((g) => ui.people.includes(g))
+  const ready = s.status === 'ready'
+  const busy = seq.running
 
   return (
     <div className="demo sdk">
-      <p className="demo-hint">Run the app, then add people.</p>
+      <p className="demo-hint">Join, then bring people in. Try Safari mode.</p>
       <div className="sdk-grid">
-        <pre className="sdk-code" aria-label="Reference app source" tabIndex={0}>
+        <pre className="sdk-code" aria-label="Host page source" tabIndex={0}>
           {CODE.map((l, i) => (
             <span key={i} className={hot.includes(i) ? 'ln hot' : 'ln'}>
               <i>{i + 1}</i>
@@ -151,49 +124,51 @@ export default function SdkRun() {
             </span>
           ))}
         </pre>
-        <Frame title="Reference app" url="localhost:5173/room" className="sdk-app">
-          <p className="sdk-status">
-            <span className={online && ui.live ? 'dot-live on' : 'dot-live'} aria-hidden="true" />
-            {online ? ui.status : 'Reconnecting'}
-            {ui.user && <span className="sdk-user">{ui.user}</span>}
-          </p>
-          {ui.room ? (
-            <>
-              <h4>{ui.room}</h4>
-              <ul className="sdk-people">
-                {ui.people.map((p) => (
-                  <li key={p}>
-                    <span aria-hidden="true">{p[0]}</span>
-                    {p}
-                  </li>
+        <Frame title="Host app" url="app.acme.com/meet" className="sdk-app">
+          <div className="host-bar">
+            <b>Acme Clinic</b>
+            <span>Meet</span>
+            <span className="host-chat">
+              Team chat {s.unread > 0 && <em aria-label={`${s.unread} unread`}>{s.unread}</em>}
+            </span>
+          </div>
+          <div className={`room st-${s.status}`}>
+            {s.status === 'idle' && <p className="room-msg">Enter access code 1234567</p>}
+            {s.status === 'loading' && <p className="room-msg">Loading the meeting widget…</p>}
+            {s.status === 'needs-access' && (
+              <div className="room-msg">
+                <p>Allow the meeting to use cookies</p>
+                <button type="button" className="demo-primary" onClick={grant} disabled={busy}>Allow</button>
+              </div>
+            )}
+            {s.status === 'error' && <p className="room-msg bad">{s.error}</p>}
+            {s.status === 'left' && <p className="room-msg">You left the meeting</p>}
+            {ready && (
+              <div className="tiles-grid" data-n={Math.min(s.people.length, 4)}>
+                {s.people.map((p) => (
+                  <div key={p.id} className={['tile', p.id === s.speaker ? 'speaking' : '', p.isMuted ? 'muted' : ''].join(' ')}>
+                    <span className="tile-face">{p.name[0]}</span>
+                    <span className="tile-name">{p.name}{p.isCurrent && ' (you)'}</span>
+                  </div>
                 ))}
-              </ul>
-            </>
-          ) : (
-            <p className="sdk-empty">No session yet</p>
-          )}
+              </div>
+            )}
+          </div>
         </Frame>
       </div>
-      <p className="sdk-say" aria-live="polite">{evLine !== null ? 'Handled by the event listener, no refetch.' : step ? step.say : 'Press run to start the app.'}</p>
       <div className="demo-actions">
-        <button type="button" className="demo-primary" onClick={runAll} disabled={seq.running}>
-          {at < 0 ? 'Run the app' : 'Run it again'}
-        </button>
-        <button type="button" onClick={() => !done && apply(at + 1)} disabled={seq.running || done}>
-          Next line
-        </button>
-        <button type="button" onClick={join} disabled={!done || !online || full}>
-          Someone joins
-        </button>
-        <button type="button" onClick={leave} disabled={!done || !online || ui.people.length < 2}>
-          Someone leaves
-        </button>
-        <button type="button" onClick={drop} disabled={!done || !online}>
-          Drop the connection
-        </button>
-        <button type="button" onClick={reset}>Reset</button>
+        <button type="button" className="demo-primary" onClick={() => join()} disabled={busy}>{s.status === 'idle' ? 'Join' : 'Rejoin'}</button>
+        <label className="demo-check">
+          <input type="checkbox" checked={safari} onChange={(e) => setSafari(e.target.checked)} disabled={busy} /> Safari, cookies blocked
+        </label>
+        <button type="button" onClick={add} disabled={!ready || busy || s.people.length > GUESTS.length}>Someone joins</button>
+        <button type="button" onClick={remove} disabled={!ready || busy || s.people.length < 2}>Someone leaves</button>
+        <button type="button" onClick={speak} disabled={!ready || busy}>Next speaker</button>
+        <button type="button" onClick={message} disabled={busy}>Chat message</button>
+        <button type="button" onClick={leave} disabled={!ready || busy}>Leave</button>
+        <button type="button" onClick={() => join(true)} disabled={busy}>Wrong code</button>
       </div>
-      <Log title="Network" lines={net} empty="No requests yet" />
+      <Log title="Widget events" lines={log} empty="Press Join" />
     </div>
   )
 }

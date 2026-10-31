@@ -333,7 +333,7 @@ describe('what I work on', () => {
   it('lists each step with its problem and result, and opens the entry', async () => {
     render(<App />)
     const section = document.querySelector('[data-part="thread"]')!
-    expect(section).toHaveTextContent('I worked the front desk across Campus Housing')
+    expect(section).toHaveTextContent('At the front desk, every package')
     expect(section).toHaveTextContent('10-20×')
     fireEvent.click(screen.getByRole('button', { name: /^PurolatorSoftware & Network/ }))
     const drawer = await findDrawer()
@@ -391,7 +391,7 @@ describe('hiring for', () => {
     history.replaceState(null, '', '/?for=data')
     render(<App />)
     expect(document.querySelector('main')).toHaveAttribute('data-lens', 'data')
-    expect(document.querySelector('.lens-sum')).toHaveTextContent('Purolator')
+    expect(document.querySelector('.lens-sum')).toHaveTextContent('3 of 10 match')
     fireEvent.click(screen.getByRole('radio', { name: /^Testing and automation/ }))
     expect(new URL(location.href).searchParams.get('for')).toBe('automation')
     fireEvent.click(screen.getByRole('radio', { name: 'Anything' }))
