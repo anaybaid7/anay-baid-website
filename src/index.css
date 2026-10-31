@@ -4008,9 +4008,6 @@ label {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.tiles .warn b {
-  color: var(--bad);
-}
 .sales-grid,
 .fraud-grid {
   display: grid;
@@ -6783,6 +6780,339 @@ main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) 
 }
 .graph-note {
   margin: 12px 0 0;
+  color: var(--bad);
+  font-weight: 700;
+}
+
+/* ---- content script timeline ---- */
+.obs-sliders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 22px;
+}
+.obs {
+  display: block;
+  width: 100%;
+  margin: 6px 0 14px;
+  font-family: var(--font);
+}
+.obs .row {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.obs .lbl {
+  fill: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.obs .ax,
+.obs .tag {
+  fill: var(--ink-3);
+  font-size: 11px;
+}
+.obs .tag {
+  fill: var(--ink);
+  font-weight: 650;
+}
+.obs .tick {
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+.obs .part {
+  fill: var(--ink);
+}
+.obs .p-entry,
+.obs .p-keys {
+  fill: var(--cobalt);
+}
+.obs .deb {
+  fill: color-mix(in srgb, var(--ink-3) 30%, transparent);
+}
+.obs .deb.fired {
+  fill: var(--ink-2);
+}
+.obs .init.retry {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 1.5;
+}
+.obs .init.build {
+  fill: var(--cobalt);
+}
+.obs .watch {
+  fill: color-mix(in srgb, var(--cobalt) 25%, transparent);
+}
+.obs .watch.restart {
+  fill: color-mix(in srgb, var(--ink-3) 25%, transparent);
+}
+.obs .watch.timeout {
+  fill: color-mix(in srgb, var(--bad) 25%, transparent);
+}
+.obs .xmark {
+  fill: var(--bad);
+  font-size: 13px;
+  font-weight: 800;
+}
+.obs .btn-mark {
+  fill: var(--cobalt);
+}
+@media (max-width: 760px) {
+  .obs-sliders {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tiles .warn b {
+  color: var(--bad);
+}
+
+/* ---- config drift ---- */
+.drift-wrap {
+  overflow-x: auto;
+}
+.drift-grid {
+  border-collapse: collapse;
+  font: 12.5px var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.drift-grid th {
+  padding: 6px 10px;
+  color: var(--ink-3);
+  font: 650 12.5px var(--font);
+  text-align: left;
+}
+.drift-grid td {
+  padding: 7px 10px;
+  border: 1.5px solid var(--line);
+  transition: background 0.25s;
+}
+.drift-grid td.changed {
+  background: var(--tint);
+}
+.drift-grid td.odd {
+  background: color-mix(in srgb, var(--bad) 18%, transparent);
+  font-weight: 700;
+}
+.drift-grid td.fresh {
+  outline: 2.5px solid var(--ink);
+  outline-offset: -2.5px;
+}
+.drift-foot {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  margin-top: 14px;
+}
+.spark {
+  width: 100%;
+  background: var(--card);
+}
+.spark polyline {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2.5;
+}
+.spark .now {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.spark .cut {
+  stroke: var(--cobalt);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+@media (max-width: 760px) {
+  .drift-foot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- showtime model ---- */
+.checks {
+  gap: 8px 20px;
+}
+.pchart.st .pt {
+  fill: var(--ink-3);
+  opacity: 0.55;
+}
+.pchart.st .pt.test {
+  fill: none;
+  stroke: var(--ink-3);
+  opacity: 0.6;
+}
+.pchart.st .pt.bad {
+  opacity: 1;
+  stroke: var(--paper);
+  stroke-width: 1;
+}
+.pchart.st .f-dup,
+.showtime .f-dup input {
+  fill: var(--warn);
+  accent-color: var(--warn);
+}
+.pchart.st .f-neg,
+.showtime .f-neg input {
+  fill: var(--bad);
+  accent-color: var(--bad);
+}
+.pchart.st .f-missing,
+.showtime .f-missing input {
+  fill: var(--cobalt);
+  accent-color: var(--cobalt);
+}
+.pchart.st .fit {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  transition: d 0.3s;
+}
+.pchart.st .fit.wk {
+  stroke-dasharray: 7 4;
+}
+.heat-key .k-fit,
+.heat-key .k-wk {
+  height: 0;
+  width: 18px;
+  border-top: 2.5px solid var(--ink);
+}
+.heat-key .k-wk {
+  border-top-style: dashed;
+}
+.heat-key .k-test {
+  border: 1.5px solid var(--ink-3);
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}
+
+/* ---- sequence diagram ---- */
+.seq-scroll {
+  overflow-x: auto;
+}
+.seq {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  font-family: var(--font);
+}
+.seq .lane-head {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.seq .lane-name {
+  fill: var(--ink);
+  font: 650 12.5px var(--font);
+}
+.seq .life {
+  stroke: var(--line);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+.seq .msg line,
+.seq .msg path {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+}
+.seq .arrowhead {
+  fill: var(--ink-2);
+}
+.seq .msg text {
+  fill: var(--ink);
+  font: 11.5px var(--mono);
+}
+.seq .msg.ok line {
+  stroke: var(--cobalt);
+}
+.seq .msg.tls line {
+  stroke: var(--cobalt);
+  stroke-dasharray: 6 3;
+}
+.seq .msg.bad line,
+.seq .msg.bad path {
+  stroke: var(--bad);
+}
+.seq .msg.bad text {
+  fill: var(--bad);
+  font-weight: 700;
+}
+.seq .msg {
+  animation: seq-in 0.25s ease-out;
+}
+@keyframes seq-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seq .msg {
+    animation: none;
+  }
+}
+
+/* ---- terraform graph ---- */
+.tf-plan {
+  flex: 1;
+  min-width: 220px;
+}
+.tfg {
+  display: block;
+  width: 100%;
+  min-width: 820px;
+  margin: 4px 0 12px;
+}
+.tfg .wire {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.tfg .res rect {
+  fill: var(--paper);
+  stroke: var(--line);
+  stroke-width: 1.5;
+  transition: fill 0.2s, stroke 0.2s;
+}
+.tfg .res text {
+  fill: var(--ink-3);
+  font: 11.5px var(--mono);
+}
+.tfg .res:not(.a-none) text {
+  fill: var(--ink);
+  font-weight: 700;
+}
+.tfg .a-create rect,
+.tfg .a-update rect {
+  stroke: var(--cobalt);
+}
+.tfg .a-replace rect {
+  stroke: var(--bad);
+  stroke-dasharray: 5 3;
+}
+.tfg .st-running rect {
+  fill: color-mix(in srgb, var(--cobalt) 22%, transparent);
+  animation: tf-pulse 0.8s ease-in-out infinite alternate;
+}
+.tfg .st-done rect {
+  fill: var(--cobalt);
+  stroke: var(--cobalt);
+  stroke-dasharray: none;
+}
+.tfg .st-done text {
+  fill: var(--on-cobalt) !important;
+}
+@keyframes tf-pulse {
+  to {
+    fill: color-mix(in srgb, var(--cobalt) 45%, transparent);
+  }
+}
+.tf-note {
+  margin: 0 0 12px;
+  color: var(--ink-2);
+}
+.tf-note.bad {
   color: var(--bad);
   font-weight: 700;
 }

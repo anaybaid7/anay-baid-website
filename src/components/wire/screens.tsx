@@ -144,6 +144,31 @@ const starrez: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'History panel',
+    notes: [
+      { n: 1, title: 'How much to show', text: 'Latest 5, latest 10, all, or a custom count.', node: 'log' },
+      { n: 2, title: 'One row per entry', text: 'Type, staff, time and the exact line that was copied. Only those strings are kept.', node: 'log' },
+      { n: 3, title: 'Capped at 500', text: 'Newest first in localStorage on that desk machine, oldest dropped past 500.', node: 'log' },
+    ],
+    draw: () => (
+      <Win title="StarRez" url="uwaterloo.starrezhousing.com">
+        <Row between><T b>Activity History (128 total)</T><Btn>✕</Btn></Row>
+        <N n={1} block><Row><Btn primary>Latest 5</Btn><Btn>Latest 10</Btn><Btn>All</Btn><In ph="Custom #" /><Btn>Go</Btn><Btn>Clear All</Btn></Row></N>
+        <N n={2} block>
+          <Tbl
+            cols={['Type', 'Staff', 'Time', 'Entry']}
+            rows={[
+              ['package', 'A.B', '3:42 pm', 'S.L (20871234) V1S-305a 2 pkgs @ 3:42 pm - A.B'],
+              ['lockout', 'A.B', '3:30 pm', 'J.P (20765112) REV-E-212b KC: L0932; lost key - A.B'],
+              ['label', 'A.B', '3:18 pm', '10/30/2026 3:18p.m. · 20654321 · …'],
+            ]}
+          />
+        </N>
+        <N n={3}><T>Showing 5 of 128 entries</T></N>
+      </Win>
+    ),
+  },
 ]
 
 // ---- Battleship, from public/index.html ----
@@ -352,6 +377,21 @@ const insightvault: Screen[] = [
           </Box>
         </Row>
         <N n={3} block><Row between><T>weights.json · bias and coefficients</T><Btn primary>Export</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Parity check',
+    notes: [
+      { n: 1, title: 'Same rows, two scorers', text: 'The held-out set is scored by scikit-learn and by the Java layer reading the exported weights.', node: 'weights' },
+      { n: 2, title: 'Should match to rounding', text: 'Both read the same coefficients, so any real gap means serving drifted from training.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="parity, held-out set">
+        <N n={1} block>
+          <Tbl cols={['Transaction', 'Python', 'Java', 'Diff']} rows={[['tx_90211', '0.8731', '0.8731', '0'], ['tx_90198', '0.6402', '0.6402', '0'], ['tx_90177', '0.1189', '0.1189', '0']]} />
+        </N>
+        <N n={2} block><Row between><T b>Max diff 0</T><Btn primary>Ship weights</Btn></Row></N>
       </Win>
     ),
   },
@@ -675,6 +715,21 @@ const nationwide: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Drift report',
+    notes: [
+      { n: 1, title: 'Setting by setting', text: 'Each host against the runbook, so one hand tweak stands out.', node: 'legacy' },
+      { n: 2, title: 'Fix by rebuilding', text: 'Odd boxes are replaced from the image instead of patched by hand again.', node: 'docker' },
+    ],
+    draw: () => (
+      <Win title="Hosts vs runbook">
+        <N n={1} block>
+          <Tbl cols={['Host', 'Runtime', 'OpenSSL', 'MTU', 'Timezone']} hot={2} rows={[['app-01', '17.0.9', '3.0.11', '1500', 'UTC'], ['app-02', '17.0.10', '3.0.11', '1500', 'UTC'], ['app-03', '17.0.8', '3.0.11', '9001', 'UTC'], ['batch-01', '17.0.9', '3.0.9', '1500', 'America/New_York']]} />
+        </N>
+        <N n={2} block><Row><Btn primary>Rebuild app-03 from image</Btn><Btn>Export</Btn></Row></N>
+      </Win>
+    ),
+  },
 ]
 
 // ---- Cineplex: the shape of the reporting and reconciliation views ----
@@ -740,6 +795,22 @@ const cineplex: Screen[] = [
           <Board n={28} rows={8} hits={[65, 110, 156]} misses={[3, 4, 191, 192]} />
         </N>
         <N n={2} block><Row between><T>Theatre 7120 · Feb 10 · +412 rows</T><Btn primary>Show rows</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Model inputs',
+    notes: [
+      { n: 1, title: 'Held-out week', text: 'Trained on earlier weeks, scored on a later one.', node: 'ml' },
+      { n: 2, title: 'What cleaning changed', text: 'Rows fixed or dropped per rule, next to the error before and after.', node: 'tests' },
+    ],
+    draw: () => (
+      <Win title="Showtime model, training run">
+        <N n={1} block><Row between><T>Train weeks 1 to 3</T><T b>Test week 4</T></Row></N>
+        <N n={2} block>
+          <Tbl cols={['Rule', 'Rows', 'Error after']} rows={[['no showtime', 'dropped', '·'], ['retried batch', 'deduped', '·'], ['refund rows', 'netted', '·']]} />
+        </N>
+        <Bars values={[90, 55, 35, 30]} />
       </Win>
     ),
   },
@@ -809,6 +880,28 @@ const cicd: Screen[] = [
           <Tbl cols={['Mail', 'Updated']} rows={[['SMTP_SERVER_ADDRESS', '·'], ['SMTP_PORT', '·'], ['SMTP_USERNAME', '·'], ['SMTP_PASSWORD', '·'], ['FROM_EMAIL_ADDRESS', '·']]} />
         </N>
         <Row><Btn primary>New repository secret</Btn></Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Workflow file',
+    notes: [
+      { n: 1, title: 'When it runs', text: 'On every push to main.', node: 'push' },
+      { n: 2, title: 'Inputs as env', text: 'Repo, user, branch and environment, plus whether to email.', node: 'check' },
+      { n: 3, title: 'Custom data', text: 'JSON merged into client_payload.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="GitHub" url="…/.github/workflows/trigger.yml">
+        <T b>name: Trigger Build</T>
+        <N n={1} block><T>on: push: branches: [main]</T></N>
+        <N n={2} block>
+          <Box title="env">
+            <T>GITHUB_REPO_NAME, GITHUB_USERNAME, GITHUB_BRANCH_NAME</T>
+            <T>ENVIRONMENT_NAME: production</T>
+            <T>SEND_EMAIL_NOTIFICATION: true</T>
+          </Box>
+        </N>
+        <N n={3} block><T>uses: ./.github/actions/trigger_build · INPUT_CUSTOM_DATA</T></N>
       </Win>
     ),
   },

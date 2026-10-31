@@ -72,6 +72,11 @@ export type DemoKind =
   | 'shift'
   | 'heatmap'
   | 'graph'
+  | 'observer'
+  | 'drift'
+  | 'showtime'
+  | 'sequence'
+  | 'terraform'
 
 export interface Detail {
   arch: Architecture
@@ -457,6 +462,7 @@ export const DETAILS: Record<string, Detail> = {
     demos: [
       { kind: 'provision', name: 'Provision a device' },
       { kind: 'network', name: 'Reach the database' },
+      { kind: 'drift', name: 'Drift' },
     ],
   },
 
@@ -547,6 +553,7 @@ export const DETAILS: Record<string, Detail> = {
       { kind: 'stream', name: 'Stream sales' },
       { kind: 'dataval', name: 'Reconcile two copies' },
       { kind: 'heatmap', name: 'Find the anomalies' },
+      { kind: 'showtime', name: 'Clean the training data' },
     ],
   },
 
@@ -655,6 +662,7 @@ export const DETAILS: Record<string, Detail> = {
       { kind: 'fraud', name: 'Live alert queue' },
       { kind: 'scorer', name: 'Score one transaction' },
       { kind: 'evaluate', name: 'Pick a threshold' },
+      { kind: 'terraform', name: 'Plan and apply' },
     ],
   },
 
@@ -786,6 +794,7 @@ export const DETAILS: Record<string, Detail> = {
     demos: [
       { kind: 'extension', name: 'Use it on a profile' },
       { kind: 'shift', name: 'Desk rush' },
+      { kind: 'observer', name: 'Page load timing' },
     ],
   },
 
@@ -990,6 +999,7 @@ export const DETAILS: Record<string, Detail> = {
     demos: [
       { kind: 'build', name: 'Run the action' },
       { kind: 'graph', name: 'Both workflows' },
+      { kind: 'sequence', name: 'Message by message' },
     ],
   },
 
@@ -1164,4 +1174,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router', 'evaluate', 'heatmap', 'graph']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']
