@@ -105,6 +105,18 @@ button {
   display: flex;
   gap: 22px;
 }
+.top nav.top-sections {
+  justify-self: center;
+  gap: 26px;
+}
+.top-sections a {
+  color: var(--ink-2);
+}
+@media (max-width: 920px) {
+  .top nav.top-sections {
+    display: none;
+  }
+}
 .top nav a,
 .top nav button {
   background: none;
@@ -7259,5 +7271,150 @@ button:focus-visible > .shot {
   .featured,
   .entry-work {
     display: none;
+  }
+}
+
+/* ---- experience, one job at a time ---- */
+.xp {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 18px;
+}
+.xp-tabs {
+  display: flex;
+  flex-direction: column;
+  border-left: 1.5px solid var(--line);
+  align-self: start;
+  position: sticky;
+  top: 80px;
+}
+.xp-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: -1.5px;
+  padding: 11px 14px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  color: var(--ink-2);
+  font: 600 15px var(--font);
+  text-align: left;
+  cursor: pointer;
+}
+.xp-tabs button img {
+  flex: none;
+  object-fit: contain;
+}
+.xp-tabs button b {
+  display: block;
+  font-weight: 700;
+}
+.xp-tabs button small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.xp-tabs button:hover {
+  color: var(--ink);
+  background: var(--card);
+}
+.xp-tabs button[aria-selected="true"] {
+  border-left-color: var(--cobalt);
+  color: var(--ink);
+  background: var(--card);
+}
+.xp-tabs button.dim {
+  opacity: 0.45;
+}
+.xp-panels > .entry {
+  display: block;
+  padding-top: 0;
+  border-top: 0;
+}
+.xp-panels > .entry.off {
+  display: none;
+}
+.xp-panels .entry-title {
+  margin-top: 0;
+}
+
+/* ---- projects as cards ---- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px 26px;
+}
+.cards > .entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  border-top: 0;
+}
+.card-shot {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.card-when {
+  margin: 0 0 2px;
+  color: var(--ink-3);
+  font-size: 13.5px;
+}
+.cards .entry-title {
+  margin-top: 0;
+  font-size: 20px;
+}
+.cards .entry-desc {
+  margin: 6px 0 10px;
+}
+.card-more {
+  display: none;
+}
+@media (max-width: 760px) {
+  .xp {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .xp-tabs {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    border-left: 0;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .xp-tabs button {
+    margin: 0 0 -1.5px;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  .xp-tabs button[aria-selected="true"] {
+    border-bottom-color: var(--cobalt);
+  }
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media print {
+  .xp {
+    display: block;
+  }
+  .xp-tabs,
+  .card-shot {
+    display: none;
+  }
+  .xp-panels > .entry.off,
+  .card-more {
+    display: block;
+  }
+  .cards {
+    display: block;
   }
 }
