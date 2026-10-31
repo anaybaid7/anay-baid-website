@@ -320,6 +320,15 @@ describe('App', () => {
     expect(new URL(location.href).searchParams.get('demo')).toBe('evaluate')
   })
 
+  it('opens the drawer overview on the work, a decision and a way to try it', async () => {
+    history.replaceState(null, '', '/?open=project-insightvault')
+    render(<App />)
+    const drawer = await findDrawer()
+    expect(drawer.querySelector('.feature-case')).toHaveTextContent('Rules and a logistic regression model together over a single black-box model')
+    fireEvent.click(within(drawer as HTMLElement).getByRole('button', { name: /^Try / }))
+    expect(new URL(location.href).searchParams.get('tab')).toBe('try')
+  })
+
   it('gives every job and project the same row of drawer parts', () => {
     render(<App />)
     for (const row of document.querySelectorAll('.entries .entry-tabs')) {

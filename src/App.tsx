@@ -10,11 +10,12 @@ import { openResume } from './resume'
 import SettingsPanel from './components/SettingsPanel'
 import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
-import { setSettings, useSettings, withTransition, resolvedTheme, calm } from './settings'
+import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
-import { FEATURED, clip, thumb } from './showcase'
+import { FEATURED } from './showcase'
+import { Clip, Shot } from './components/Media'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
@@ -118,6 +119,29 @@ function detailFromUrl(): Opened | null {
 const lensFromUrl = (): Area | null => {
   const a = new URLSearchParams(location.search).get('for')
   return a && a in AREAS ? (a as Area) : null
+}
+
+const SECTION_LINKS = [['featured', 'Featured'], ['experience', 'Experience'], ['projects', 'Projects'], ['contact', 'Contact']] as const
+
+// which of the header's sections is on screen, for marking its link
+function useReading() {
+  const [id, setId] = useState<string | null>(null)
+  useEffect(() => {
+    if (typeof IntersectionObserver !== 'function') return
+    const parts = SECTION_LINKS.map(([s]) => document.getElementById(s)?.closest('section, footer')).filter((x): x is HTMLElement => !!x)
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const hit = SECTION_LINKS.find(([s]) => e.target.contains(document.getElementById(s)))
+          if (e.isIntersecting && hit) setId(hit[0])
+        }
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    )
+    parts.forEach((p) => io.observe(p))
+    return () => io.disconnect()
+  }, [])
+  return id
 }
 
 const ownerFromUrl = () => new URLSearchParams(location.search).has('me')
@@ -408,33 +432,6 @@ function insideCommands(show: (d: Opened) => void): Command[] {
 }
 
 
-// a demo's picture, in the current theme
-function Shot({ kind }: { kind: DemoKind }) {
-  return (
-    <span className="shot">
-      <img className="lt" src={thumb(kind, 'light')} alt="" width={640} height={400} loading="lazy" decoding="async" />
-      <img className="dk" src={thumb(kind, 'dark')} alt="" width={640} height={400} loading="lazy" decoding="async" />
-    </span>
-  )
-}
-
-// a featured demo playing on a loop, or its still picture before hydration
-// and when motion is reduced
-function Clip({ kind }: { kind: DemoKind }) {
-  const settings = useSettings()
-  const hydrated = useHydrated()
-  if (!hydrated || calm(settings)) return <Shot kind={kind} />
-  const theme = resolvedTheme(settings)
-  return (
-    <span className="shot">
-      <video key={theme} poster={thumb(kind, theme)} width={960} height={600} autoPlay muted loop playsInline preload="metadata" aria-hidden="true">
-        <source src={clip(kind, theme, 'webm')} type="video/webm" />
-        <source src={clip(kind, theme, 'mp4')} type="video/mp4" />
-      </video>
-    </span>
-  )
-}
-
 // The three pieces of work to look at first: the problem, one decision and
 // what came of it, in the same order each time
 function Featured({ onOpen }: { onOpen: OpenFn }) {
@@ -544,6 +541,7 @@ export default function App() {
   const [keysOpen, setKeysOpen] = useState(false)
   const [termOpen, setTermOpen] = useState(false)
   const hydrated = useHydrated()
+  const reading = useReading()
   const [, setMonthTick] = useState(0)
   const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
   const [filter, setFilter] = useState<string[]>(() => (prerendered ? [] : filterFromUrl()))
@@ -752,10 +750,9 @@ export default function App() {
       <header className="top wrap">
         <span className="top-name">Anay Baid</span>
         <nav className="top-sections" aria-label="Sections">
-          <a href="#featured">Featured</a>
-          <a href="#experience">Experience</a>
-          <a href="#projects">Projects</a>
-          <a href="#contact">Contact</a>
+          {SECTION_LINKS.map(([id, label]) => (
+            <a key={id} href={`#${id}`} aria-current={reading === id ? 'location' : undefined}>{label}</a>
+          ))}
         </nav>
         <nav aria-label="Contact">
           <button type="button" className="search" onClick={() => setMenuOpen(true)}>

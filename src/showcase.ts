@@ -13,3 +13,6 @@ export const clip = (kind: DemoKind, theme: 'light' | 'dark', ext: 'webm' | 'mp4
 
 // screenshots made by scripts/shots.mjs, one per demo and theme
 export const thumb = (kind: DemoKind, theme: 'light' | 'dark') => `/shots/${kind}-${theme}.webp`
+
+// the demos that have a recording, which are the featured ones
+export const hasClip = (kind: DemoKind) => FEATURED.some((f) => f.kind === kind)

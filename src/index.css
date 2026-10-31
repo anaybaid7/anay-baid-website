@@ -7506,3 +7506,82 @@ button:focus-visible > .shot {
 .feature-case dd span {
   color: var(--ink-2);
 }
+
+/* ---- drawer overview: the work first ---- */
+.ov-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+  margin-bottom: 22px;
+}
+.ov-media {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.ov-try {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 6px 10px;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font: 650 13.5px var(--font);
+}
+.ov-facts .drawer-when {
+  margin-top: 0;
+}
+.ov-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cobalt);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* tab rows that scroll on narrow screens show a soft edge */
+@media (max-width: 760px) {
+  .ov-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .drawer-tabs,
+  .try-bar .sub-tabs,
+  .code-tab .sub-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-right: 28px;
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+  }
+  .drawer-tabs::-webkit-scrollbar,
+  .try-bar .sub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .try-bar .sub-tabs button,
+  .code-tab .sub-tabs button {
+    flex: none;
+    white-space: nowrap;
+  }
+  .try-bar .sub-tabs {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+/* the header link for the section on screen */
+.top-sections a[aria-current] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cobalt);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
