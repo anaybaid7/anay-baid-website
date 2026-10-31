@@ -3,9 +3,9 @@ import { render, screen, fireEvent, within, waitFor } from '@testing-library/rea
 import App from './App'
 import { __resetForTests, setSettings } from './settings'
 import { DETAILS } from './details'
-import { experience, projects, profile, repos } from './data'
+import { experience, projects, profile } from './data'
 
-const SECTIONS = ['Featured', 'Experience', 'Projects', 'Education', 'Skills', 'Code']
+const SECTIONS = ['Featured', 'Experience', 'More projects', 'About']
 
 beforeEach(() => {
   history.replaceState(null, '', '/')
@@ -111,13 +111,6 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy address' }))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(profile.email)
     await waitFor(() => expect(screen.getByText(/copied .* to your clipboard/i)).toBeInTheDocument())
-  })
-
-  it('lists my repos with my own summaries even when the GitHub API is unreachable', () => {
-    render(<App />)
-    const list = document.querySelector('.repos')!
-    expect(list.querySelectorAll('li')).toHaveLength(repos.length)
-    expect(list).toHaveTextContent(repos[0].about)
   })
 
   it('settings change the page and survive a reload', () => {
@@ -254,7 +247,7 @@ describe('App', () => {
     const root = document.documentElement.dataset
     expect(root.view).toBe('skim')
     expect(root.lead).toBe('projects')
-    expect(root.hide).toBe('github colophon')
+    expect(root.hide).toBe('colophon')
     fireEvent.click(screen.getByRole('checkbox', { name: 'Education', hidden: true }))
     expect(root.hide).toContain('education')
     fireEvent.click(screen.getByRole('radio', { name: /Narrow/, hidden: true }))
@@ -262,11 +255,11 @@ describe('App', () => {
   })
 
   it('reads hidden sections and width from a link', () => {
-    history.replaceState(null, '', '/?hide=github,nonsense,skills&width=wide&lead=projects')
+    history.replaceState(null, '', '/?hide=colophon,nonsense,skills&width=wide&lead=projects')
     __resetForTests()
     render(<App />)
     const root = document.documentElement.dataset
-    expect(root.hide).toBe('skills github')
+    expect(root.hide).toBe('skills colophon')
     expect(root.width).toBe('wide')
     expect(root.lead).toBe('projects')
   })
@@ -319,23 +312,6 @@ describe('App', () => {
     expect(document.getElementById('job-iotum')).toHaveClass('dim')
   })
 
-  it('drops repos GitHub does not list publicly, so nothing links to a 404', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => repos.filter((r) => r.name !== 'insight-vault').map((r) => ({ name: r.name, language: 'TypeScript', pushed_at: new Date().toISOString() })),
-      }),
-    )
-    render(<App />)
-    await waitFor(() => expect(document.querySelector('.repo-meta')).not.toBeNull())
-    const names = Array.from(document.querySelectorAll('.repos li > a')).map((a) => a.textContent)
-    expect(names).not.toContain('insight-vault')
-    expect(names).toContain('battleship-purolator')
-  })
-})
-
-describe('featured and per-entry work', () => {
   it('opens a featured piece straight on its demo', async () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'Try Fraud alerts that explain themselves' }))

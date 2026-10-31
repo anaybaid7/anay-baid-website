@@ -130,8 +130,9 @@ export default defineConfig({
         // not just a manifest for show.
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,pdf}'],
         // the full-size photo is only used for the share image, not the page
-        // the event page's screenshots load when that page is opened
-        globIgnores: ['**/avatar.png', '**/og.png', '**/logos/*.png', '**/event-shots/**'],
+        // the event page's screenshots load when that page is opened, and
+        // the demo screenshots load as they scroll into view
+        globIgnores: ['**/avatar.png', '**/og.png', '**/logos/*.png', '**/event-shots/**', '**/shots/**'],
         // Never cache the live GitHub API calls — that data should always be
         // fresh, or explicitly fail, not silently serve a stale snapshot.
         navigateFallbackDenylist: [/^\/api\//, /^\/purolator-intern-event/],

@@ -1,7 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { profile, experience, projects, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
-import GithubActivity from './components/GithubActivity'
 import ThemeToggle from './components/ThemeToggle'
 import { parsePeriod, monthIndex, monthLabel } from './timeline'
 import { slug, uses, whereUsed } from './evidence'
@@ -11,11 +10,11 @@ import { openResume } from './resume'
 import SettingsPanel from './components/SettingsPanel'
 import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
-import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
+import { setSettings, useSettings, withTransition, resolvedTheme, calm } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
-import { FEATURED, thumb } from './showcase'
+import { FEATURED, clip, thumb } from './showcase'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
@@ -419,7 +418,25 @@ function Shot({ kind }: { kind: DemoKind }) {
   )
 }
 
-// The three pieces of work to look at first, each with the same parts
+// a featured demo playing on a loop, or its still picture before hydration
+// and when motion is reduced
+function Clip({ kind }: { kind: DemoKind }) {
+  const settings = useSettings()
+  const hydrated = useHydrated()
+  if (!hydrated || calm(settings)) return <Shot kind={kind} />
+  const theme = resolvedTheme(settings)
+  return (
+    <span className="shot">
+      <video key={theme} poster={thumb(kind, theme)} width={960} height={600} autoPlay muted loop playsInline preload="metadata" aria-hidden="true">
+        <source src={clip(kind, theme, 'webm')} type="video/webm" />
+        <source src={clip(kind, theme, 'mp4')} type="video/mp4" />
+      </video>
+    </span>
+  )
+}
+
+// The three pieces of work to look at first: the problem, one decision and
+// what came of it, in the same order each time
 function Featured({ onOpen }: { onOpen: OpenFn }) {
   return (
     <section className="section featured" aria-labelledby="featured" data-part="featured">
@@ -428,16 +445,30 @@ function Featured({ onOpen }: { onOpen: OpenFn }) {
         <ol className="feature-list">
           {FEATURED.map((f) => {
             const e = entryById(f.id)!
+            const d = NOTES[f.id]?.decisions[f.decision]
             return (
-              <li key={f.id} className="feature" data-areas={e.areas.join(' ')}>
+              <li key={f.id} className="feature" data-areas={e.areas.join(' ')} data-feature={f.id}>
                 <button type="button" className="feature-shot" onClick={() => onOpen(f.id, 'try', f.kind)} aria-label={`Try ${f.title}`}>
-                  <Shot kind={f.kind} />
+                  <Clip kind={f.kind} />
                 </button>
                 <div className="feature-text">
                   <p className="feature-where">{e.kind === 'job' ? `${e.title}, ${e.sub}` : 'Project'}</p>
                   <h3>{f.title}</h3>
                   {e.highlight && <p className="entry-result"><b>{e.highlight.value}</b> {e.highlight.label}</p>}
-                  <p className="feature-built">{e.built}</p>
+                  <dl className="feature-case">
+                    <div>
+                      <dt>Problem</dt>
+                      <dd>{e.why}</dd>
+                    </div>
+                    {d && (
+                      <div>
+                        <dt>Decision</dt>
+                        <dd>
+                          {d.chose} over {d.over}. <span>{d.because}</span>
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
                   <p className="entry-tabs">
                     <button type="button" className="primary" onClick={() => onOpen(f.id, 'try', f.kind)}>Try it</button>
                     <button type="button" onClick={() => onOpen(f.id, 'how')}>How it works</button>
@@ -478,31 +509,28 @@ function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) =>
 // Skills as on the resume, grouped. Click one to show only the work that used it.
 function Skills({ onFilter }: { onFilter: (skills: string[]) => void }) {
   return (
-    <section className="section" aria-labelledby="skills" data-part="skills">
-      <h2 id="skills">Skills</h2>
-      <div className="section-body">
-        <p className="skills-hint">Click a skill to see the work that used it.</p>
-        <dl className="skill-list">
-          {(Object.keys(skills) as (keyof typeof skills)[]).map((k) => (
-            <div key={k}>
-              <dt>{skillLabels[k]}</dt>
-              <dd>
-                {skills[k].map((sk) => {
-                  const used = whereUsed(sk).length > 0
-                  return used ? (
-                    <button key={sk} type="button" onClick={() => onFilter([sk])}>
-                      {sk}
-                    </button>
-                  ) : (
-                    <span key={sk}>{sk}</span>
-                  )
-                })}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
+    <div className="about-block skills-block" data-part="skills">
+      <h3 id="skills">Skills</h3>
+      <dl className="skill-list">
+        {(Object.keys(skills) as (keyof typeof skills)[]).map((k) => (
+          <div key={k}>
+            <dt>{skillLabels[k]}</dt>
+            <dd>
+              {skills[k].map((sk) => {
+                const used = whereUsed(sk).length > 0
+                return used ? (
+                  <button key={sk} type="button" onClick={() => onFilter([sk])} title="Show the work that used it">
+                    {sk}
+                  </button>
+                ) : (
+                  <span key={sk}>{sk}</span>
+                )
+              })}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   )
 }
 
@@ -634,7 +662,8 @@ export default function App() {
     history.replaceState(null, '', `#job-${slug(shortOrg(experience[i].org))}`)
   }, [])
   const openProject = useCallback((s: string) => {
-    const el = document.getElementById(`project-${s}`)
+    // a featured project is shown up top instead of in the list
+    const el = document.querySelector<HTMLElement>(`[data-feature="project-${s}"]`) ?? document.getElementById(`project-${s}`)
     history.replaceState(null, '', `#project-${s}`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [])
@@ -681,7 +710,7 @@ export default function App() {
       { group: 'Elsewhere', label: 'Devpost', keywords: 'hackathons', run: () => window.open(profile.links.devpost, '_blank', 'noopener') },
       { group: 'Elsewhere', label: 'Play Battleship live', keywords: 'game demo', run: () => window.open('https://purolator-battleship.onrender.com', '_blank', 'noopener') },
       { group: 'Page', label: 'Skills', run: () => goTo('skills') },
-      { group: 'Page', label: 'Code on GitHub', keywords: 'repos source', run: () => goTo('github') },
+      { group: 'Page', label: 'About', keywords: 'education skills site', run: () => goTo('about') },
       { group: 'Page', label: 'Switch light or dark', keywords: 'theme mode', run: () => (document.querySelector('.theme') as HTMLButtonElement | null)?.click() },
       { group: 'Page', label: 'Switch between full detail and skim', keywords: 'view compact summary', run: () => setSettings({ view: document.documentElement.dataset.view === 'skim' ? 'full' : 'skim' }) },
       { group: 'Page', label: 'Settings', keywords: 'preferences text size accent motion', run: () => (document.getElementById('settings') as (HTMLElement & { showPopover?: () => void }) | null)?.showPopover?.() },
@@ -799,14 +828,14 @@ export default function App() {
         <Experience active={activeJob} onPick={selectJob} filter={filter} onOpen={openDetail} lens={lens} onLens={applyLens} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
-          <h2 id="projects">Projects</h2>
+          <h2 id="projects">More projects</h2>
           <div className="section-body">
             <ol className="entries cards">
               {projects.map((p) => {
                 const id = `project-${slug(p.title)}`
                 const first = DETAILS[id]?.demos?.[0]
                 return (
-                  <li key={p.title} className={entryClass(false, !fits(p.tech, filter))} data-areas={p.areas.join(' ')} id={id}>
+                  <li key={p.title} className={[entryClass(false, !fits(p.tech, filter)), FEATURED.some((f) => f.id === id) ? 'in-featured' : ''].join(' ')} data-areas={p.areas.join(' ')} id={id}>
                     {first && (
                       <button type="button" className="card-shot" onClick={() => openDetail(id, 'try', first.kind)} aria-label={`Try ${p.title}`}>
                         <Shot kind={first.kind} />
@@ -839,60 +868,46 @@ export default function App() {
           </div>
         </section>
 
-        <section className="section" aria-labelledby="education" data-part="education">
-          <h2 id="education">Education</h2>
-          <div className="section-body">
-            <div className="entry solo">
-              <p className="entry-when">{education.gradDate.replace('Expected ', 'Graduating ')}</p>
-              <div className="entry-main">
-                <h3 className="entry-title">
-                  <img src={education.logo} alt="" width={28} height={28} />
-                  {education.school}
-                </h3>
-                <p className="entry-sub">{education.degree}</p>
-                <p className="stack">{education.specializations}</p>
-                <Bullets items={education.highlights} />
-              </div>
+        <section className="section about" aria-labelledby="about" data-part="about">
+          <h2 id="about">About</h2>
+          <div className="section-body about-grid">
+            <div className="about-block" data-part="education">
+              <h3 id="education">Education</h3>
+              <p className="about-lead">
+                <img src={education.logo} alt="" width={24} height={24} />
+                <b>{education.school}</b>
+              </p>
+              <p>{education.degree}, {education.gradDate.replace('Expected ', 'graduating ')}</p>
+              <p className="stack">{education.specializations}</p>
+              <Bullets items={education.highlights} />
             </div>
-          </div>
-        </section>
 
-        <Skills onFilter={applyFilter} />
+            <Skills onFilter={applyFilter} />
 
-        <section className="section" aria-labelledby="github" data-part="github">
-          <h2 id="github">Code</h2>
-          <div className="section-body">
-            <GithubActivity />
-          </div>
-        </section>
-
-        <section className="section" aria-labelledby="colophon" data-part="colophon">
-          <h2 id="colophon">About this site</h2>
-          <div className="section-body">
-            <dl className="facts colophon">
-              <div>
-                <dt>Built with</dt>
-                <dd>React, TypeScript, Vite and plain CSS</dd>
-              </div>
-              <div>
-                <dt>Content</dt>
-                <dd>Everything on the page comes from one data file, which also builds the <a href={FILES.text}>plain text resume</a> and <a href={FILES.json}>JSON Resume</a></dd>
-              </div>
-              <div>
-                <dt>Tested</dt>
-                <dd>Every push runs lint, type checks, unit tests, and browser tests with accessibility scans</dd>
-              </div>
-              <div>
-                <dt>Privacy</dt>
-                <dd>No tracking and no cookies. Settings stay in your browser</dd>
-              </div>
-              <div>
-                <dt>Source</dt>
-                <dd>
-                  <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">github.com/anaybaid7/anay-baid-website</a>
-                </dd>
-              </div>
-            </dl>
+            <div className="about-block" data-part="colophon">
+              <h3 id="colophon">This site</h3>
+              <dl className="facts colophon">
+                <div>
+                  <dt>Built with</dt>
+                  <dd>React, TypeScript, Vite and plain CSS, prerendered at build time</dd>
+                </div>
+                <div>
+                  <dt>Content</dt>
+                  <dd>One data file builds the page, the <a href={FILES.text}>plain text resume</a> and the <a href={FILES.json}>JSON Resume</a></dd>
+                </div>
+                <div>
+                  <dt>Tested</dt>
+                  <dd>Every push runs lint, type checks, unit tests, and browser tests with accessibility scans</dd>
+                </div>
+                <div>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">anay-baid-website</a>, and the rest on{' '}
+                    <a href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
         </section>
       </main>

@@ -34,8 +34,7 @@ const GROUPS: [string, Choice[]][] = [
 const SECTION_NAMES: Record<Hideable, string> = {
   education: 'Education',
   skills: 'Skills',
-  github: 'Code',
-  colophon: 'About this site',
+  colophon: 'This site',
 }
 
 function Choices<K extends Choice>({ k, value }: { k: K; value: Settings[K] }) {
