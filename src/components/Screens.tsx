@@ -122,7 +122,24 @@ function ForecastBoth({ nodes, onNode }: { nodes: ArchNode[]; onNode: (id: strin
   )
 }
 
+// where each set of wireframes comes from
+const SOURCE: Partial<Record<ScreenKind, string>> = {
+  starrez: 'From the extension’s code',
+  battleship: 'From the game’s code',
+  pashu: 'From the game’s code',
+  iotum: 'Sketch of a host app on Iotum’s public SDK',
+  nationwide: 'Sketch of the Intune and deployment views',
+  cineplex: 'Layout sketch',
+  cicd: 'Sketch of the GitHub pages',
+  routing: 'Layout sketch',
+}
+
 export default function Screens({ kind, nodes, onNode }: Props) {
   if (kind === 'forecast-tool') return <ForecastBoth nodes={nodes} onNode={onNode} />
-  return <Wireframes key={kind} screens={WIREFRAMES[kind]} nodes={nodes} onNode={onNode} />
+  return (
+    <>
+      {SOURCE[kind] && <p className="sample wire-src">{SOURCE[kind]}</p>}
+      <Wireframes key={kind} screens={WIREFRAMES[kind]} nodes={nodes} onNode={onNode} />
+    </>
+  )
 }

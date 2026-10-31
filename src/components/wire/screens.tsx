@@ -474,4 +474,284 @@ const forecast: Screen[] = [
   },
 ]
 
-export const WIREFRAMES = { forecast, starrez, battleship, insightvault, pashu }
+// ---- Iotum: a host app embedding callbridge-js, sketched from the SDK's
+// own concepts (SSO sign in, Meeting and Dashboard widgets, events) ----
+const iotum: Screen[] = [
+  {
+    name: 'Sign in',
+    notes: [
+      { n: 1, title: 'Domain', text: 'The customer’s Callbridge domain.', node: 'sdk' },
+      { n: 2, title: 'SSO token', text: 'Comes from the app’s own backend, never typed by end users.', node: 'backend' },
+    ],
+    draw: () => (
+      <Win title="Reference app" url="localhost.callbridge.com/token">
+        <Box title="Connect">
+          <N n={1} block><In ph="acme.callbridge.com" /></N>
+          <N n={2} block>
+            <In ph="SSO token" mono />
+            <In ph="Host ID" mono />
+          </N>
+          <Btn primary>Submit</Btn>
+        </Box>
+      </Win>
+    ),
+  },
+  {
+    name: 'Meeting',
+    notes: [
+      { n: 1, title: 'Access code', text: 'Creates the Meeting widget for that room.', node: 'sdk' },
+      { n: 2, title: 'Widget container', text: 'The iframe the SDK renders into.', node: 'platform' },
+      { n: 3, title: 'Host controls', text: 'Mute, camera and devices called from the host page after room.READY.', node: 'sdk' },
+    ],
+    draw: () => (
+      <Win title="Reference app" url="localhost.callbridge.com/meeting">
+        <N n={1} block><Row><In ph="Access code 1234567" mono /><Btn primary>Start meeting</Btn></Row></N>
+        <N n={2} block>
+          <Row>
+            <Img h={90} label="Anay" />
+            <Img h={90} label="Jordan" />
+          </Row>
+        </N>
+        <N n={3} block><Row><Btn>Mute</Btn><Btn>Camera off</Btn><In ph="Microphone: USB headset" /></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Team chat tab',
+    notes: [
+      { n: 1, title: 'Tabs in the host app', text: 'Iotum features sit in tabs so they feel native.', node: 'app' },
+      { n: 2, title: 'Unread badge', text: 'Summed from dashboard.UNREAD_MESSAGES.', node: 'sdk' },
+    ],
+    draw: () => (
+      <Win title="Reference app" url="localhost.callbridge.com/tabbed-dashboard">
+        <N n={1} block><Tabs items={['Home', 'Meetings', 'Team Chat', 'Drive', 'Contacts']} on={2} /></N>
+        <Row>
+          <Box title="Rooms">
+            <N n={2}><T b># general  3</T></N>
+            <T># design  1</T>
+            <T>Jordan</T>
+          </Box>
+          <Box grow title="# general"><T w={80} /><T w={60} /><T w={70} /><In ph="Message" /></Box>
+        </Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Test report',
+    notes: [
+      { n: 1, title: 'Browser specs', text: 'Selenium runs each flow in Chrome.', node: 'tests' },
+      { n: 2, title: 'Gate', text: 'One failure blocks the release.', node: 'ci' },
+    ],
+    draw: () => (
+      <Win title="CI" url="ci/reference-app/run/482">
+        <N n={1} block>
+          <Tbl cols={['Spec', 'Result']} hot={2} rows={[['signs in with an SSO token', 'pass'], ['joins a meeting from the access code', 'pass'], ['shows unread chat count', 'FAIL'], ['unloads the widget on leave', 'pass']]} />
+        </N>
+        <N n={2} block><Row between><T b>Release blocked</T><Btn>Re-run</Btn></Row></N>
+      </Win>
+    ),
+  },
+]
+
+// ---- Nationwide: the Intune and deployment views the work ran through ----
+const nationwide: Screen[] = [
+  {
+    name: 'Intune compliance',
+    notes: [
+      { n: 1, title: 'Status counts', text: 'Compliant, in grace period, not evaluated, not compliant.', node: 'azure' },
+      { n: 2, title: 'Device list', text: 'Sort by status to find what needs fixing.', node: 'intune' },
+    ],
+    draw: () => (
+      <Win title="Intune admin center" url="intune.microsoft.com › Devices › Compliance">
+        <N n={1} block>
+          <Row between>
+            {[['Compliant', '41'], ['In grace', '2'], ['Not evaluated', '3'], ['Not compliant', '1']].map(([k, v]) => (
+              <Box key={k}><T b>{v}</T><T>{k}</T></Box>
+            ))}
+          </Row>
+        </N>
+        <N n={2} block>
+          <Tbl cols={['Device', 'User', 'Status', 'OS', 'Last contact']} hot={2} rows={[['NA-LT-0139', 'm.chen', 'Compliant', 'Windows', '2 h'], ['NA-PH-0021', 'r.singh', 'Compliant', 'Android', '1 h'], ['NA-LT-0142', 'a.baid', 'Not compliant', 'Windows', '5 min']]} />
+        </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Policy settings',
+    notes: [
+      { n: 1, title: 'Per setting', text: 'Which setting a device fails, not just that it fails.', node: 'intune' },
+      { n: 2, title: 'Apps', text: 'Required apps pushed with the policy.', node: 'devices' },
+    ],
+    draw: () => (
+      <Win title="Intune admin center" url="Devices › Compliance › Windows baseline">
+        <N n={1} block>
+          <Tbl cols={['Setting', 'Compliant', 'Not compliant']} hot={0} rows={[['Require BitLocker', '46', '1'], ['Minimum password length 12', '47', '0'], ['Firewall on', '47', '0']]} />
+        </N>
+        <N n={2} block><Row><Btn>Company Portal</Btn><Btn>Outlook</Btn><Btn>VPN client</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Environments',
+    notes: [
+      { n: 1, title: 'One digest', text: 'Dev, staging and prod run the same image.', node: 'envs' },
+      { n: 2, title: 'Promote', text: 'Moves the tested image forward instead of rebuilding.', node: 'docker' },
+    ],
+    draw: () => (
+      <Win title="Deployments">
+        <N n={1} block>
+          <Row>
+            {['dev', 'staging', 'prod'].map((e) => (
+              <Box key={e} title={e}><T>appraisal-api</T><T b>sha256:4f1c9a…</T></Box>
+            ))}
+          </Row>
+        </N>
+        <N n={2} block><Row><Btn primary>Promote staging → prod</Btn><Btn>Roll back</Btn></Row></N>
+      </Win>
+    ),
+  },
+]
+
+// ---- Cineplex: the shape of the reporting and reconciliation views ----
+const cineplex: Screen[] = [
+  {
+    name: 'Box office dashboard',
+    notes: [
+      { n: 1, title: 'Live totals', text: 'Only rows that pass validation count.', node: 'dash' },
+      { n: 2, title: 'By theatre', text: 'Updates as sales stream in.', node: 'etl' },
+    ],
+    draw: () => (
+      <Win title="Box office" url="dashboard/box-office/today">
+        <N n={1} block>
+          <Row between>
+            {[['Gross', '$48,210'], ['Tickets', '3,904'], ['Shows', '212'], ['Held back', '7']].map(([k, v]) => (
+              <Box key={k}><T>{k}</T><T b>{v}</T></Box>
+            ))}
+          </Row>
+        </N>
+        <N n={2} block><Bars values={[70, 92, 55, 64, 38, 81, 47]} /></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Held-back rows',
+    notes: [
+      { n: 1, title: 'Reason per row', text: 'Missing showtime, negative gross or duplicate id.', node: 'checks' },
+      { n: 2, title: 'Release', text: 'Fixed rows go back into the totals.', node: 'etl' },
+    ],
+    draw: () => (
+      <Win title="Validation">
+        <N n={1} block>
+          <Tbl cols={['Sale', 'Theatre', 'Reason']} hot={0} rows={[['#10442', 'Downtown', 'missing showtime'], ['#10448', 'Uptown', 'negative gross -41.85'], ['#10451', 'Midtown', 'duplicate sale id']]} />
+        </N>
+        <N n={2} block><Row><Btn>Fix and release</Btn><Btn>Discard</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Reconciliation',
+    notes: [
+      { n: 1, title: 'Schema diff', text: 'Missing columns and type drift between copies.', node: 'recon' },
+      { n: 2, title: 'As tests', text: 'Every mismatch is a failing test until it’s fixed.', node: 'tests' },
+    ],
+    draw: () => (
+      <Win title="Reconcile box_office">
+        <N n={1} block>
+          <Tbl cols={['Column', 'Azure', 'On-prem']} hot={1} rows={[['show_id', 'BIGINT', 'BIGINT'], ['screen_id', 'INT', 'missing'], ['show_date', 'DATE', 'VARCHAR(10)'], ['rows', '1,204,331', '1,204,318']]} />
+        </N>
+        <N n={2} block><Row between><T b>3 failing</T><Btn primary>Run again</Btn></Row></N>
+      </Win>
+    ),
+  },
+]
+
+// ---- CI/CD: the GitHub pages the action drives ----
+const cicd: Screen[] = [
+  {
+    name: 'Workflow run',
+    notes: [
+      { n: 1, title: 'Trigger', text: 'repository_dispatch with the branch and environment.', node: 'api' },
+      { n: 2, title: 'Job graph', text: 'Only the matching environment runs.', node: 'target' },
+    ],
+    draw: () => (
+      <Win title="GitHub" url="github.com/anaybaid7/planner-app/actions/runs/7781">
+        <N n={1} block><Row between><T b>Build, repository_dispatch</T><T>refs/heads/main · staging</T></Row></N>
+        <N n={2} block>
+          <Row>
+            <Box title="dev"><T>skipped</T></Box>
+            <Box title="staging"><T b>success 1m 42s</T></Box>
+            <Box title="production"><T>skipped</T></Box>
+          </Row>
+        </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Action log',
+    notes: [
+      { n: 1, title: 'Inputs first', text: 'Missing variables stop the run here.', node: 'check' },
+      { n: 2, title: 'Per-run file', text: 'Named with a UUID so runs don’t collide.', node: 'log' },
+    ],
+    draw: () => (
+      <Win title="GitHub" url="…/runs/7781/job/1">
+        <N n={1} block><T>Starting GitHub Dispatch action</T><T>Input arguments: triggered_by=push</T></N>
+        <N n={2} block><T>/github/home/logs/github_dispatch_3f9a12c0….log</T></N>
+        <T>Triggering build for anaybaid7/planner-app/refs/heads/main/staging</T>
+      </Win>
+    ),
+  },
+  {
+    name: 'Email',
+    notes: [{ n: 1, title: 'One email per run', text: 'Sent over STARTTLS once the build is triggered.', node: 'smtp' }],
+    draw: () => (
+      <Win title="Inbox">
+        <N n={1} block>
+          <Box title="GitHub Action: Build triggered for anaybaid7/planner-app/refs/heads/main/staging">
+            <T>From: builds@…</T>
+            <T w={70} />
+          </Box>
+        </N>
+      </Win>
+    ),
+  },
+]
+
+// ---- Routing: the three views of the app ----
+const routing: Screen[] = [
+  {
+    name: 'Events',
+    notes: [
+      { n: 1, title: 'Client-side links', text: 'No page load between views.', node: 'router' },
+      { n: 2, title: 'Live seats', text: 'Pushed over the socket into the store.', node: 'ws' },
+    ],
+    draw: () => (
+      <Win title="App" url="app.local/events">
+        <N n={1} block><Tabs items={['Home', 'Events', 'New event']} on={1} /></N>
+        <N n={2} block>
+          <Tbl cols={['Event', 'Seats left']} rows={[['Systems design night', '18'], ['Hack day', '39']]} hot={1} />
+        </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'New event',
+    notes: [
+      { n: 1, title: 'Inline errors', text: 'Shown as you type.', node: 'forms' },
+      { n: 2, title: 'Dispatch', text: 'Only valid data reaches the store.', node: 'store' },
+    ],
+    draw: () => (
+      <Win title="App" url="app.local/events/new">
+        <Tabs items={['Home', 'Events', 'New event']} on={2} />
+        <N n={1} block>
+          <In ph="Title" />
+          <T>Title is required</T>
+          <In ph="organizer@" />
+          <T>Enter a valid email</T>
+        </N>
+        <N n={2} block><Btn primary>Create event</Btn></N>
+      </Win>
+    ),
+  },
+]
+
+export const WIREFRAMES = { forecast, starrez, battleship, insightvault, pashu, iotum, nationwide, cineplex, cicd, routing }

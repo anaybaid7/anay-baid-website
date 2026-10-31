@@ -244,3 +244,17 @@ describe('battleship match report', () => {
     expect(openHits([0, 1, 10], fleet)).toEqual([10])
   })
 })
+
+describe('callbridge host state', () => {
+  it('tracks people, the speaker and unread counts from widget events', async () => {
+    const { initialHost, onEvent } = await import('./callbridge')
+    let s = onEvent(initialHost, { type: 'room.READY' })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 1, name: 'A', isCurrent: true, isMuted: false, isLeft: false })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 2, name: 'B', isCurrent: false, isMuted: false, isLeft: false })
+    s = onEvent(s, { type: 'conference.SPEAKER', speakerId: 2 })
+    s = onEvent(s, { type: 'participant.CHANGE', id: 2, name: 'B', isCurrent: false, isMuted: false, isLeft: true })
+    expect(s.people.map((p) => p.id)).toEqual([1])
+    expect(s.speaker).toBeNull()
+    expect(onEvent(s, { type: 'dashboard.UNREAD_MESSAGES', rooms: { a: 2, b: 3 } }).unread).toBe(5)
+  })
+})
