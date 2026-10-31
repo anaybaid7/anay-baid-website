@@ -5,6 +5,8 @@ import ArchDiagram from './ArchDiagram'
 import Screens from './Screens'
 import CodeView from './CodeView'
 import Decisions from './Decisions'
+import { Clip } from './Media'
+import { NOTES } from '../decisions'
 import { SpeedPicker } from './sim/SpeedPicker'
 import { sourcesFor } from './demos/sources'
 import PipelineRun from './demos/PipelineRun'
@@ -114,6 +116,65 @@ const TAB_NAMES: Record<Tab, string> = {
   code: 'Code',
 }
 
+// The first tab: the work in motion, then the problem, one decision and the
+// details, so the overview isn't a copy of the page
+function Overview({ entry, onTab }: { entry: NonNullable<ReturnType<typeof entryById>>; onTab: (t: Tab, demo?: DemoKind) => void }) {
+  const demo = DETAILS[entry.id]?.demos?.[0]
+  const notes = NOTES[entry.id]
+  const d = notes?.decisions[0]
+  return (
+    <div className="drawer-overview">
+      <div className="ov-top">
+        {demo && (
+          <button type="button" className="ov-media" onClick={() => onTab('try', demo.kind)} aria-label={`Try ${demo.name}`}>
+            <Clip kind={demo.kind} eager />
+            <span className="ov-try">Try {demo.name.toLowerCase()} →</span>
+          </button>
+        )}
+        <div className="ov-facts">
+          <p className="drawer-when">{entry.when}</p>
+          {entry.highlight && (
+            <p className="entry-result">
+              <b>{entry.highlight.value}</b> {entry.highlight.label}
+            </p>
+          )}
+          <dl className="feature-case">
+            <div>
+              <dt>{entry.kind === 'job' ? 'Problem' : 'Why'}</dt>
+              <dd>{entry.why}</dd>
+            </div>
+            {d && (
+              <div>
+                <dt>Decision</dt>
+                <dd>
+                  {d.chose} over {d.over}.{' '}
+                  <button type="button" className="ov-link" onClick={() => onTab('decisions')}>
+                    {notes.decisions.length > 1 ? `${notes.decisions.length - 1} more` : 'Why'}
+                  </button>
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      </div>
+      {entry.description && <p className="entry-desc">{entry.description}</p>}
+      <ul className="dashes">
+        {entry.bullets.map((b) => <li key={b}>{b}</li>)}
+      </ul>
+      <ul className="chips" aria-label="Stack">
+        {entry.tech.map((t) => <li key={t}>{t}</li>)}
+      </ul>
+      {entry.links.length > 0 && (
+        <p className="project-links">
+          {entry.links.map((l) => (
+            <a key={l.href + l.label} href={l.href} target="_blank" rel="noreferrer">{l.label}</a>
+          ))}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // A panel that slides in from the right with everything about one job or
 // project. Previous and next move through the list without closing it, Esc
 // closes it, and the URL keeps which one is open so it can be shared.
@@ -137,6 +198,15 @@ export default function DetailDrawer({ open, onChange }: {
   const detail = open ? DETAILS[open.id] : undefined
   const tabs = open ? tabsFor(open.id) : []
   const tab = open && tabs.includes(open.tab) ? open.tab : 'overview'
+
+  // on a narrow screen the tab row scrolls, so keep the current tab in view
+  useEffect(() => {
+    // wait a frame, the dialog may only just be opening
+    const id = requestAnimationFrame(() =>
+      document.querySelector('.drawer-tabs [aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }),
+    )
+    return () => cancelAnimationFrame(id)
+  }, [tab, open?.id])
   const index = entry ? ENTRIES.indexOf(entry) : -1
   const prev = index > 0 ? ENTRIES[index - 1] : undefined
   const next = index >= 0 && index < ENTRIES.length - 1 ? ENTRIES[index + 1] : undefined
@@ -219,41 +289,7 @@ export default function DetailDrawer({ open, onChange }: {
 
           <div className="drawer-body" id="drawer-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={0}>
             {tab === 'overview' && (
-              <div className="drawer-overview">
-                <p className="drawer-when">{entry.when}</p>
-                {entry.highlight && (
-                  <p className="entry-result">
-                    <b>{entry.highlight.value}</b> {entry.highlight.label}
-                  </p>
-                )}
-                {entry.description && <p className="entry-desc">{entry.description}</p>}
-                <p className="entry-why"><span>{entry.kind === 'job' ? 'The problem' : 'Why I built it'}</span> {entry.why}</p>
-                <ul className="dashes">
-                  {entry.bullets.map((b) => <li key={b}>{b}</li>)}
-                </ul>
-                <ul className="chips" aria-label="Stack">
-                  {entry.tech.map((t) => <li key={t}>{t}</li>)}
-                </ul>
-                {entry.links.length > 0 && (
-                  <p className="project-links">
-                    {entry.links.map((l) => (
-                      <a key={l.href + l.label} href={l.href} target="_blank" rel="noreferrer">{l.label}</a>
-                    ))}
-                  </p>
-                )}
-                {tabs.length > 1 && (
-                  <p className="drawer-more">
-                    More in{' '}
-                    {tabs.slice(1).map((t, i) => (
-                      <span key={t}>
-                        {i > 0 && (i === tabs.length - 2 ? ' and ' : ', ')}
-                        <button type="button" onClick={() => onChange({ id: entry.id, tab: t })}>{TAB_NAMES[t]}</button>
-                      </span>
-                    ))}
-                    .
-                  </p>
-                )}
-              </div>
+              <Overview entry={entry} onTab={(t, demo) => onChange({ id: entry.id, tab: t, demo })} />
             )}
             {tab === 'how' && detail && <ArchDiagram
                 key={`${entry.id}-${focusNode ?? ''}-${open?.at ? `${open.at.flow}.${open.at.step}` : ''}`}

@@ -8,8 +8,12 @@ export const FEATURED: { id: string; kind: DemoKind; title: string; decision: nu
   { id: 'project-starrez-enterprise-automation-suite', kind: 'extension', title: 'One-click front desk logging', decision: 0 },
 ]
 
-// short recordings made by scripts/clips.mjs, for the featured demos
+// short recordings made by scripts/clips.mjs
 export const clip = (kind: DemoKind, theme: 'light' | 'dark', ext: 'webm' | 'mp4') => `/clips/${kind}-${theme}.${ext}`
 
 // screenshots made by scripts/shots.mjs, one per demo and theme
 export const thumb = (kind: DemoKind, theme: 'light' | 'dark') => `/shots/${kind}-${theme}.webp`
+
+// the demos that have a recording: the featured ones and each entry's first
+const CLIPS: DemoKind[] = ['planner', 'evaluate', 'extension', 'pipeline', 'sdk', 'provision', 'stream', 'fraud', 'build', 'fsm', 'battleship', 'router']
+export const hasClip = (kind: DemoKind) => CLIPS.includes(kind)

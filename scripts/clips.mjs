@@ -1,4 +1,4 @@
-// Records a short loop of each featured demo being used, in light and dark,
+// Records a short loop of each entry's lead demo being used, in light and dark,
 // into public/clips. Run against a built preview, like shots.mjs:
 // node scripts/clips.mjs [base url]. Needs ffmpeg with libvpx-vp9 and libx264.
 import { chromium } from 'playwright'
@@ -59,6 +59,46 @@ const CLIPS = {
     },
   },
 }
+
+// the first demo of every other entry: press its main button and watch
+const press = (id, wait = 5200) => ({
+  id,
+  async play(p) {
+    await p.locator('.demo .demo-primary').first().click()
+    await pause(p, wait)
+  },
+})
+Object.assign(CLIPS, {
+  pipeline: press('job-purolator'),
+  sdk: press('job-iotum', 4500),
+  provision: press('job-nationwide-appraisals'),
+  stream: press('job-cineplex-entertainment'),
+  fraud: press('project-insightvault'),
+  build: press('project-ci-cd-build-automation-tool', 4500),
+  fsm: press('project-pashu', 6000),
+  battleship: {
+    id: 'project-battleship-for-purolator',
+    async play(p) {
+      await p.getByRole('button', { name: 'Random' }).click()
+      await pause(p, 700)
+      await p.getByRole('button', { name: 'Random' }).click()
+      await pause(p, 700)
+      await p.getByRole('button', { name: /Lock in routes/ }).click()
+      await pause(p, 900)
+      await p.getByRole('button', { name: 'Auto-fire' }).click()
+      await pause(p, 5000)
+    },
+  },
+  router: {
+    id: 'project-client-side-routing-system',
+    async play(p) {
+      for (const name of ['Events', 'New event', 'Home', 'Events']) {
+        await p.locator('.demo').getByRole('button', { name, exact: true }).first().click()
+        await pause(p, 1100)
+      }
+    },
+  },
+})
 
 mkdirSync('public/clips', { recursive: true })
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
