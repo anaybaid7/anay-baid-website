@@ -125,6 +125,50 @@ const starrez: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Lockout reason',
+    notes: [
+      { n: 1, title: 'Keys checked first', text: 'With no key codes on the Keys card the modal never opens and nothing is copied.', node: 'tasks' },
+      { n: 2, title: 'A reason is required', text: 'An empty reason swaps the placeholder for a prompt instead of copying.', node: 'buttons' },
+      { n: 3, title: 'Then the entry', text: 'Copy Log builds the lockout line with the reason after the key codes.', node: 'clip' },
+    ],
+    draw: () => (
+      <Win title="StarRez" url="uwaterloo.starrezhousing.com">
+        <N n={1}><T>Rez 360 › KEYS › LOANER L-1: L0932</T></N>
+        <Box title="Lockout Reason">
+          <T>Enter the reason for this lockout before copying the log entry.</T>
+          <N n={2} block><In ph="e.g. forgot key in room, lost key..." /></N>
+          <Row><Btn>Cancel</Btn><N n={3}><Btn primary>Copy Log</Btn></N></Row>
+        </Box>
+        <T>S.L (20871234) V1S-305a KC: L0932; forgot key in room - A.B</T>
+      </Win>
+    ),
+  },
+  {
+    name: 'History panel',
+    notes: [
+      { n: 1, title: 'How much to show', text: 'Latest 5, latest 10, all, or a custom count.', node: 'log' },
+      { n: 2, title: 'One row per entry', text: 'Type, staff, time and the exact line that was copied. Only those strings are kept.', node: 'log' },
+      { n: 3, title: 'Capped at 500', text: 'Newest first in localStorage on that desk machine, oldest dropped past 500.', node: 'log' },
+    ],
+    draw: () => (
+      <Win title="StarRez" url="uwaterloo.starrezhousing.com">
+        <Row between><T b>Activity History (128 total)</T><Btn>✕</Btn></Row>
+        <N n={1} block><Row><Btn primary>Latest 5</Btn><Btn>Latest 10</Btn><Btn>All</Btn><In ph="Custom #" /><Btn>Go</Btn><Btn>Clear All</Btn></Row></N>
+        <N n={2} block>
+          <Tbl
+            cols={['Type', 'Staff', 'Time', 'Entry']}
+            rows={[
+              ['package', 'A.B', '3:42 pm', 'S.L (20871234) V1S-305a 2 pkgs @ 3:42 pm - A.B'],
+              ['lockout', 'A.B', '3:30 pm', 'J.P (20765112) REV-E-212b KC: L0932; lost key - A.B'],
+              ['label', 'A.B', '3:18 pm', '10/30/2026 3:18p.m. · 20654321 · …'],
+            ]}
+          />
+        </N>
+        <N n={3}><T>Showing 5 of 128 entries</T></N>
+      </Win>
+    ),
+  },
 ]
 
 // ---- Battleship, from public/index.html ----
@@ -306,6 +350,48 @@ const insightvault: Screen[] = [
           </N>
         </Row>
         <N n={3} block><Row><Btn primary>Confirm fraud</Btn><Btn>Dismiss</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Training report',
+    notes: [
+      { n: 1, title: 'Split by time', text: 'Train on the earlier months, test on the later ones, so the score reflects transactions the model has not seen.', node: 'train' },
+      { n: 2, title: 'Pick the threshold here', text: 'Precision and recall at each cut, with the counts behind them.', node: 'train' },
+      { n: 3, title: 'Weights out, not a model file', text: 'The coefficients go to a JSON file the Java scorer reads, so serving needs no Python.', node: 'weights' },
+    ],
+    draw: () => (
+      <Win title="train.py, report">
+        <N n={1} block>
+          <Row between><T b>Train</T><T>earlier months</T><T b>Test</T><T>later months</T></Row>
+          <Meter v={80} label="80 / 20 by date" />
+        </N>
+        <Row>
+          <N n={2} block>
+            <Box title="Threshold">
+              <Tbl cols={['Cut', 'Precision', 'Recall']} hot={1} rows={[['0.40', '·', '·'], ['0.50', '·', '·'], ['0.60', '·', '·']]} />
+            </Box>
+          </N>
+          <Box title="Confusion">
+            <Tbl cols={['Outcome', 'Fraud', 'Legit']} rows={[['Flagged', 'TP', 'FP'], ['Passed', 'FN', 'TN']]} />
+          </Box>
+        </Row>
+        <N n={3} block><Row between><T>weights.json · bias and coefficients</T><Btn primary>Export</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Parity check',
+    notes: [
+      { n: 1, title: 'Same rows, two scorers', text: 'The held-out set is scored by scikit-learn and by the Java layer reading the exported weights.', node: 'weights' },
+      { n: 2, title: 'Should match to rounding', text: 'Both read the same coefficients, so any real gap means serving drifted from training.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="parity, held-out set">
+        <N n={1} block>
+          <Tbl cols={['Transaction', 'Python', 'Java', 'Diff']} rows={[['tx_90211', '0.8731', '0.8731', '0'], ['tx_90198', '0.6402', '0.6402', '0'], ['tx_90177', '0.1189', '0.1189', '0']]} />
+        </N>
+        <N n={2} block><Row between><T b>Max diff 0</T><Btn primary>Ship weights</Btn></Row></N>
       </Win>
     ),
   },
@@ -610,6 +696,40 @@ const nationwide: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Bastion rules',
+    notes: [
+      { n: 1, title: 'Only the bastion is public', text: 'The database sits in a private subnet with no public address.', node: 'ssh' },
+      { n: 2, title: 'Rules point at rules', text: 'The database allows 5432 from the bastion’s security group, not from an IP range.', node: 'db' },
+    ],
+    draw: () => (
+      <Win title="Security groups" url="console › VPC › Security groups">
+        <N n={1} block>
+          <Tbl cols={['Instance', 'Subnet', 'Public IP']} rows={[['bastion', 'public 10.0.1.0/24', 'yes'], ['appraisals-db', 'private 10.0.2.0/24', 'none']]} />
+        </N>
+        <N n={2} block>
+          <Box title="Inbound rules">
+            <Tbl cols={['Group', 'Port', 'Source']} hot={1} rows={[['sg-bastion', '22', 'office range'], ['sg-db', '5432', 'sg-bastion']]} />
+          </Box>
+        </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Drift report',
+    notes: [
+      { n: 1, title: 'Setting by setting', text: 'Each host against the runbook, so one hand tweak stands out.', node: 'legacy' },
+      { n: 2, title: 'Fix by rebuilding', text: 'Odd boxes are replaced from the image instead of patched by hand again.', node: 'docker' },
+    ],
+    draw: () => (
+      <Win title="Hosts vs runbook">
+        <N n={1} block>
+          <Tbl cols={['Host', 'Runtime', 'OpenSSL', 'MTU', 'Timezone']} hot={2} rows={[['app-01', '17.0.9', '3.0.11', '1500', 'UTC'], ['app-02', '17.0.10', '3.0.11', '1500', 'UTC'], ['app-03', '17.0.8', '3.0.11', '9001', 'UTC'], ['batch-01', '17.0.9', '3.0.9', '1500', 'America/New_York']]} />
+        </N>
+        <N n={2} block><Row><Btn primary>Rebuild app-03 from image</Btn><Btn>Export</Btn></Row></N>
+      </Win>
+    ),
+  },
 ]
 
 // ---- Cineplex: the shape of the reporting and reconciliation views ----
@@ -663,6 +783,37 @@ const cineplex: Screen[] = [
       </Win>
     ),
   },
+  {
+    name: 'Anomaly calendar',
+    notes: [
+      { n: 1, title: 'Count first', text: 'Row counts per theatre and day, so a mismatch points at one partition instead of the whole table.', node: 'recon' },
+      { n: 2, title: 'Then the rows', text: 'Drill into one cell to see the rows and the likely cause.', node: 'tests' },
+    ],
+    draw: () => (
+      <Win title="Reconcile box_office" url="recon/box_office/2024-02">
+        <N n={1} block>
+          <Board n={28} rows={8} hits={[65, 110, 156]} misses={[3, 4, 191, 192]} />
+        </N>
+        <N n={2} block><Row between><T>Theatre 7120 · Feb 10 · +412 rows</T><Btn primary>Show rows</Btn></Row></N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Model inputs',
+    notes: [
+      { n: 1, title: 'Held-out week', text: 'Trained on earlier weeks, scored on a later one.', node: 'ml' },
+      { n: 2, title: 'What cleaning changed', text: 'Rows fixed or dropped per rule, next to the error before and after.', node: 'tests' },
+    ],
+    draw: () => (
+      <Win title="Showtime model, training run">
+        <N n={1} block><Row between><T>Train weeks 1 to 3</T><T b>Test week 4</T></Row></N>
+        <N n={2} block>
+          <Tbl cols={['Rule', 'Rows', 'Error after']} rows={[['no showtime', 'dropped', '·'], ['retried batch', 'deduped', '·'], ['refund rows', 'netted', '·']]} />
+        </N>
+        <Bars values={[90, 55, 35, 30]} />
+      </Win>
+    ),
+  },
 ]
 
 // ---- CI/CD: the GitHub pages the action drives ----
@@ -711,6 +862,46 @@ const cicd: Screen[] = [
             <T w={70} />
           </Box>
         </N>
+      </Win>
+    ),
+  },
+  {
+    name: 'Secrets',
+    notes: [
+      { n: 1, title: 'Token for the dispatch', text: 'Needs permission to send repository_dispatch to the target repo.', node: 'api' },
+      { n: 2, title: 'Mail settings', text: 'Only needed when SEND_EMAIL_NOTIFICATION is true.', node: 'smtp' },
+    ],
+    draw: () => (
+      <Win title="GitHub" url="…/settings/secrets/actions">
+        <N n={1} block>
+          <Tbl cols={['Repository secret', 'Updated']} hot={0} rows={[['YOUR_GITHUB_ACCESS_TOKEN', '·']]} />
+        </N>
+        <N n={2} block>
+          <Tbl cols={['Mail', 'Updated']} rows={[['SMTP_SERVER_ADDRESS', '·'], ['SMTP_PORT', '·'], ['SMTP_USERNAME', '·'], ['SMTP_PASSWORD', '·'], ['FROM_EMAIL_ADDRESS', '·']]} />
+        </N>
+        <Row><Btn primary>New repository secret</Btn></Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Workflow file',
+    notes: [
+      { n: 1, title: 'When it runs', text: 'On every push to main.', node: 'push' },
+      { n: 2, title: 'Inputs as env', text: 'Repo, user, branch and environment, plus whether to email.', node: 'check' },
+      { n: 3, title: 'Custom data', text: 'JSON merged into client_payload.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="GitHub" url="…/.github/workflows/trigger.yml">
+        <T b>name: Trigger Build</T>
+        <N n={1} block><T>on: push: branches: [main]</T></N>
+        <N n={2} block>
+          <Box title="env">
+            <T>GITHUB_REPO_NAME, GITHUB_USERNAME, GITHUB_BRANCH_NAME</T>
+            <T>ENVIRONMENT_NAME: production</T>
+            <T>SEND_EMAIL_NOTIFICATION: true</T>
+          </Box>
+        </N>
+        <N n={3} block><T>uses: ./.github/actions/trigger_build · INPUT_CUSTOM_DATA</T></N>
       </Win>
     ),
   },
