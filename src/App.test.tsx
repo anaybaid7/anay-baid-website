@@ -159,9 +159,15 @@ describe('App', () => {
     expect(document.getElementById('job-purolator')).toHaveClass('dim')
   })
 
-  it('checks a pasted job posting against the page', () => {
+  it('keeps the posting matcher off the public page', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Paste the job posting' }))
+    expect(screen.queryByRole('button', { name: 'Check a posting' })).toBeNull()
+  })
+
+  it('checks a pasted job posting against the page with ?me', () => {
+    history.replaceState(null, '', '/?me')
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Check a posting' }))
     fireEvent.change(screen.getByLabelText('Job posting'), {
       target: { value: 'You have 2+ years with Python and AWS, experience with k8s, and know your way around Kafka.' },
     })

@@ -1846,6 +1846,9 @@ main.wrap > * {
   min-width: 0;
 }
 [data-part="hero"] {
+  order: -6;
+}
+[data-part="showcase"] {
   order: -5;
 }
 [data-part="thread"] {
@@ -5710,19 +5713,25 @@ button.thread-row:hover .thread-where b {
   color: var(--ink-2);
 }
 .entry,
-.thread-row {
+.thread-row,
+.shot-tile {
   transition: opacity 0.2s ease-out;
 }
 main[data-lens="data"] .entry:not([data-areas~="data"]),
 main[data-lens="data"] .thread-row:not(.head):not([data-areas~="data"]),
+main[data-lens="data"] .shot-tile:not([data-areas~="data"]),
 main[data-lens="backend"] .entry:not([data-areas~="backend"]),
 main[data-lens="backend"] .thread-row:not(.head):not([data-areas~="backend"]),
+main[data-lens="backend"] .shot-tile:not([data-areas~="backend"]),
 main[data-lens="infra"] .entry:not([data-areas~="infra"]),
 main[data-lens="infra"] .thread-row:not(.head):not([data-areas~="infra"]),
+main[data-lens="infra"] .shot-tile:not([data-areas~="infra"]),
 main[data-lens="automation"] .entry:not([data-areas~="automation"]),
 main[data-lens="automation"] .thread-row:not(.head):not([data-areas~="automation"]),
+main[data-lens="automation"] .shot-tile:not([data-areas~="automation"]),
 main[data-lens="frontend"] .entry:not([data-areas~="frontend"]),
-main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) {
+main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]),
+main[data-lens="frontend"] .shot-tile:not([data-areas~="frontend"]) {
   opacity: 0.32;
 }
 /* printing with a lens set prints only that work */
@@ -7115,4 +7124,88 @@ main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) 
 .tf-note.bad {
   color: var(--bad);
   font-weight: 700;
+}
+
+/* ---- try the work ---- */
+.showcase-sum {
+  margin: 0 0 18px;
+  color: var(--ink-2);
+}
+.shots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.shot-tile button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.shot {
+  display: block;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+.shot .dk,
+:root[data-theme="dark"] .shot .lt {
+  display: none;
+}
+:root[data-theme="dark"] .shot .dk {
+  display: block;
+}
+.shot-tile button:hover .shot,
+.shot-tile button:focus-visible .shot {
+  border-color: var(--cobalt);
+  transform: translateY(-2px);
+}
+.shot-title {
+  display: block;
+  margin-top: 9px;
+  font-weight: 700;
+  font-size: 15.5px;
+}
+.shot-tile button:hover .shot-title {
+  color: var(--cobalt);
+}
+.shot-where {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 13.5px;
+}
+@media (max-width: 920px) {
+  .shots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shot {
+    transition: none;
+  }
+  .shot-tile button:hover .shot {
+    transform: none;
+  }
+}
+@media print {
+  .showcase {
+    display: none;
+  }
 }

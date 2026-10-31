@@ -14,7 +14,8 @@ import Shortcuts from './components/Shortcuts'
 import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
-import { DETAILS, tabsFor, type Tab } from './details'
+import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
+import { SHOWCASE, thumb } from './showcase'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
@@ -111,7 +112,8 @@ function detailFromUrl(): Opened | null {
   const id = q.get('open')
   // tab=play was the old name for the demo tab, so older links still land on it
   const tab = q.get('tab') === 'play' ? 'try' : (q.get('tab') as Tab)
-  return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview' } : null
+  const demo = DETAILS[id ?? '']?.demos?.find((d) => d.kind === q.get('demo'))?.kind
+  return id && ENTRIES.some((e) => e.id === id) ? { id, tab: tab || 'overview', demo } : null
 }
 
 // ?for=data shows the page through one area of work, for a role hiring for it
@@ -119,6 +121,8 @@ const lensFromUrl = (): Area | null => {
   const a = new URLSearchParams(location.search).get('for')
   return a && a in AREAS ? (a as Area) : null
 }
+
+const ownerFromUrl = () => new URLSearchParams(location.search).has('me')
 
 const filterFromUrl = () =>
   (new URLSearchParams(location.search).get('stack') ?? '').split(',').map((x) => x.trim()).filter(Boolean)
@@ -336,7 +340,7 @@ const strongest = allSkills
 const wins = projects.filter((p) => p.award?.toLowerCase().includes('winner'))
 
 // the five things a recruiter checks first, answered before they scroll
-function Glance({ onCheck }: { onCheck: () => void }) {
+function Glance({ onCheck }: { onCheck?: () => void }) {
   return (
     <section className="section glance" aria-labelledby="glance" data-part="glance">
       <h2 id="glance">At a glance</h2>
@@ -365,10 +369,11 @@ function Glance({ onCheck }: { onCheck: () => void }) {
             <dd>{profile.location.replace(', ON', ', Ontario')}</dd>
           </div>
         </dl>
-        <p className="glance-check">
-          Recruiting for a role? <button type="button" onClick={onCheck}>Paste the job posting</button> to see which of
-          the skills it asks for I've used, and where.
-        </p>
+        {onCheck && (
+          <p className="glance-check">
+            <button type="button" onClick={onCheck}>Check a posting</button>
+          </p>
+        )}
       </div>
     </section>
   )
@@ -462,6 +467,40 @@ function Thread({ onOpen, lens, onLens }: { onOpen: (id: string, tab?: Tab) => v
   )
 }
 
+// The demos up front, as pictures, so the work shows before any reading.
+// Each opens its drawer on that demo.
+const demoCount = Object.values(DETAILS).reduce((n, d) => n + (d.demos?.length ?? 0), 0)
+
+function Showcase({ onOpen }: { onOpen: (id: string, tab: Tab, demo: DemoKind) => void }) {
+  return (
+    <section className="section showcase" aria-labelledby="try-work" data-part="showcase">
+      <h2 id="try-work">Try the work</h2>
+      <div className="section-body">
+        <p className="showcase-sum">
+          {demoCount} working demos and {Object.keys(DETAILS).length} system diagrams, running in your browser on sample data.
+        </p>
+        <ul className="shots">
+          {SHOWCASE.map((t) => {
+            const e = entryById(t.id)!
+            return (
+              <li key={t.kind} className="shot-tile" data-areas={e.areas.join(' ')}>
+                <button type="button" onClick={() => onOpen(t.id, 'try', t.kind)}>
+                  <span className="shot">
+                    <img className="lt" src={thumb(t, 'light')} alt="" width={640} height={400} loading="lazy" decoding="async" />
+                    <img className="dk" src={thumb(t, 'dark')} alt="" width={640} height={400} loading="lazy" decoding="async" />
+                  </span>
+                  <span className="shot-title">{t.title}</span>
+                  <span className="shot-where">{shortOrg(e.title.replace(/ \(.*\)$/, ''))}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
 // Skills as on the resume, grouped. Click one to show only the work that used it.
 function Skills({ onFilter }: { onFilter: (skills: string[]) => void }) {
   return (
@@ -507,6 +546,8 @@ export default function App() {
   const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
   const [filter, setFilter] = useState<string[]>(() => (prerendered ? [] : filterFromUrl()))
   const [lens, setLens] = useState<Area | null>(() => (prerendered ? null : lensFromUrl()))
+  // the posting matcher is my own tool, only there with ?me in the URL
+  const [owner, setOwner] = useState(() => !prerendered && ownerFromUrl())
 
   // after hydrating prerendered HTML, pick up what the URL and the clock say
   // This has to be an effect: hydration must first match the HTML exactly.
@@ -516,6 +557,7 @@ export default function App() {
     setDetail(detailFromUrl())
     setFilter(filterFromUrl())
     setLens(lensFromUrl())
+    setOwner(ownerFromUrl())
     const real = monthOf(new Date())
     if (real !== thisMonth) {
       thisMonth = real
@@ -539,6 +581,8 @@ export default function App() {
     // a flow and step only make sense for the diagram they were set on
     url.searchParams.delete('flow')
     url.searchParams.delete('step')
+    url.searchParams.delete('demo')
+    if (next?.demo && next.tab === 'try') url.searchParams.set('demo', next.demo)
     if (next?.at) {
       url.searchParams.set('flow', String(next.at.flow))
       url.searchParams.set('step', String(next.at.step))
@@ -547,7 +591,7 @@ export default function App() {
     if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
   }, [])
   const openDetail = useCallback(
-    (id: string, tab?: Tab) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview' }),
+    (id: string, tab?: Tab, demo?: DemoKind) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview', demo }),
     [showDetail],
   )
   const settings = useSettings()
@@ -590,7 +634,7 @@ export default function App() {
         case 'k': step(-1); break
         case 's': setSettings({ view: settings.view === 'skim' ? 'full' : 'skim' }); break
         case 't': setSettings({ theme: resolvedTheme(settings) === 'dark' ? 'light' : 'dark' }); break
-        case 'm': setMatcherOpen(true); break
+        case 'm': if (owner) setMatcherOpen(true); break
         case '`': setTermOpen(true); break
         case ',': (document.getElementById('settings') as (HTMLElement & { togglePopover?: () => void }) | null)?.togglePopover?.(); break
         case '?': setKeysOpen(true); break
@@ -601,7 +645,7 @@ export default function App() {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [settings, filter, applyFilter])
+  }, [settings, filter, applyFilter, owner])
   const showResume = useCallback(() => openResume(() => setResumeOpen(true)), [])
 
   const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -666,7 +710,7 @@ export default function App() {
       { group: 'Page', label: 'Print this view', keywords: 'pdf one page tailored', run: () => window.print() },
       { group: 'Page', label: 'Keyboard shortcuts', keywords: 'keys help', run: () => setKeysOpen(true) },
       { group: 'Page', label: 'Open the terminal', keywords: 'shell cli command line', run: () => setTermOpen(true) },
-      { group: 'Hiring', label: 'Check against a job posting', keywords: 'match requirements jd', run: () => setMatcherOpen(true) },
+      ...(owner ? [{ group: 'Hiring', label: 'Check against a job posting', keywords: 'match requirements jd', run: () => setMatcherOpen(true) }] : []),
       ...stackFilterCommands(applyFilter),
       { group: 'Hiring', label: 'Save contact card', keywords: 'vcard vcf contacts', run: downloadVcard },
       { group: 'Hiring', label: 'Download resume as JSON Resume', keywords: 'json ats data', run: downloadJsonResume },
@@ -693,7 +737,7 @@ export default function App() {
         })),
       ),
     ]
-  }, [showDetail, showResume, applyFilter, applyLens])
+  }, [showDetail, showResume, applyFilter, applyLens, owner])
   return (
     <>
       <div className="progress" aria-hidden="true" />
@@ -746,9 +790,11 @@ export default function App() {
           </div>
         </section>
 
+        <Showcase onOpen={openDetail} />
+
         <Thread onOpen={openDetail} lens={lens} onLens={applyLens} />
 
-        <Glance onCheck={() => setMatcherOpen(true)} />
+        <Glance onCheck={owner ? () => setMatcherOpen(true) : undefined} />
 
         {filter.length > 0 && (
           <div className="filterbar" role="status" data-part="filter">
@@ -840,6 +886,10 @@ export default function App() {
                 <dd>Everything on the page comes from one data file, which also builds the <a href={FILES.text}>plain text resume</a> and <a href={FILES.json}>JSON Resume</a></dd>
               </div>
               <div>
+                <dt>Tested</dt>
+                <dd>Every push runs lint, type checks, unit tests, and browser tests with accessibility scans</dd>
+              </div>
+              <div>
                 <dt>Privacy</dt>
                 <dd>No tracking and no cookies. Settings stay in your browser</dd>
               </div>
@@ -906,7 +956,7 @@ export default function App() {
           <DetailDrawer open={detail} onChange={showDetail} />
         </Suspense>
       )}
-      <Matcher
+      {owner && <Matcher
         open={matcherOpen}
         onOpenChange={setMatcherOpen}
         onFilter={applyFilter}
@@ -915,7 +965,7 @@ export default function App() {
           applyLens(a)
           setTimeout(() => goTo('thread'), 0)
         }}
-      />
+      />}
       <Shortcuts open={keysOpen} onOpenChange={setKeysOpen} />
       {termOpen && (
         <Suspense fallback={null}>

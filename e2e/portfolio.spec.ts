@@ -67,7 +67,7 @@ test('settings open as a popover, apply, and stick after a reload', async ({ pag
 })
 
 test('a pasted job posting filters the page and the filter survives in the link', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?me')
   await page.keyboard.press('m')
   await page.getByRole('textbox', { name: 'Job posting' }).fill('Selenium and Mocha for test automation')
   await page.getByRole('button', { name: /show only/i }).click()

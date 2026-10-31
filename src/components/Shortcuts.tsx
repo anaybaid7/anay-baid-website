@@ -4,7 +4,6 @@ const SHORTCUTS: [string, string][] = [
   ['J / K', 'Next or previous job or project'],
   ['S', 'Switch between full detail and skim'],
   ['T', 'Switch light and dark'],
-  ['M', 'Check against a job posting'],
   ['`', 'Terminal'],
   [',', 'Settings'],
   ['/ or Ctrl K', 'Search'],
