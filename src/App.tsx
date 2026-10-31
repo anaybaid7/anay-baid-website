@@ -10,11 +10,11 @@ import { openResume } from './resume'
 import SettingsPanel from './components/SettingsPanel'
 import Matcher from './components/Matcher'
 import Shortcuts from './components/Shortcuts'
-import { setSettings, useSettings, withTransition, resolvedTheme } from './settings'
+import { setSettings, useSettings, withTransition, resolvedTheme, calm } from './settings'
 import { FILES, downloadJsonResume, downloadVcard } from './exports'
 import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
-import { FEATURED, thumb } from './showcase'
+import { FEATURED, clip, thumb } from './showcase'
 import { NOTES } from './decisions'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
@@ -418,7 +418,25 @@ function Shot({ kind }: { kind: DemoKind }) {
   )
 }
 
-// The three pieces of work to look at first, each with the same parts
+// a featured demo playing on a loop, or its still picture before hydration
+// and when motion is reduced
+function Clip({ kind }: { kind: DemoKind }) {
+  const settings = useSettings()
+  const hydrated = useHydrated()
+  if (!hydrated || calm(settings)) return <Shot kind={kind} />
+  const theme = resolvedTheme(settings)
+  return (
+    <span className="shot">
+      <video key={theme} poster={thumb(kind, theme)} width={960} height={600} autoPlay muted loop playsInline preload="metadata" aria-hidden="true">
+        <source src={clip(kind, theme, 'webm')} type="video/webm" />
+        <source src={clip(kind, theme, 'mp4')} type="video/mp4" />
+      </video>
+    </span>
+  )
+}
+
+// The three pieces of work to look at first: the problem, one decision and
+// what came of it, in the same order each time
 function Featured({ onOpen }: { onOpen: OpenFn }) {
   return (
     <section className="section featured" aria-labelledby="featured" data-part="featured">
@@ -427,16 +445,30 @@ function Featured({ onOpen }: { onOpen: OpenFn }) {
         <ol className="feature-list">
           {FEATURED.map((f) => {
             const e = entryById(f.id)!
+            const d = NOTES[f.id]?.decisions[f.decision]
             return (
               <li key={f.id} className="feature" data-areas={e.areas.join(' ')} data-feature={f.id}>
                 <button type="button" className="feature-shot" onClick={() => onOpen(f.id, 'try', f.kind)} aria-label={`Try ${f.title}`}>
-                  <Shot kind={f.kind} />
+                  <Clip kind={f.kind} />
                 </button>
                 <div className="feature-text">
                   <p className="feature-where">{e.kind === 'job' ? `${e.title}, ${e.sub}` : 'Project'}</p>
                   <h3>{f.title}</h3>
                   {e.highlight && <p className="entry-result"><b>{e.highlight.value}</b> {e.highlight.label}</p>}
-                  <p className="feature-built">{e.built}</p>
+                  <dl className="feature-case">
+                    <div>
+                      <dt>Problem</dt>
+                      <dd>{e.why}</dd>
+                    </div>
+                    {d && (
+                      <div>
+                        <dt>Decision</dt>
+                        <dd>
+                          {d.chose} over {d.over}. <span>{d.because}</span>
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
                   <p className="entry-tabs">
                     <button type="button" className="primary" onClick={() => onOpen(f.id, 'try', f.kind)}>Try it</button>
                     <button type="button" onClick={() => onOpen(f.id, 'how')}>How it works</button>

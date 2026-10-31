@@ -2427,7 +2427,8 @@ label {
   border: 1.5px solid var(--line);
   background: #fff;
 }
-.shot img {
+.shot img,
+.shot video {
   display: block;
   width: 100%;
   height: auto;
@@ -7138,7 +7139,8 @@ main[data-lens="frontend"] .feature:not([data-areas~="frontend"]) {
   background: var(--paper);
   transition: border-color 0.15s;
 }
-.shot img {
+.shot img,
+.shot video {
   display: block;
   width: 100%;
   height: 100%;
@@ -7195,11 +7197,8 @@ button:focus-visible > .shot {
 .feature h3 {
   margin: 0 0 10px;
   font-size: 22px;
+  font-weight: 750;
   line-height: 1.2;
-}
-.feature-built {
-  margin: 8px 0 14px;
-  color: var(--ink-2);
 }
 
 .entry-work {
@@ -7473,5 +7472,37 @@ button:focus-visible > .shot {
 .skills-block .skill-list dt {
   padding-top: 0;
   font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* shift-click picks a range of weeks, so it shouldn't select text too */
+.plan-grid tbody tr {
+  user-select: none;
+}
+
+/* problem and decision on each featured piece */
+.feature-case {
+  margin: 14px 0 16px;
+  display: grid;
+  gap: 10px;
+}
+.feature-case > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+}
+.feature-case dt {
+  color: var(--cobalt);
+  font-weight: 650;
+  font-size: 14.5px;
+  padding-top: 1px;
+}
+.feature-case dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+.feature-case dd span {
   color: var(--ink-2);
 }
