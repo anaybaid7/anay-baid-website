@@ -68,3 +68,34 @@ export function validPlacement(ships: Placed[]) {
   if (new Set(cells).size !== cells.length) return 'two vehicles overlap'
   return null
 }
+
+// The match report from the game over card, ported from game.js: shot
+// count, hits, accuracy, first hit, best hit streak and vehicles lost.
+export function report(shots: number[], targets: Placed[]) {
+  const hitAt = new Set(targets.flatMap((s) => s.cells))
+  const results = shots.map((c) => hitAt.has(c))
+  const hits = results.filter(Boolean).length
+  let best = 0
+  let run = 0
+  for (const r of results) {
+    run = r ? run + 1 : 0
+    best = Math.max(best, run)
+  }
+  const first = results.indexOf(true)
+  const sunk = targets.filter((s) => s.cells.every((c) => shots.includes(c))).length
+  return {
+    shots: shots.length,
+    hits,
+    accuracy: shots.length ? `${Math.round((hits / shots.length) * 100)}%` : '-',
+    firstHit: first < 0 ? '-' : `#${first + 1}`,
+    bestStreak: best,
+    sunk,
+  }
+}
+
+// vehicles that were hit but not sunk, so the next shot goes next to them
+export const openHits = (shots: number[], targets: Placed[]) =>
+  shots.filter((c) => {
+    const s = targets.find((t) => t.cells.includes(c))
+    return s && !s.cells.every((k) => shots.includes(k))
+  })

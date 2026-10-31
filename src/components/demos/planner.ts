@@ -115,3 +115,12 @@ export function gapCheck(d: DayCheck, excludeHolidays = true) {
   const pct = baseline ? (diff / baseline) * 100 : Infinity
   return { baseline, diff, pct, check: Math.abs(pct) >= 50 && Math.abs(diff) >= 100 }
 }
+
+// From the Daily Distribution page. Past weeks with the same holiday weekday
+// are overlaid, and their normalized average is the suggested shape for the
+// event week.
+export function averageShape(weeks: number[][]) {
+  if (!weeks.length) return null
+  const mean = weeks[0].map((_, d) => weeks.reduce((a, w) => a + w[d], 0) / weeks.length)
+  return normalize(mean)
+}
