@@ -70,11 +70,11 @@ export function Tbl({ cols, rows, hot }: { cols: string[]; rows: ReactNode[][]; 
   )
 }
 
-// a game board, with some cells marked
-export function Board({ n, ships = [], hits = [], misses = [] }: { n: number; ships?: number[]; hits?: number[]; misses?: number[] }) {
+// a grid of cells, square unless rows is given, with some cells marked
+export function Board({ n, rows = n, ships = [], hits = [], misses = [] }: { n: number; rows?: number; ships?: number[]; hits?: number[]; misses?: number[] }) {
   return (
-    <div className="wboard" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
-      {Array.from({ length: n * n }, (_, i) => (
+    <div className="wboard" style={{ gridTemplateColumns: `repeat(${n}, 1fr)`, ...(rows !== n && { aspectRatio: `${n} / ${rows}`, maxWidth: 'none' }) }}>
+      {Array.from({ length: n * rows }, (_, i) => (
         <i key={i} className={hits.includes(i) ? 'h' : misses.includes(i) ? 'm' : ships.includes(i) ? 's' : ''} />
       ))}
     </div>

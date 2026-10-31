@@ -6312,3 +6312,477 @@ main[data-lens="frontend"] .thread-row:not(.head):not([data-areas~="frontend"]) 
   color: #ff8a80;
 }
 .wire-src { margin: 0 0 8px; }
+
+/* ---- model evaluation ---- */
+.split-bar {
+  position: relative;
+  display: flex;
+  gap: 1px;
+  height: 16px;
+  margin: 0 0 30px;
+}
+.split-bar i {
+  flex: 1;
+}
+.split-bar i.tr {
+  background: var(--ink-3);
+}
+.split-bar i.te {
+  background: var(--cobalt);
+}
+.split-bar span {
+  position: absolute;
+  top: 20px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.sb-r {
+  right: 0;
+  color: var(--cobalt) !important;
+}
+.eval-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.pchart.pr .mod.big {
+  transition: cx 0.2s ease-out, cy 0.2s ease-out;
+}
+.cm {
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cm th,
+.cm td {
+  padding: 10px 16px;
+  font-size: 14px;
+  text-align: center;
+}
+.cm th {
+  color: var(--ink-3);
+  font-weight: 650;
+}
+.cm td {
+  border: 1.5px solid var(--line);
+  font-size: 22px;
+  font-weight: 800;
+  min-width: 82px;
+}
+.cm td.tp {
+  background: color-mix(in srgb, var(--cobalt) 18%, transparent);
+}
+.cm td.fn {
+  background: color-mix(in srgb, var(--bad) 18%, transparent);
+}
+.cm td.fp {
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+.tiles.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tiles.two div:nth-child(3) {
+  border-left: 0;
+}
+.tiles.two div:nth-child(n + 3) {
+  border-top: 1.5px solid var(--line);
+}
+@media (max-width: 760px) {
+  .eval-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- network path ---- */
+.net .mode {
+  margin: 0;
+}
+.topo {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  margin: 6px 0 14px;
+  font-family: var(--font);
+}
+.topo .vpc {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+.topo .subnet {
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.topo .subnet.pub {
+  fill: color-mix(in srgb, var(--cobalt) 6%, transparent);
+}
+.topo .subnet.priv {
+  fill: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.topo .zone {
+  fill: var(--ink-3);
+  font-size: 12px;
+}
+.topo .tn rect {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  transition: fill 0.2s, stroke 0.2s;
+}
+.topo .tn text {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.topo .tn.ok rect {
+  fill: var(--tint);
+  stroke: var(--cobalt);
+}
+.topo .tn.bad rect {
+  stroke: var(--bad);
+  stroke-width: 2.5;
+}
+.topo .hop {
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+  animation: hop-flow 0.7s linear infinite;
+}
+.topo .hop.ok {
+  stroke: var(--cobalt);
+}
+.topo .hop.bad {
+  stroke: var(--bad);
+  animation: none;
+}
+.topo .x {
+  fill: var(--bad);
+  font-size: 22px;
+  font-weight: 800;
+}
+@keyframes hop-flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+.net-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: start;
+}
+.net-cmd {
+  display: block;
+  padding: 8px 10px;
+  background: var(--card);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.hops {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  font-size: 14.5px;
+}
+.hops li {
+  padding: 2px 0;
+}
+.hops li.bad {
+  color: var(--bad);
+  font-weight: 650;
+}
+.net-verdict {
+  margin: 8px 0 0;
+  font-weight: 750;
+}
+.net-verdict.ok {
+  color: var(--cobalt);
+}
+.net-verdict.bad {
+  color: var(--bad);
+}
+.rules {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.rules th,
+.rules td {
+  padding: 7px 12px;
+  border-bottom: 1.5px solid var(--line);
+  text-align: left;
+}
+.rules th {
+  color: var(--ink-3);
+  font-weight: 650;
+}
+.rules tr.ok td {
+  background: var(--tint);
+}
+.rules tr.bad td {
+  background: color-mix(in srgb, var(--bad) 14%, transparent);
+}
+@media (max-width: 760px) {
+  .net-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topo .hop {
+    animation: none;
+  }
+}
+
+/* ---- desk rush ---- */
+.lane {
+  margin: 0 0 14px;
+}
+.lane-h {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.lane-h b {
+  color: var(--ink);
+  margin-right: auto;
+}
+.lane svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  background: var(--card);
+}
+.lane .wait,
+.shift-key .wait {
+  fill: color-mix(in srgb, var(--bad) 45%, transparent);
+  background: color-mix(in srgb, var(--bad) 45%, transparent);
+}
+.lane .busy,
+.shift-key .busy {
+  fill: var(--cobalt);
+  background: var(--cobalt);
+}
+.lane .now {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.shift-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.shift-key i {
+  display: inline-block;
+  width: 14px;
+  height: 8px;
+}
+.shift-key i:nth-of-type(2) {
+  margin-left: 10px;
+}
+
+/* ---- reconciliation heatmap ---- */
+.heat-scroll {
+  overflow-x: auto;
+}
+.heat-grid {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.heat-grid th {
+  padding: 0 6px 0 0;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-align: left;
+  white-space: nowrap;
+}
+.heat-grid thead th {
+  height: 18px;
+  padding: 0;
+  overflow: visible;
+}
+.heat-grid td {
+  padding: 0;
+}
+.heat-grid td i,
+.heat-grid td button {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  padding: 0;
+  background: var(--card);
+}
+.heat-grid td button {
+  cursor: pointer;
+}
+.heat-grid td button.on,
+.heat-grid td button:hover {
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+}
+.heat-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+.heat-key i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}
+.heat-key i:nth-of-type(2) {
+  margin-left: 10px;
+}
+.heat-key span {
+  margin-left: auto;
+  color: var(--ink);
+  font-weight: 700;
+}
+.heat-drill {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--line);
+}
+.heat-drill h4 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.heat-drill p {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+}
+.heat-drill pre {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--console);
+  color: var(--console-ink);
+  font: 13px/1.5 var(--mono);
+  overflow-x: auto;
+}
+
+/* ---- workflow graph ---- */
+.demo-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.demo-inline select {
+  padding: 6px 8px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 13.5px var(--mono);
+}
+.jobs {
+  display: block;
+  width: 100%;
+  max-width: 780px;
+  margin: 8px 0 14px;
+  font-family: var(--font);
+}
+.jobs .repo {
+  fill: var(--card);
+}
+.jobs .zone {
+  fill: var(--ink-3);
+  font-size: 12px;
+}
+.jobs .wire {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+}
+.jobs .wire.cross {
+  stroke-dasharray: 5 4;
+}
+.jobs .wire.lit {
+  stroke: var(--cobalt);
+}
+.jobs .job {
+  cursor: pointer;
+  outline: none;
+}
+.jobs .job rect:first-child {
+  fill: var(--paper);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.jobs .job.open rect:first-child,
+.jobs .job:focus-visible rect:first-child {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.jobs .job text {
+  fill: var(--ink);
+  font: 600 12.5px var(--mono);
+}
+.jobs .dot {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+}
+.jobs .s-success .dot {
+  fill: var(--cobalt);
+  stroke: var(--cobalt);
+}
+.jobs .s-running .dot {
+  stroke: var(--cobalt);
+  animation: dot-pulse 0.9s ease-in-out infinite alternate;
+}
+.jobs .s-skipped .dot {
+  stroke: var(--line);
+  fill: var(--line);
+}
+.jobs .s-skipped text {
+  fill: var(--ink-3);
+}
+@keyframes dot-pulse {
+  to {
+    fill: color-mix(in srgb, var(--cobalt) 55%, transparent);
+  }
+}
+.job-steps .job-name {
+  margin: 0 0 6px;
+  font: 700 14px var(--mono);
+}
+.job-steps ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.job-steps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 7px 0;
+  border-bottom: 1.5px solid var(--line);
+  font-size: 14.5px;
+}
+.job-steps code {
+  flex-basis: 100%;
+  padding-left: 22px;
+  font: 12.5px var(--mono);
+  color: var(--ink-2);
+}
+.graph-note {
+  margin: 12px 0 0;
+  color: var(--bad);
+  font-weight: 700;
+}

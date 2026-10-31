@@ -67,6 +67,11 @@ export type DemoKind =
   | 'build'
   | 'fsm'
   | 'router'
+  | 'evaluate'
+  | 'network'
+  | 'shift'
+  | 'heatmap'
+  | 'graph'
 
 export interface Detail {
   arch: Architecture
@@ -449,7 +454,10 @@ export const DETAILS: Record<string, Detail> = {
       },
     ],
     screens: 'nationwide',
-    demos: [{ kind: 'provision', name: 'Provision a device' }],
+    demos: [
+      { kind: 'provision', name: 'Provision a device' },
+      { kind: 'network', name: 'Reach the database' },
+    ],
   },
 
   'job-cineplex-entertainment': {
@@ -538,6 +546,7 @@ export const DETAILS: Record<string, Detail> = {
     demos: [
       { kind: 'stream', name: 'Stream sales' },
       { kind: 'dataval', name: 'Reconcile two copies' },
+      { kind: 'heatmap', name: 'Find the anomalies' },
     ],
   },
 
@@ -645,6 +654,7 @@ export const DETAILS: Record<string, Detail> = {
     demos: [
       { kind: 'fraud', name: 'Live alert queue' },
       { kind: 'scorer', name: 'Score one transaction' },
+      { kind: 'evaluate', name: 'Pick a threshold' },
     ],
   },
 
@@ -773,7 +783,10 @@ export const DETAILS: Record<string, Detail> = {
       },
     ],
     screens: 'starrez',
-    demos: [{ kind: 'extension', name: 'Use it on a profile' }],
+    demos: [
+      { kind: 'extension', name: 'Use it on a profile' },
+      { kind: 'shift', name: 'Desk rush' },
+    ],
   },
 
   'project-battleship-for-purolator': {
@@ -974,7 +987,10 @@ export const DETAILS: Record<string, Detail> = {
       },
     ],
     screens: 'cicd',
-    demos: [{ kind: 'build', name: 'Run the action' }],
+    demos: [
+      { kind: 'build', name: 'Run the action' },
+      { kind: 'graph', name: 'Both workflows' },
+    ],
   },
 
   'project-pashu': {
@@ -1148,4 +1164,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router', 'evaluate', 'heatmap', 'graph']

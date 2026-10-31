@@ -22,6 +22,11 @@ import BattleshipMatch from './demos/BattleshipMatch'
 import DispatchRun from './demos/DispatchRun'
 import Shelter from './demos/Shelter'
 import RouterApp from './demos/RouterApp'
+import Evaluate from './demos/Evaluate'
+import Network from './demos/Network'
+import Shift from './demos/Shift'
+import Heatmap from './demos/Heatmap'
+import Graph from './demos/Graph'
 
 const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   pipeline: PipelineRun,
@@ -39,6 +44,11 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   build: DispatchRun,
   fsm: Shelter,
   router: RouterApp,
+  evaluate: Evaluate,
+  network: Network,
+  shift: Shift,
+  heatmap: Heatmap,
+  graph: Graph,
 }
 
 // the demos for one entry, with a row of sub-tabs when there is more than one

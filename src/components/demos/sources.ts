@@ -10,6 +10,9 @@ import battleship from '../../battleship.ts?raw'
 import dispatch from './dispatch.ts?raw'
 import shelter from './shelter.ts?raw'
 import appStore from './appStore.ts?raw'
+import evaluate from './evaluate.ts?raw'
+import heatmap from './heatmap.ts?raw'
+import graph from './graph.ts?raw'
 import type { DemoKind } from '../../details'
 
 export interface Source {
@@ -32,6 +35,9 @@ export const SOURCES: Partial<Record<DemoKind, Source>> = {
   build: { file: 'dispatch.ts', source: dispatch },
   fsm: { file: 'shelter.ts', source: shelter },
   router: { file: 'appStore.ts', source: appStore },
+  evaluate: { file: 'evaluate.ts', source: evaluate },
+  heatmap: { file: 'heatmap.ts', source: heatmap },
+  graph: { file: 'graph.ts', source: graph },
 }
 
 // one entry per file, in the order the demos are listed
