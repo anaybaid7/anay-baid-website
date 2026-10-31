@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DAYS, gapCheck, normalize, OPS, revert, runOp, splitWeek, sumsTo100, total, type Change, type DayCheck, type Op, type Week } from './planner'
+import { averageShape, DAYS, gapCheck, normalize, OPS, revert, runOp, splitWeek, sumsTo100, total, type Change, type DayCheck, type Op, type Week } from './planner'
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-CA')
 
@@ -152,58 +152,130 @@ function Weekly() {
   )
 }
 
-const SHARES = [0.4, 20.6, 20.1, 19.8, 19.7, 18.9, 0.5]
 const WEEKLY = 18240
 
-// One week turned into days by weekday share, the way the Daily tab does it.
+// Canada Day week at terminal 101: this year's shape, and past weeks where
+// July 1 fell on the same weekday, to compare against
+const NOW = [0.81, 3.2, 22.4, 21.08, 19.66, 18.64, 14.21]
+const HISTORY: Record<string, number[]> = {
+  '2015 W27': [0.7, 2.1, 23.6, 21.9, 19.2, 18.5, 14.0],
+  '2020 W28': [0.9, 3.9, 21.8, 20.6, 19.9, 18.8, 14.1],
+  '2009 W27': [0.6, 2.6, 22.9, 21.5, 19.5, 18.7, 14.2],
+  '2026 W26': [0.8, 19.4, 19.9, 19.6, 19.2, 18.3, 2.8],
+}
+const COLORS = ['#7c8db5', '#c26b2c', '#2f8f6d', '#9a5bb5']
+
+function ShapeChart({ now, overlays, avg }: { now: number[]; overlays: [string, number[]][]; avg: number[] | null }) {
+  const W = 560
+  const H = 200
+  const x = (i: number) => 36 + (i * (W - 52)) / 6
+  const y = (v: number) => H - 24 - (v / 25) * (H - 36)
+  const line = (v: number[]) => v.map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p).toFixed(1)}`).join(' ')
+  return (
+    <svg className="pchart shape" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Share of the week by day">
+      {[0, 10, 20].map((v) => (
+        <g key={v}>
+          <line className="grid" x1={30} x2={W - 10} y1={y(v)} y2={y(v)} />
+          <text className="ax" x={0} y={y(v) + 4}>{v}%</text>
+        </g>
+      ))}
+      {DAYS.map((d, i) => <text key={d} className="ax" x={x(i)} y={H - 6} textAnchor="middle">{d}</text>)}
+      {overlays.map(([k, v], i) => <path key={k} d={line(v)} style={{ stroke: COLORS[i % COLORS.length] }} className="ov" />)}
+      {avg && <path d={line(avg)} className="avg" />}
+      <path d={line(now)} className="fc" />
+      {now.map((p, i) => <circle key={i} cx={x(i)} cy={y(p)} r={3.5} className="mod" />)}
+    </svg>
+  )
+}
+
+// The Daily Distribution page: overlay past weeks, take their average,
+// edit the shares, and save only when the week adds to 100%.
 function Daily() {
-  const [shares, setShares] = useState(SHARES)
-  const ok = sumsTo100(shares)
-  // until the shares add to 100%, the days don't add back to the week
-  const days = ok ? splitWeek(WEEKLY, shares) : shares.map((x) => Math.round((WEEKLY * x) / 100))
-  const short = WEEKLY - days.reduce((a, b) => a + b, 0)
-  const sum = shares.reduce((a, b) => a + b, 0)
-  const top = Math.max(...days, 1)
+  const [saved, setSaved] = useState(NOW)
+  const [edit, setEdit] = useState(NOW)
+  const [overlays, setOverlays] = useState<string[]>(['2015 W27', '2020 W28'])
+  const [log, setLog] = useState<string[]>([])
+  const avg = averageShape(overlays.map((o) => HISTORY[o]))
+  const sum = edit.reduce((a, b) => a + b, 0)
+  const ok = sumsTo100(edit)
+  const days = ok ? splitWeek(WEEKLY, edit) : edit.map((p) => Math.round((WEEKLY * p) / 100))
+
+  const save = () => {
+    const changes = edit.map((v, i) => [i, v] as const).filter(([i, v]) => Math.abs(v - saved[i]) > 0.001)
+    setLog([...changes.map(([i, v]) => `T101 W27 ${DAYS[i]}  ${saved[i].toFixed(2)}% → ${v.toFixed(2)}%`), ...log].slice(0, 12))
+    setSaved(edit)
+  }
 
   return (
     <>
-      <p className="demo-hint">Make Wednesday a holiday, then normalize.</p>
-      <div className="daily">
-        {DAYS.map((d, i) => (
-          <div key={d} className="daily-col">
-            <span className="daily-bar">
-              <i style={{ height: `${(days[i] / top) * 100}%` }} />
-            </span>
-            <b>{fmt(days[i])}</b>
-            <label>
-              <span>{d}</span>
-              <input
-                type="number"
-                step="0.01"
-                value={shares[i]}
-                aria-label={`${d} share`}
-                onChange={(e) => setShares(shares.map((s, j) => (j === i ? +e.target.value : s)))}
-              />
-            </label>
+      <p className="demo-hint">Add overlays, use their average, save.</p>
+      <div className="plan-grid">
+        <div>
+          <p className="shape-head">
+            <b>Week 27</b> <span className="plan-event">Canada Day</span> <span>T101 · PCL Del Pieces · {fmt(WEEKLY)}</span>
+          </p>
+          <ShapeChart now={edit} overlays={overlays.map((o) => [o, HISTORY[o]])} avg={avg} />
+          <div className="ov-tags">
+            {overlays.map((o, i) => (
+              <button key={o} type="button" className="ov-tag" onClick={() => setOverlays(overlays.filter((x) => x !== o))} aria-label={`Remove ${o}`}>
+                <i style={{ background: COLORS[i % COLORS.length] }} /> {o} ×
+              </button>
+            ))}
+            <select value="" onChange={(e) => e.target.value && setOverlays([...overlays, e.target.value])} aria-label="Add an overlay">
+              <option value="">+ overlay</option>
+              {Object.keys(HISTORY)
+                .filter((k) => !overlays.includes(k))
+                .map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+            {avg && <span className="ov-avg"><i /> average</span>}
           </div>
-        ))}
+          <div className="table-scroll">
+            <table className="plan-table shape-table">
+              <thead>
+                <tr><th>Day</th><th>Saved</th><th>New</th><th>Pieces</th></tr>
+              </thead>
+              <tbody>
+                {DAYS.map((d, i) => (
+                  <tr key={d} className={Math.abs(edit[i] - saved[i]) > 0.001 ? 'changed' : ''}>
+                    <td>{d}</td>
+                    <td>{saved[i].toFixed(2)}%</td>
+                    <td>
+                      <input
+                        className="plan-input"
+                        type="number"
+                        step="0.01"
+                        value={edit[i]}
+                        aria-label={`${d} share`}
+                        onChange={(e) => setEdit(edit.map((v, j) => (j === i ? +e.target.value : v)))}
+                      />
+                    </td>
+                    <td>{fmt(days[i])}</td>
+                  </tr>
+                ))}
+                <tr className={ok ? 'sum-ok' : 'sum-bad'}>
+                  <td>Total</td>
+                  <td>100.00%</td>
+                  <td>{sum.toFixed(2)}%</td>
+                  <td>{fmt(days.reduce((a, b) => a + b, 0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="plan-ops">
+            <button type="button" onClick={() => avg && setEdit(avg)} disabled={!avg}>Use average</button>
+            <button type="button" onClick={() => setEdit(normalize(edit))}>Normalize</button>
+            <button type="button" className="demo-primary" onClick={save} disabled={!ok}>Save</button>
+            <button type="button" onClick={() => setEdit(saved)}>Reset</button>
+          </div>
+        </div>
+        <aside className="plan-log">
+          <p className="demo-h">Distribution changes</p>
+          <ol>
+            {log.length === 0 && <li className="none">Nothing saved yet</li>}
+            {log.map((l, i) => <li key={i}><span>{l}</span></li>)}
+          </ol>
+        </aside>
       </div>
-      <div className="demo-actions">
-        <button type="button" onClick={() => setShares(shares.map((s, i) => (i === 3 ? 0 : s)))}>
-          Make Wednesday a holiday
-        </button>
-        <button type="button" className="demo-primary" onClick={() => setShares(normalize(shares))}>
-          Normalize
-        </button>
-        <button type="button" onClick={() => setShares(SHARES)}>
-          Reset
-        </button>
-      </div>
-      <p className={`demo-out ${ok ? '' : 'warn'}`} aria-live="polite">
-        {ok
-          ? `${sum.toFixed(2)}%. Days add back to ${fmt(days.reduce((a, b) => a + b, 0))}.`
-          : `${sum.toFixed(2)}%. ${fmt(short)} pieces missing. Can’t save until it’s 100%.`}
-      </p>
     </>
   )
 }
@@ -281,7 +353,7 @@ function Gaps() {
 
 const PARTS = [
   ['weekly', 'Edit the weekly forecast'],
-  ['daily', 'Split a week into days'],
+  ['daily', 'Daily distribution'],
   ['gaps', 'Check for gaps'],
 ] as const
 
