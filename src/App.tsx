@@ -355,6 +355,11 @@ function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: 
                 <span>
                   <b>{shortOrg(e.org)}</b>
                   <small>{shortPeriod(e.period)}</small>
+                  {e.highlight && (
+                    <small className="xp-result">
+                      <em>{e.highlight.value}</em> {e.highlight.label}
+                    </small>
+                  )}
                 </span>
               </button>
             ))}
@@ -731,6 +736,15 @@ export default function App() {
           goTo('experience')
         },
       })),
+      ...Object.entries(DETAILS).flatMap(([id, d]) =>
+        (d.demos ?? []).map((demo) => ({
+          group: 'Demos',
+          label: `Try ${demo.name.toLowerCase()}`,
+          hint: entryById(id)?.title.replace(/ \(.*\)$/, ''),
+          keywords: `demo try ${demo.kind}`,
+          run: () => showDetail({ id, tab: 'try', demo: demo.kind }),
+        })),
+      ),
       ...insideCommands(showDetail),
       ...Object.entries(NOTES).flatMap(([id, n]) =>
         n.decisions.map((d) => ({
@@ -794,6 +808,14 @@ export default function App() {
                 {wins.length > 0 && <span>{plural(wins.length, 'hackathon win')}</span>}
                 <span>{profile.location.replace(', ON', '')}</span>
               </p>
+              <div className="hero-orgs" role="group" aria-label="Co-op employers">
+                {experience.map((e, i) => (
+                  <button key={e.org} type="button" onClick={() => openJob(i)} title={`${e.role}, ${shortPeriod(e.period)}`}>
+                    <img src={e.logo} alt="" width={20} height={20} />
+                    {shortOrg(e.org)}
+                  </button>
+                ))}
+              </div>
               <p className="hero-links">
                 <a className="primary" href={`mailto:${profile.email}`}>Email me</a>
                 <button type="button" onClick={showResume}>Read resume</button>
