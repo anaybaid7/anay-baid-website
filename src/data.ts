@@ -288,6 +288,13 @@ export const education = {
   highlights: [
     '100% in CS 445 (Software Requirements Specification) and CS 446 (Software Design and Architectures), and recognized for it by the Director of Software Engineering.',
   ],
+  letter: {
+    href: '/letters/Anay_Baid_CS445_Reference_Letter.pdf',
+    by: 'Victoria Sakhnini',
+    role: 'Director of Software Engineering, University of Waterloo',
+    course: 'CS\u00a0445',
+    quote: 'His project work was flawless across all eight deliverables, an achievement I consider nearly impossible given the complexity of requirements modelling.',
+  },
 }
 
 export const allTech = Array.from(

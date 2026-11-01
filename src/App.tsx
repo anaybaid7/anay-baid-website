@@ -709,6 +709,7 @@ export default function App() {
       { group: 'Elsewhere', label: 'Play Battleship live', keywords: 'game demo', run: () => window.open('https://purolator-battleship.onrender.com', '_blank', 'noopener') },
       { group: 'Page', label: 'Skills', run: () => goTo('skills') },
       { group: 'Page', label: 'About', keywords: 'education skills site', run: () => goTo('about') },
+      { group: 'Page', label: 'CS 445 reference letter', keywords: 'reference recommendation professor pdf', run: () => window.open(education.letter.href, '_blank', 'noopener') },
       { group: 'Page', label: 'Switch light or dark', keywords: 'theme mode', run: () => (document.querySelector('.theme') as HTMLButtonElement | null)?.click() },
       { group: 'Page', label: 'Switch between full detail and skim', keywords: 'view compact summary', run: () => setSettings({ view: document.documentElement.dataset.view === 'skim' ? 'full' : 'skim' }) },
       { group: 'Page', label: 'Settings', keywords: 'preferences text size accent motion', run: () => (document.getElementById('settings') as (HTMLElement & { showPopover?: () => void }) | null)?.showPopover?.() },
@@ -877,6 +878,15 @@ export default function App() {
               <p>{education.degree}, {education.gradDate.replace('Expected ', 'graduating ')}</p>
               <p className="stack">{education.specializations}</p>
               <Bullets items={education.highlights} />
+              {education.letter && (
+                <figure className="letter">
+                  <blockquote>“{education.letter.quote}”</blockquote>
+                  <figcaption>
+                    {education.letter.by}, {education.letter.role}.{' '}
+                    <a href={education.letter.href} target="_blank" rel="noreferrer">Read the {education.letter.course} reference letter</a>
+                  </figcaption>
+                </figure>
+              )}
             </div>
 
             <Skills onFilter={applyFilter} />
