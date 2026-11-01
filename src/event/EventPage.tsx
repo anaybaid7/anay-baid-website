@@ -309,7 +309,9 @@ export default function EventPage() {
 function Deck() {
   const [at, setAt] = useState(fromHash)
   const [notes, setNotes] = useState(false)
-  const [spot, setSpot] = useState<number | null>(null)
+  // the weekly cycle opens on its first step, so the slide never starts empty
+  const [spot, setSpot] = useState<number | null>(() => (slides[fromHash()].steps ? 0 : null))
+  const [back, setBack] = useState(false)
   const [panel, setPanel] = useState<'grid' | 'keys' | null>(null)
   const [pointer, setPointer] = useState(false)
   const channel = useRef<BroadcastChannel | null>(null)
@@ -321,11 +323,12 @@ function Deck() {
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(last, i))
+    setBack(n < at)
     setAt(n)
     setNotes(false)
-    setSpot(null)
+    setSpot(slides[n].steps ? 0 : null)
     history.replaceState(null, '', `#${n + 1}`)
-  }, [last])
+  }, [last, at])
 
   // Each click shows the next thing: the notes, then each part of the
   // screenshot zoomed in, then the next slide.
@@ -424,7 +427,7 @@ function Deck() {
       <main className="ev-main">
         <div className="deck" ref={stage}>
           <div
-            className={`deck-slide ${layout}${notes ? ' with-notes' : ''}`}
+            className={`deck-slide ${layout}${notes ? ' with-notes' : ''}${back ? ' from-left' : ''}`}
             onClick={advance}
             role="button"
             tabIndex={0}
@@ -433,8 +436,26 @@ function Deck() {
           >
             <div className="deck-main">
               <div className="deck-head">
-                <h1 className="deck-title">{slide.title}</h1>
-                {slide.line && <p className="deck-line">{slide.line}</p>}
+                <div className="deck-headline">
+                  <h1 className="deck-title">{slide.title}</h1>
+                  {slide.line && <p className="deck-line">{slide.line}</p>}
+                </div>
+                {slide.spots && (
+                  <ol className="deck-parts" aria-label="Parts of this screenshot">
+                    {slide.spots.map((sp, i) => (
+                      <li key={sp.title}>
+                        <button
+                          type="button"
+                          aria-pressed={i === spot}
+                          onClick={(e) => { e.stopPropagation(); setSpot(i === spot ? null : i) }}
+                        >
+                          <span>{i + 1}</span>
+                          {sp.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
                 {slide.points && (
                   <ul className="deck-points">
                     {slide.points.map((p, i) => (

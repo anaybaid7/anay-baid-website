@@ -247,6 +247,7 @@ export const slides: Slide[] = [
   {
     label: 'The forecast tool',
     title: 'This year next to last year',
+    line: 'Peak season in late November is the stretch the whole year gets planned around',
     image: '/event-shots/weekly-chart.webp',
     time: 35,
     notes: [
@@ -261,6 +262,7 @@ export const slides: Slide[] = [
   {
     label: 'The forecast tool',
     title: "Adding what the model can't see",
+    line: 'The model gets us close, then we add what only people know',
     image: '/event-shots/weekly-grid.webp',
     time: 30,
     notes: [
@@ -276,6 +278,7 @@ export const slides: Slide[] = [
   {
     label: 'The forecast tool',
     title: 'Turning a week into days',
+    line: 'Staffing happens by the day, so every week gets split into days',
     image: '/event-shots/shape-edit.webp',
     time: 30,
     notes: [
@@ -291,6 +294,7 @@ export const slides: Slide[] = [
   {
     label: 'The forecast tool',
     title: 'How close we got',
+    line: 'Every day we line up what came in against what we said would',
     image: '/event-shots/accuracy.webp',
     time: 30,
     notes: [
@@ -305,6 +309,7 @@ export const slides: Slide[] = [
   {
     label: 'Hub Reporting',
     title: 'The same for the hubs',
+    line: 'Hubs need their own forecast, so I built them a report in Power BI',
     image: '/event-shots/powerbi-overview.webp',
     time: 30,
     notes: [
@@ -320,6 +325,7 @@ export const slides: Slide[] = [
   {
     label: 'Hub Reporting',
     title: 'Week over week at a hub',
+    line: 'Pick any two weeks and see what changed for each type of parcel',
     image: '/event-shots/powerbi-weekly-comparison.webp',
     time: 20,
     notes: [
