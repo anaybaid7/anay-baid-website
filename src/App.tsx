@@ -604,6 +604,8 @@ export default function App() {
   const showCase = useCallback((id: string | null) => {
     const url = new URL(location.href)
     url.searchParams.delete('case')
+    // a step link only belongs to the case study it was made in
+    if (!id || !location.pathname.startsWith(casePath(id))) url.hash = ''
     if (id) {
       url.pathname = casePath(id)
       for (const k of ['open', 'tab', 'demo', 'flow', 'step']) url.searchParams.delete(k)

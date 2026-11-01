@@ -71,6 +71,26 @@ export default function CaseStudy({ id, onClose, onNext }: { id: string; onClose
     d.addEventListener('scroll', onScroll, { passive: true })
     return () => d.removeEventListener('scroll', onScroll)
   }, [])
+  // about 230 words a minute over everything written in the case study
+  const words = [entry.why, entry.description ?? '', ...flows.flatMap((fl) => [fl.summary ?? '', ...fl.steps.map((st) => `${st.title} ${st.detail}`)]), ...notes.decisions.map((d) => `${d.chose} ${d.over} ${d.because}`), ...notes.handles, ...(notes.next ?? [])]
+    .join(' ')
+    .split(/\s+/).length
+  const minutes = Math.max(1, Math.round(words / 230))
+  const [linked, setLinked] = useState<string | null>(null)
+  const linkStep = (f: number, s: number) => {
+    const url = new URL(location.href)
+    url.hash = `step-${f + 1}-${s + 1}`
+    history.replaceState(null, '', url)
+    navigator.clipboard?.writeText(url.href).then(() => {
+      setLinked(url.hash)
+      setTimeout(() => setLinked(null), 1600)
+    }, () => {})
+  }
+  // a link to one step scrolls straight to it
+  useEffect(() => {
+    const m = location.hash.match(/^#step-(\d+)-(\d+)$/)
+    if (m) requestAnimationFrame(() => dialog.current?.querySelector(`#step-${m[1]}-${m[2]}`)?.scrollIntoView({ block: 'center' }))
+  }, [])
   const jump = (part: string) => dialog.current?.querySelector(`#cs-${part}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   useEffect(() => {
@@ -102,7 +122,10 @@ export default function CaseStudy({ id, onClose, onNext }: { id: string; onClose
       <header className="cs-head">
         <p className="cs-kicker">Case study</p>
         <h2 id="case-title">{entry.title}</h2>
-        <p className="cs-sub">{entry.kind === 'job' ? `${entry.sub}, ${entry.when}` : entry.when}</p>
+        <p className="cs-sub">
+          {entry.kind === 'job' ? `${entry.sub}, ${entry.when}` : entry.when}
+          <span className="cs-time">{minutes} min read</span>
+        </p>
         {entry.highlight && (
           <p className="entry-result">
             <b>{entry.highlight.value}</b> {entry.highlight.label}
@@ -134,9 +157,14 @@ export default function CaseStudy({ id, onClose, onNext }: { id: string; onClose
                 <h4>{fl.name}</h4>
                 {fl.summary && <p className="cs-summary">{fl.summary}</p>}
                 {fl.steps.map((st, s) => (
-                  <article key={s} className={`cs-step ${at.f === f && at.s === s ? 'on' : ''}`} data-f={f} data-s={s}>
+                  <article key={s} id={`step-${f + 1}-${s + 1}`} className={`cs-step ${at.f === f && at.s === s ? 'on' : ''}`} data-f={f} data-s={s}>
                     <p className="cs-n">{s + 1}</p>
-                    <h5>{st.title}</h5>
+                    <h5>
+                      {st.title}
+                      <button type="button" className="cs-link" onClick={() => linkStep(f, s)} aria-label={`Copy a link to step ${s + 1}, ${st.title}`}>
+                        {linked === `#step-${f + 1}-${s + 1}` ? 'Copied' : 'Link'}
+                      </button>
+                    </h5>
                     <p>{st.detail}</p>
                     {st.payload && (
                       <div className="flow-payload">

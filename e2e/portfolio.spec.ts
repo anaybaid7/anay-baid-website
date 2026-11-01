@@ -192,3 +192,9 @@ test('a case study opens from its own address and moves on to the next', async (
   await page.keyboard.press('Escape')
   await expect(page).toHaveURL(/\/$/)
 })
+
+test('a link to one step of a case study opens on that step', async ({ page }) => {
+  await page.goto('/work/purolator/#step-1-3')
+  const step = page.locator('#step-1-3')
+  await expect(step).toBeInViewport()
+})

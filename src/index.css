@@ -168,13 +168,10 @@ button {
 .hero h1 span + span {
   animation-delay: 0.07s;
 }
+/* transform only: text that starts invisible counts as painted late */
 @keyframes widen {
   from {
     transform: scaleX(0.55);
-    opacity: 0;
-  }
-  45% {
-    opacity: 1;
   }
 }
 
@@ -188,7 +185,6 @@ button {
 }
 @keyframes settle {
   from {
-    opacity: 0;
     transform: translateY(10px);
   }
 }
@@ -8208,4 +8204,37 @@ dialog.case[open] {
 }
 .cs-next button:hover {
   color: var(--cobalt);
+}
+
+.cs-time {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--line);
+  color: var(--ink-3);
+}
+.cs-link {
+  margin-left: 10px;
+  padding: 2px 7px;
+  border: 1.5px solid var(--line);
+  background: none;
+  color: var(--ink-3);
+  font: 600 12.5px var(--font);
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out);
+  cursor: pointer;
+}
+.cs-step:hover .cs-link,
+.cs-step.on .cs-link,
+.cs-link:focus-visible {
+  opacity: 1;
+}
+.cs-link:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+@media (hover: none) {
+  .cs-link {
+    opacity: 1;
+  }
 }

@@ -3,6 +3,7 @@
 // hydrates the same markup instead of building it from scratch.
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { JSDOM } from 'jsdom'
+import Beasties from 'beasties'
 
 const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://a2baid.netlify.app/' })
 const g = globalThis
@@ -19,7 +20,12 @@ const html = render()
 const file = 'dist/index.html'
 const page = await readFile(file, 'utf8')
 if (!page.includes('<div id="root"></div>')) throw new Error('no empty #root in dist/index.html')
-const full = page.replace('<div id="root"></div>', `<div id="root">${html}</div>`)
+// Inline the CSS the first screen uses and load the rest without blocking
+// paint. Rules keyed on the settings attributes (theme, accent, size and so
+// on) are always kept, since those are set by a script before first paint.
+const beasties = new Beasties({ path: 'dist', publicPath: './', preload: 'swap', pruneSource: false, reduceInlineStyles: false, allowRules: [/\[data-/, /prefers-color-scheme/, /prefers-reduced-motion/], logLevel: 'warn' })
+// beasties also preloads the web fonts the inlined CSS uses
+const full = await beasties.process(page.replace('<div id="root"></div>', `<div id="root">${html}</div>`))
 await writeFile(file, full)
 
 // One page per case study, so a shared /work/<name>/ link previews that case
