@@ -123,6 +123,9 @@ const lensFromUrl = (): Area | null => {
   return a && a in AREAS ? (a as Area) : null
 }
 
+// small counts read better as words in a sentence
+const word = (n: number) => ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][n] ?? String(n)
+
 const SECTION_LINKS = [['featured', 'Featured'], ['experience', 'Experience'], ['projects', 'Projects'], ['contact', 'Contact']] as const
 
 // which of the header's sections is on screen, for marking its link
@@ -826,30 +829,13 @@ export default function App() {
             />
             <div className="hero-copy">
               <p className="lede">Software engineer for backend services and data pipelines.</p>
-              <p className="sub">
+              <p className="sub hero-facts">
                 On co{'\u2011'}op at Purolator, building the forecasting pipeline, the planning tools on top of it and
-                the AWS stack they run on.
+                the AWS stack they run on. Final year of CS at Waterloo, graduating April 2027, with{' '}
+                {word(experience.length)} co{'\u2011'}op terms
+                {wins.length > 0 && <> and {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>} behind me. Based in{' '}
+                {profile.location.replace(', ON', '')}.
               </p>
-              <dl className="hero-facts">
-                <div>
-                  <dt>Graduating</dt>
-                  <dd>April 2027, Waterloo CS</dd>
-                </div>
-                <div>
-                  <dt>Co{'\u2011'}op</dt>
-                  <dd>{experience.length} terms, {totalMonths()} months</dd>
-                </div>
-                {wins.length > 0 && (
-                  <div>
-                    <dt>Hackathons</dt>
-                    <dd>{plural(wins.length, 'win')}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt>Based in</dt>
-                  <dd>{profile.location.replace(', ON', '')}</dd>
-                </div>
-              </dl>
               <div className="hero-orgs" role="group" aria-label="Co-op employers">
                 {experience.map((e, i) => (
                   <button key={e.org} type="button" onClick={() => openJob(i)} title={`${shortOrg(e.org)}, ${e.role}, ${shortPeriod(e.period)}`}>

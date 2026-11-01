@@ -7183,12 +7183,6 @@ button:focus-visible > .shot {
   border-color: var(--cobalt);
 }
 
-.hero-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 24px;
-}
-
 .feature-list {
   margin: 0;
   padding: 0;
@@ -7782,35 +7776,14 @@ dd {
   max-width: 17em;
 }
 .hero-copy .sub {
-  margin: 14px 0 0;
-  max-width: 34em;
+  margin: 16px 0 0;
+  max-width: 36em;
   font-size: clamp(17px, 1.35vw, 19px);
   line-height: 1.55;
   color: var(--ink-2);
 }
-.hero-facts {
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
-  gap: 10px 40px;
-  margin: 24px 0 0;
-  padding: 14px 0;
-  border-top: 1.5px solid var(--line);
-  border-bottom: 1.5px solid var(--line);
-}
-.hero-facts dt {
-  color: var(--ink-3);
-  font-size: 13px;
-  font-weight: 600;
-}
-.hero-facts dd {
-  margin: 2px 0 0;
-  font-size: 15.5px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-}
 .hero-orgs {
-  margin: 16px 0 0;
+  margin: 20px 0 0;
   gap: 8px 22px;
 }
 .hero-orgs button {
@@ -7825,59 +7798,41 @@ dd {
 .hero-links {
   margin-top: 26px;
 }
-@media (max-width: 1100px) {
-  .hero-facts {
-    grid-template-columns: repeat(2, max-content);
-  }
-}
-/* phones: the photo sits beside the facts instead of alone on a row */
+/* phones: a small photo beside the headline instead of alone on a row */
 @media (max-width: 620px) {
   .hero-grid {
-    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-columns: 76px minmax(0, 1fr);
     grid-template-areas:
-      "lede lede"
+      "photo lede"
       "sub sub"
-      "photo facts"
       "orgs orgs"
       "links links";
-    gap: 0 16px;
+    gap: 0 14px;
     align-items: center;
   }
   .hero-copy {
     display: contents;
   }
+  .hero-grid .photo {
+    grid-area: photo;
+    width: 76px;
+    height: 76px;
+  }
   .hero-copy .lede {
     grid-area: lede;
-    font-size: 27px;
+    font-size: 23px;
   }
   .hero-copy .sub {
     grid-area: sub;
+    margin-top: 18px;
     font-size: 16.5px;
-  }
-  .hero-grid .photo {
-    grid-area: photo;
-    width: 96px;
-    height: 96px;
-    margin-top: 22px;
-  }
-  .hero-facts {
-    grid-area: facts;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 14px;
-    margin-top: 22px;
-    padding: 0;
-    border: 0;
-  }
-  .hero-facts dd {
-    font-size: 14.5px;
-    white-space: normal;
   }
   .hero-orgs {
     grid-area: orgs;
     display: grid;
     grid-template-columns: repeat(2, max-content);
     gap: 10px 28px;
-    margin-top: 22px;
+    margin-top: 20px;
   }
   .hero-links {
     grid-area: links;
