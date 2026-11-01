@@ -7,6 +7,7 @@ import CodeView from './CodeView'
 import Decisions from './Decisions'
 import { Clip } from './Media'
 import { NOTES } from '../decisions'
+import { hasCase } from '../cases'
 import { SpeedPicker } from './sim/SpeedPicker'
 import { sourcesFor } from './demos/sources'
 import PipelineRun from './demos/PipelineRun'
@@ -64,7 +65,7 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
 }
 
 // the demos for one entry, with a row of sub-tabs when there is more than one
-function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string }[]; first?: DemoKind }) {
+export function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string }[]; first?: DemoKind }) {
   const [i, setI] = useState(() => Math.max(0, demos.findIndex((d) => d.kind === first)))
   // the link keeps which demo is showing, so a copied link opens on it
   const pick = (j: number) => {
@@ -143,7 +144,7 @@ function ShareLink() {
 
 // The first tab: the work in motion, then the problem, one decision and the
 // details, so the overview isn't a copy of the page
-function Overview({ entry, onTab }: { entry: NonNullable<ReturnType<typeof entryById>>; onTab: (t: Tab, demo?: DemoKind) => void }) {
+function Overview({ entry, onTab, onCase }: { entry: NonNullable<ReturnType<typeof entryById>>; onTab: (t: Tab, demo?: DemoKind) => void; onCase?: () => void }) {
   const demo = DETAILS[entry.id]?.demos?.[0]
   const notes = NOTES[entry.id]
   const d = notes?.decisions[0]
@@ -180,6 +181,9 @@ function Overview({ entry, onTab }: { entry: NonNullable<ReturnType<typeof entry
               </div>
             )}
           </dl>
+          {onCase && (
+            <button type="button" className="ov-case" onClick={onCase}>Read the case study →</button>
+          )}
         </div>
       </div>
       {entry.description && <p className="entry-desc">{entry.description}</p>}
@@ -212,9 +216,10 @@ export interface Opened {
   demo?: DemoKind
 }
 
-export default function DetailDrawer({ open, onChange }: {
+export default function DetailDrawer({ open, onChange, onCase }: {
   open: Opened | null
   onChange: (next: Opened | null) => void
+  onCase?: (id: string) => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   // a part of the diagram to select when a screen note links to it
@@ -317,7 +322,7 @@ export default function DetailDrawer({ open, onChange }: {
 
           <div className="drawer-body" id="drawer-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={0}>
             {tab === 'overview' && (
-              <Overview entry={entry} onTab={(t, demo) => onChange({ id: entry.id, tab: t, demo })} />
+              <Overview entry={entry} onTab={(t, demo) => onChange({ id: entry.id, tab: t, demo })} onCase={onCase && hasCase(entry.id) ? () => onCase(entry.id) : undefined} />
             )}
             {tab === 'how' && detail && <ArchDiagram
                 key={`${entry.id}-${focusNode ?? ''}-${open?.at ? `${open.at.flow}.${open.at.step}` : ''}`}

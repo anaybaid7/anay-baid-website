@@ -17,6 +17,7 @@ import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
 import { NOTES } from './decisions'
+import { caseFromUrl, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import { prerendered, useHydrated } from './hydrated'
@@ -24,6 +25,7 @@ import type { Action as TermAction } from './terminal'
 
 // the drawer and its demos load the first time someone opens one
 const DetailDrawer = lazy(() => import('./components/DetailDrawer'))
+const CaseStudy = lazy(() => import('./components/CaseStudy'))
 const Terminal = lazy(() => import('./components/Terminal'))
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
@@ -439,7 +441,7 @@ function insideCommands(show: (d: Opened) => void): Command[] {
 
 // The three pieces of work to look at first: the problem, one decision and
 // what came of it, in the same order each time
-function Featured({ onOpen }: { onOpen: OpenFn }) {
+function Featured({ onOpen, onCase }: { onOpen: OpenFn; onCase: (id: string) => void }) {
   return (
     <section className="section featured" aria-labelledby="featured" data-part="featured">
       <h2 id="featured">Featured</h2>
@@ -473,6 +475,7 @@ function Featured({ onOpen }: { onOpen: OpenFn }) {
                   </dl>
                   <p className="entry-tabs">
                     <button type="button" className="primary" onClick={() => onOpen(f.id, 'try', f.kind)}>Try it</button>
+                    {hasCase(f.id) && <button type="button" onClick={() => onCase(f.id)}>Case study</button>}
                     <button type="button" onClick={() => onOpen(f.id, 'how')}>How it works</button>
                     <button type="button" onClick={() => onOpen(f.id, 'code')}>Code</button>
                   </p>
@@ -549,6 +552,7 @@ export default function App() {
   const reading = useReading()
   const [, setMonthTick] = useState(0)
   const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
+  const [caseId, setCaseId] = useState<string | null>(() => (prerendered ? null : caseFromUrl()))
   const [filter, setFilter] = useState<string[]>(() => (prerendered ? [] : filterFromUrl()))
   const [lens, setLens] = useState<Area | null>(() => (prerendered ? null : lensFromUrl()))
   // the posting matcher is my own tool, only there with ?me in the URL
@@ -560,6 +564,7 @@ export default function App() {
   useLayoutEffect(() => {
     if (!prerendered) return
     setDetail(detailFromUrl())
+    setCaseId(caseFromUrl())
     setFilter(filterFromUrl())
     setLens(lensFromUrl())
     setOwner(ownerFromUrl())
@@ -594,6 +599,17 @@ export default function App() {
     }
     history.replaceState(null, '', url)
     if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
+  }, [])
+  // a case study lives in the URL as ?case=, like the drawer
+  const showCase = useCallback((id: string | null) => {
+    const url = new URL(location.href)
+    if (id) {
+      url.searchParams.set('case', id)
+      for (const k of ['open', 'tab', 'demo', 'flow', 'step']) url.searchParams.delete(k)
+      setDetail(null)
+    } else url.searchParams.delete('case')
+    history.replaceState(null, '', url)
+    setCaseId(id)
   }, [])
   const openDetail = useCallback(
     (id: string, tab?: Tab, demo?: DemoKind) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview', demo }),
@@ -736,6 +752,12 @@ export default function App() {
           goTo('experience')
         },
       })),
+      ...ENTRIES.filter((e) => hasCase(e.id)).map((e) => ({
+        group: 'Case studies',
+        label: `${e.title.replace(/ \(.*\)$/, '')} case study`,
+        keywords: 'case study write up deep dive',
+        run: () => showCase(e.id),
+      })),
       ...Object.entries(DETAILS).flatMap(([id, d]) =>
         (d.demos ?? []).map((demo) => ({
           group: 'Demos',
@@ -757,7 +779,7 @@ export default function App() {
         })),
       ),
     ]
-  }, [showDetail, showResume, applyFilter, applyLens, owner])
+  }, [showDetail, showResume, applyFilter, applyLens, owner, showCase])
   return (
     <>
       <div className="progress" aria-hidden="true" />
@@ -841,7 +863,7 @@ export default function App() {
           </div>
         </section>
 
-        <Featured onOpen={openDetail} />
+        <Featured onOpen={openDetail} onCase={showCase} />
 
         {filter.length > 0 && (
           <div className="filterbar" role="status" data-part="filter">
@@ -1004,7 +1026,12 @@ export default function App() {
       <SettingsPanel />
       {detail && (
         <Suspense fallback={null}>
-          <DetailDrawer open={detail} onChange={showDetail} />
+          <DetailDrawer open={detail} onChange={showDetail} onCase={showCase} />
+        </Suspense>
+      )}
+      {caseId && (
+        <Suspense fallback={null}>
+          <CaseStudy key={caseId} id={caseId} onClose={() => showCase(null)} />
         </Suspense>
       )}
       {owner && <Matcher

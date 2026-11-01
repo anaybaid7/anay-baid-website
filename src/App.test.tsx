@@ -111,6 +111,19 @@ describe('App', () => {
     expect(document.getElementById('job-iotum')).toHaveClass('on')
   })
 
+  it('opens a case study from its link, with the steps and decisions', async () => {
+    history.replaceState(null, '', '/?case=project-insightvault')
+    render(<App />)
+    const dialog = await waitFor(() => {
+      const d = document.querySelector('dialog.case')
+      if (!d) throw new Error('case study not loaded yet')
+      return d as HTMLElement
+    })
+    expect(dialog.querySelector('#case-title')).toHaveTextContent('InsightVault')
+    expect(dialog.querySelectorAll('.cs-step').length).toBeGreaterThan(2)
+    expect(dialog.querySelector('.cs-decisions')).toHaveTextContent('instead of a single black-box model')
+  })
+
   it('quotes and links the CS 445 reference letter', () => {
     render(<App />)
     const link = screen.getByRole('link', { name: 'Read the CS\u00a0445 reference letter' })
