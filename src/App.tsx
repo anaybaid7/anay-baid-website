@@ -489,6 +489,9 @@ function Featured({ onOpen, onCase }: { onOpen: OpenFn; onCase: (id: string) => 
   )
 }
 
+// short names so the row fits on one line; the full name is the title
+const LENS_SHORT: Record<Area, string> = { data: 'Data', backend: 'Backend', infra: 'Cloud', automation: 'Testing', frontend: 'Frontend' }
+
 // show the page through one area of work, for a role hiring for it
 function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) => void }) {
   return (
@@ -497,8 +500,8 @@ function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) =>
         <span className="lens-label">Hiring for</span>
         <button type="button" role="radio" aria-checked={lens === null} onClick={() => onLens(null)}>Anything</button>
         {(Object.keys(AREAS) as Area[]).map((a) => (
-          <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)}>
-            {AREAS[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
+          <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)} title={AREAS[a]}>
+            {LENS_SHORT[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
           </button>
         ))}
       </div>

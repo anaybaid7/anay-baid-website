@@ -427,7 +427,7 @@ describe('hiring for', () => {
     render(<App />)
     expect(document.querySelector('main')).toHaveAttribute('data-lens', 'data')
     expect(document.querySelector('.lens-sum')).toHaveTextContent('3 of 10 match')
-    fireEvent.click(screen.getByRole('radio', { name: /^Testing and automation/ }))
+    fireEvent.click(screen.getByRole('radio', { name: /^Testing/ }))
     expect(new URL(location.href).searchParams.get('for')).toBe('automation')
     fireEvent.click(screen.getByRole('radio', { name: 'Anything' }))
     expect(new URL(location.href).searchParams.get('for')).toBeNull()

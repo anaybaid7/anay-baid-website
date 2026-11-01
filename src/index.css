@@ -246,7 +246,7 @@ button {
 /* every section is the same shape: its name in a narrow column on the left,
    the content on the right, a full rule across the top */
 .section {
-  margin-top: 120px;
+  margin-top: 96px;
   padding-top: 26px;
   border-top: 2px solid var(--ink);
   display: grid;
@@ -790,7 +790,7 @@ dialog::backdrop {
 }
 .tl-today span {
   position: absolute;
-  left: 6px;
+  right: 6px;
   bottom: -24px;
   font-size: 13px;
   font-weight: 650;
@@ -7462,8 +7462,13 @@ button:focus-visible > .shot {
   gap: 10px;
   font-size: 18px;
 }
-.skills-block {
+.about-grid > [data-part="education"] {
   grid-row: span 2;
+}
+.about-grid > [data-part="colophon"] {
+  grid-column: 2;
+  padding-top: 22px;
+  border-top: 1.5px solid var(--line);
 }
 .skills-block .skill-list {
   margin: 0;
@@ -7479,8 +7484,10 @@ button:focus-visible > .shot {
   .about-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .skills-block {
+  .about-grid > [data-part="education"],
+  .about-grid > [data-part="colophon"] {
     grid-row: auto;
+    grid-column: auto;
   }
 }
 @media print {
@@ -8237,4 +8244,33 @@ dialog.case[open] {
   .cs-link {
     opacity: 1;
   }
+}
+
+/* the site notes read as two columns beside each other under skills */
+.about .colophon {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 28px;
+}
+@media (max-width: 760px) {
+  .about .colophon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* outside links on project cards look like the buttons beside them */
+.entry-tabs .project-links {
+  display: contents;
+}
+.entry-tabs .project-links a {
+  padding: 7px 12px;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  font: 650 14px var(--font);
+  text-decoration: none;
+  transition: border-color 0.16s var(--ease-out), transform 0.16s var(--ease-out);
+}
+.entry-tabs .project-links a:hover {
+  border-color: var(--ink);
+}
+.entry-tabs .project-links a:active {
+  transform: scale(0.97);
 }
