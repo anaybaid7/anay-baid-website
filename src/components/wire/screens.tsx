@@ -397,63 +397,151 @@ const insightvault: Screen[] = [
   },
 ]
 
-// ---- Pashu, from UIManager.cs and TimeManager.cs ----
-const pashu: Screen[] = [
+// ---- LegacyBridge AI, from Dashboard.tsx, Analyzer.tsx, Generator.tsx and Monitor.tsx ----
+const lbNav = <Tabs items={['Dashboard', 'Analyzer', 'Generator', 'Monitor']} />
+const legacybridge: Screen[] = [
   {
-    name: 'The shelter',
+    name: 'Dashboard',
     notes: [
-      { n: 1, title: 'HUD', text: 'Money, level and XP, the date, and how many animals are in the shelter.', node: 'hud' },
-      { n: 2, title: 'Needs over their heads', text: 'A food or water icon appears when an animal drops under 50 and goes looking.', node: 'npc' },
-      { n: 3, title: 'Radial build menu', text: 'Place bowls, walls and decorations.', node: 'build' },
-      { n: 4, title: 'Month end', text: 'Government funding per animal plus donations, minus rent. Below zero is game over.', node: 'time' },
+      { n: 1, title: 'Legacy systems', text: 'Each system the bank runs, its platform and how many routes already bridge it. The four here are the sample systems from the pitch.', node: 'cics' },
+      { n: 2, title: 'Status', text: 'A system that hasn’t synced in an hour is flagged, like the IMS transaction processor.', node: 'monitor' },
+      { n: 3, title: 'Next step', text: 'Every card leads into the analyzer with that system’s source.', node: 'analyzer' },
     ],
     draw: () => (
-      <Win title="Pashu">
+      <Win title="LegacyBridge AI" url="legacybridge/dashboard">
+        {lbNav}
         <N n={1} block>
-          <Row between><T b>$ 2,400</T><T>Level 3</T><Meter v={62} label="XP" /><T>14 MAR</T><T>Animals: 6</T></Row>
+          <Tbl
+            cols={['System', 'Platform', 'Routes', 'Last sync']}
+            rows={[
+              ['Core Banking System', 'COBOL/CICS', '12', '2 min ago'],
+              ['Customer Database', 'AS/400 DB2', '8', '5 min ago'],
+              ['Transaction Processor', 'Mainframe IMS', '15', '1 hour ago'],
+              ['Loan Management', 'COBOL Batch', '6', '10 min ago'],
+            ]}
+            hot={2}
+          />
         </N>
-        <Row>
-          <Box grow>
-            <N n={2} block><Img h={150} label="Shelter, animals wander. Milo: food icon" /></N>
-          </Box>
-          <N n={3} block><Box title="Build"><Btn>Food bowl</Btn><Btn>Water bowl</Btn><Btn>Wall</Btn><Btn>Decor</Btn></Box></N>
+        <Row between>
+          <N n={2}><T>Transaction Processor, last sync 1 hour ago</T></N>
+          <N n={3}><Btn primary>Analyze a system</Btn></N>
         </Row>
-        <N n={4} block>
-          <Box title="Month end">
-            <Row between><T>Govt. funds</T><T>$600</T></Row>
-            <Row between><T>Donations</T><T>$340</T></Row>
-            <Row between><T>Rent and costs</T><T>−$1,480</T></Row>
-            <Row between><T b>Total</T><T b>−$540</T></Row>
-            <Btn primary>Pay bills</Btn>
-          </Box>
-        </N>
       </Win>
     ),
   },
   {
-    name: 'Building',
+    name: 'Analyzer',
     notes: [
-      { n: 1, title: 'Radial menu', text: 'Pick what to build from a pie menu.', node: 'build' },
-      { n: 2, title: 'Preview', text: 'A ghost follows the cursor until you place it.', node: 'build' },
-      { n: 3, title: 'Bowls', text: 'Food and water bowls are what hungry animals walk to.', node: 'res' },
+      { n: 1, title: 'Source type', text: 'COBOL/CICS, AS/400 DB2 or a 3270 screen map. Each loads a real sample to start from.', node: 'analyzer' },
+      { n: 2, title: 'Source', text: 'Paste the program, schema or BMS map as it is.', node: 'cics' },
+      { n: 3, title: 'Steps', text: 'Parse the structure, extract the data model, find the business logic, map to REST, write the schema.', node: 'analyzer' },
+      { n: 4, title: 'Data model', text: 'Every field with its JSON type, the COBOL field it came from and its format. SSN is flagged sensitive.', node: 'analyzer' },
+      { n: 5, title: 'Routes', text: 'Suggested endpoints, which the generator picks up.', node: 'generator' },
     ],
     draw: () => (
-      <Win title="Pashu">
-        <Row between><T b>$ 2,400</T><T>Level 3</T><T>14 MAR</T></Row>
-        <Box>
-          <Row between>
-            <Img h={170} label="Shelter floor" />
-            <N n={1}>
-              <span className="wpie">
-                <i>Food</i><i>Water</i><i>Wall</i><i>Decor</i>
-              </span>
+      <Win title="LegacyBridge AI" url="legacybridge/analyzer">
+        {lbNav}
+        <N n={1} block>
+          <Row><Btn added>COBOL/CICS</Btn><Btn>AS/400 DB2</Btn><Btn>Mainframe 3270</Btn></Row>
+        </N>
+        <Row>
+          <Box grow>
+            <N n={2} block>
+              <Box title="Source code, 52 lines">
+                <In mono ph="01  ACCOUNT-RECORD." />
+                <In mono ph="05  ACCT-NUMBER   PIC 9(10)." />
+                <In mono ph="05  ACCT-BALANCE  PIC 9(10)V99." />
+                <In mono ph="05  OPEN-DATE     PIC 9(8)." />
+              </Box>
             </N>
-          </Row>
-          <Row>
-            <N n={2}><Btn added>Water bowl, click to place</Btn></N>
-            <N n={3}><Btn>2 food bowls out</Btn></N>
-          </Row>
-        </Box>
+            <Btn primary>Analyze</Btn>
+          </Box>
+          <Box grow title="Analysis">
+            <N n={3} block>
+              <T>✓ Parsing legacy code structure</T>
+              <T>✓ Extracting data models</T>
+              <T>✓ Mapping to REST endpoints</T>
+            </N>
+            <N n={4} block>
+              <Box title="Entity: Account">
+                <T>accountNumber, string, required</T>
+                <T>balance, number, decimal(12,2)</T>
+                <T>openDate, date, YYYYMMDD</T>
+              </Box>
+            </N>
+            <N n={5} block>
+              <T b>GET /api/v1/accounts/:accountNumber</T>
+              <T b>GET /api/v1/customers/:customerId/accounts</T>
+            </N>
+          </Box>
+        </Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Generator',
+    notes: [
+      { n: 1, title: 'Endpoint', text: 'Account lookup, customer profile, transaction history or a new transaction, each with the system behind it.', node: 'generator' },
+      { n: 2, title: 'Language', text: 'TypeScript with Express and Zod, or Python with FastAPI and Pydantic.', node: 'zod' },
+      { n: 3, title: 'The route', text: 'Types, validation, the Redis cache, the connector call and the error responses in one file.', node: 'api' },
+      { n: 4, title: 'Take it', text: 'Copy it or download it as account-api.ts or account-api.py.', node: 'api' },
+    ],
+    draw: () => (
+      <Win title="LegacyBridge AI" url="legacybridge/generator">
+        {lbNav}
+        <Row>
+          <Box title="Select endpoint">
+            <N n={1} block>
+              <Btn added>GET Account Lookup</Btn>
+              <Btn>GET Customer Profile</Btn>
+              <Btn>GET Transaction History</Btn>
+              <Btn>POST Create Transaction</Btn>
+            </N>
+            <N n={2} block><Row><Btn added>TypeScript</Btn><Btn>Python</Btn></Row></N>
+            <Btn primary>Generate</Btn>
+          </Box>
+          <Box grow>
+            <N n={3} block>
+              <Box title="account-api.ts">
+                <In mono ph="router.get('/accounts/:accountNumber', …" />
+                <In mono ph="accountNumberSchema.safeParse(accountNumber)" />
+                <In mono ph="await redisClient.get(cacheKey)" />
+                <In mono ph="new CobolConnector({ program: 'GETACCT' })" />
+                <In mono ph="await redisClient.setex(cacheKey, 300, …)" />
+              </Box>
+            </N>
+            <N n={4}><Row><Btn>Copy</Btn><Btn>Download</Btn></Row></N>
+          </Box>
+        </Row>
+      </Win>
+    ),
+  },
+  {
+    name: 'Monitor',
+    notes: [
+      { n: 1, title: 'Headline numbers', text: 'Requests, average latency, error rate and cache hit rate.', node: 'monitor' },
+      { n: 2, title: 'Charts', text: 'Requests and cache hits over the last minutes, redrawn as calls come in.', node: 'monitor' },
+      { n: 3, title: 'Live calls', text: 'Each call with its method, path, source system, status and whether the cache answered.', node: 'redis' },
+    ],
+    draw: () => (
+      <Win title="LegacyBridge AI" url="legacybridge/monitor">
+        {lbNav}
+        <N n={1} block>
+          <Row between><T b>Requests 1,284</T><T b>Latency 24ms</T><T b>Errors 0.8%</T><Meter v={72} label="Cache" /></Row>
+        </N>
+        <N n={2} block><Bars values={[40, 52, 48, 60, 58, 66, 62, 70, 64, 72, 68, 75]} /></N>
+        <N n={3} block>
+          <Tbl
+            cols={['Call', 'Source', 'Status', 'Cache']}
+            rows={[
+              ['GET /api/v1/accounts/:id', 'Core Banking COBOL', '200', 'hit'],
+              ['POST /api/v1/transactions', 'Transaction Processor IMS', '201', 'miss'],
+              ['GET /api/v1/customers/:id', 'Customer DB AS/400', '200', 'hit'],
+              ['GET /api/v1/transactions', 'Transaction Processor IMS', '500', 'miss'],
+            ]}
+            hot={3}
+          />
+        </N>
       </Win>
     ),
   },
@@ -945,4 +1033,4 @@ const routing: Screen[] = [
   },
 ]
 
-export const WIREFRAMES = { forecast, starrez, battleship, insightvault, pashu, iotum, nationwide, cineplex, cicd, routing }
+export const WIREFRAMES = { forecast, starrez, battleship, insightvault, legacybridge, iotum, nationwide, cineplex, cicd, routing }

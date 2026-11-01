@@ -23,7 +23,10 @@ import FraudScorer from './demos/FraudScorer'
 import Extension from './demos/Extension'
 import BattleshipMatch from './demos/BattleshipMatch'
 import DispatchRun from './demos/DispatchRun'
-import Shelter from './demos/Shelter'
+import Copybook from './demos/Copybook'
+import Bridge from './demos/Bridge'
+import Screen3270 from './demos/Screen3270'
+import Generator from './demos/Generator'
 import RouterApp from './demos/RouterApp'
 import Evaluate from './demos/Evaluate'
 import Network from './demos/Network'
@@ -50,7 +53,10 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   extension: Extension,
   battleship: BattleshipMatch,
   build: DispatchRun,
-  fsm: Shelter,
+  copybook: Copybook,
+  screen3270: Screen3270,
+  generator: Generator,
+  bridge: Bridge,
   router: RouterApp,
   evaluate: Evaluate,
   network: Network,

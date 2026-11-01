@@ -75,7 +75,22 @@ Object.assign(CLIPS, {
   stream: press('job-cineplex-entertainment'),
   fraud: press('project-insightvault'),
   build: press('project-ci-cd-build-automation-tool', 4500),
-  fsm: press('project-pashu', 6000),
+  copybook: {
+    id: 'project-legacybridge-ai',
+    async play(p) {
+      const cells = p.locator('.cb-bytes span')
+      for (const i of [0, 2, 5]) {
+        await cells.nth(i).hover()
+        await pause(p, 700)
+      }
+      await p.getByRole('button', { name: 'Savings' }).click()
+      await pause(p, 1100)
+      await p.getByRole('button', { name: 'Corrupt record' }).click()
+      await pause(p, 600)
+      await cells.nth(2).hover()
+      await pause(p, 1600)
+    },
+  },
   battleship: {
     id: 'project-battleship-for-purolator',
     async play(p) {

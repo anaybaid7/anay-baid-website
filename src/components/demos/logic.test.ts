@@ -5,7 +5,6 @@ import { jobsFor, payload, validate, type Inputs } from './dispatch'
 import { check, merge, runPipeline } from './pipeline'
 import { checkSale, makeSale, rng } from './sales'
 import { findRoom, initials, keyCodes, lockoutEntry, packageEntry, readStudent } from './starrez'
-import { applyXp, tick, type Animal } from './shelter'
 import { averageShape, applyOp, editTotal, gapCheck, normalize, revert, runOp, splitWeek, sumsTo100, total } from './planner'
 import { initial, matchRoute, reducer, validateEvent } from './appStore'
 import { botShot, FLEET, N, placeFleet } from '../../battleship'
@@ -127,34 +126,6 @@ describe('starrez extension', () => {
     expect(keyCodes('Bedroom: 4F21A\nLOANER L-1: L0932', '20871234')).toEqual(['L0932'])
     expect(keyCodes('Bedroom: 4F21A', '20871234')).toEqual(['4F21A'])
     expect(keyCodes('', '20871234')).toBeNull()
-  })
-})
-
-describe('pashu shelter', () => {
-  const cat: Animal = { name: 'Milo', type: 'cat', health: 51, water: 90, decay: 2, state: 'Wander' }
-
-  it('goes for food under 50, then eats on the next tick and scores', () => {
-    const a = tick(cat, 1, { food: 1, water: 0 }, () => 0.5)
-    expect(a.animal.state).toBe('goToFood')
-    const b = tick(a.animal, 1, a.bowls, () => 0.5)
-    expect(b.animal).toMatchObject({ state: 'Wander', health: 100 })
-    expect(b.bowls.food).toBe(0)
-    expect(b.events).toContainEqual({ kind: 'ate', name: 'Milo', xp: 15 })
-  })
-
-  it('keeps looking when there is no food, and dies at zero', () => {
-    const hungry = { ...cat, state: 'goToFood' as const, health: 40 }
-    const r1 = tick(hungry, 1, { food: 0, water: 0 })
-    expect(r1.animal).toMatchObject({ state: 'goToFood', waiting: true })
-    expect(tick(r1.animal, 1, { food: 0, water: 0 }).events).toEqual([])
-    const r = tick({ ...cat, health: 1 }, 1, { food: 0, water: 0 })
-    expect(r.animal.state).toBe('Dead')
-    expect(r.events[0]).toMatchObject({ kind: 'died', xp: -75 })
-  })
-
-  it('rolls XP into levels both ways', () => {
-    expect(applyXp(90, 1, 20)).toEqual({ xp: 10, level: 2 })
-    expect(applyXp(30, 2, -75)).toEqual({ xp: 55, level: 1 })
   })
 })
 

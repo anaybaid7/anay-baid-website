@@ -8,7 +8,7 @@ export const hasCase = (id: string) => Boolean(NOTES[id] && DETAILS[id]?.flows?.
 export const CASE_IDS = Object.keys(NOTES).filter(hasCase)
 
 // /work/purolator, /work/insightvault and so on
-export const caseSlug = (id: string) => id.replace(/^(job|project)-/, '').replace(/-(entertainment|enterprise-automation-suite|for-purolator|build-automation-tool)$/, '')
+export const caseSlug = (id: string) => id.replace(/^(job|project)-/, '').replace(/-(entertainment|enterprise-automation-suite|for-purolator|build-automation-tool|ai)$/, '')
 export const casePath = (id: string) => `/work/${caseSlug(id)}/`
 
 // a case study opens from its own path, or from ?case= on any page

@@ -47,10 +47,10 @@ test('the theme switch flips to dark and remembers it', async ({ page }) => {
 test('the search menu finds a project and opens it', async ({ page }) => {
   await page.goto('/')
   await page.keyboard.press('Control+k')
-  await page.getByRole('combobox').fill('pashu')
+  await page.getByRole('combobox').fill('legacybridge')
   await page.keyboard.press('Enter')
-  await expect(page.locator('dialog.drawer #drawer-title')).toHaveText('Pashu (Animal Welfare Game)')
-  await expect(page).toHaveURL(/open=project-pashu/)
+  await expect(page.locator('dialog.drawer #drawer-title')).toHaveText('LegacyBridge AI')
+  await expect(page).toHaveURL(/open=project-legacybridge-ai/)
 })
 
 test('settings open as a popover, apply, and stick after a reload', async ({ page }) => {
@@ -115,10 +115,10 @@ test('a shared view link reorders and hides sections', async ({ page }) => {
 test('the page map jumps to a project', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
-  const mark = page.locator('.minimap a[href="#project-pashu"]')
+  const mark = page.locator('.minimap a[href="#project-legacybridge-ai"]')
   await mark.click()
-  await expect(page).toHaveURL(/#project-pashu$/)
-  await expect(page.locator('#project-pashu')).toBeInViewport()
+  await expect(page).toHaveURL(/#project-legacybridge-ai$/)
+  await expect(page.locator('#project-legacybridge-ai')).toBeInViewport()
 })
 
 test('a job opens into a drawer with a working diagram, and Esc closes it', async ({ page }) => {
