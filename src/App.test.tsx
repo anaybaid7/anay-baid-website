@@ -101,14 +101,27 @@ describe('App', () => {
     render(<App />)
     const facts = document.querySelector('.hero-facts')!
     expect(facts).toHaveTextContent('April 2027')
-    expect(facts).toHaveTextContent(`${experience.length} terms`)
-    expect(facts).toHaveTextContent('2 wins')
+    expect(facts).toHaveTextContent('four co\u2011op terms')
+    expect(facts).toHaveTextContent('two hackathon wins')
   })
 
   it('opens a job from its logo under the intro', () => {
     render(<App />)
     fireEvent.click(within(screen.getByRole('group', { name: 'Co-op employers' })).getByRole('button', { name: /Iotum/ }))
     expect(document.getElementById('job-iotum')).toHaveClass('on')
+  })
+
+  it('opens a case study from its link, with the steps and decisions', async () => {
+    history.replaceState(null, '', '/?case=project-insightvault')
+    render(<App />)
+    const dialog = await waitFor(() => {
+      const d = document.querySelector('dialog.case')
+      if (!d) throw new Error('case study not loaded yet')
+      return d as HTMLElement
+    }, { timeout: 5000 })
+    expect(dialog.querySelector('#case-title')).toHaveTextContent('InsightVault')
+    expect(dialog.querySelectorAll('.cs-step').length).toBeGreaterThan(2)
+    expect(dialog.querySelector('.cs-decisions')).toHaveTextContent('instead of a single black-box model')
   })
 
   it('quotes and links the CS 445 reference letter', () => {
@@ -414,7 +427,7 @@ describe('hiring for', () => {
     render(<App />)
     expect(document.querySelector('main')).toHaveAttribute('data-lens', 'data')
     expect(document.querySelector('.lens-sum')).toHaveTextContent('3 of 10 match')
-    fireEvent.click(screen.getByRole('radio', { name: /^Testing and automation/ }))
+    fireEvent.click(screen.getByRole('radio', { name: /^Testing/ }))
     expect(new URL(location.href).searchParams.get('for')).toBe('automation')
     fireEvent.click(screen.getByRole('radio', { name: 'Anything' }))
     expect(new URL(location.href).searchParams.get('for')).toBeNull()

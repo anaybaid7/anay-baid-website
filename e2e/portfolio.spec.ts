@@ -47,10 +47,10 @@ test('the theme switch flips to dark and remembers it', async ({ page }) => {
 test('the search menu finds a project and opens it', async ({ page }) => {
   await page.goto('/')
   await page.keyboard.press('Control+k')
-  await page.getByRole('combobox').fill('pashu')
+  await page.getByRole('combobox').fill('legacybridge')
   await page.keyboard.press('Enter')
-  await expect(page.locator('dialog.drawer #drawer-title')).toHaveText('Pashu (Animal Welfare Game)')
-  await expect(page).toHaveURL(/open=project-pashu/)
+  await expect(page.locator('dialog.drawer #drawer-title')).toHaveText('LegacyBridge AI')
+  await expect(page).toHaveURL(/open=project-legacybridge-ai/)
 })
 
 test('settings open as a popover, apply, and stick after a reload', async ({ page }) => {
@@ -115,10 +115,10 @@ test('a shared view link reorders and hides sections', async ({ page }) => {
 test('the page map jumps to a project', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
-  const mark = page.locator('.minimap a[href="#project-pashu"]')
+  const mark = page.locator('.minimap a[href="#project-legacybridge-ai"]')
   await mark.click()
-  await expect(page).toHaveURL(/#project-pashu$/)
-  await expect(page.locator('#project-pashu')).toBeInViewport()
+  await expect(page).toHaveURL(/#project-legacybridge-ai$/)
+  await expect(page.locator('#project-legacybridge-ai')).toBeInViewport()
 })
 
 test('a job opens into a drawer with a working diagram, and Esc closes it', async ({ page }) => {
@@ -179,4 +179,22 @@ test('the terminal runs commands and opens the drawer', async ({ page }) => {
   await cmd.fill('open insightvault code')
   await cmd.press('Enter')
   await expect(page.locator('dialog.drawer .code figcaption')).toContainText('score.ts')
+})
+
+test('a case study opens from its own address and moves on to the next', async ({ page }) => {
+  await page.goto('/work/insightvault/')
+  await expect(page).toHaveTitle('InsightVault case study, Anay Baid')
+  const study = page.locator('dialog.case')
+  await expect(study).toBeVisible()
+  await expect(study.locator('#case-title')).toContainText('InsightVault')
+  await study.locator('.cs-next button').click()
+  await expect(page).toHaveURL(/\/work\/[a-z-]+\/$/)
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/$/)
+})
+
+test('a link to one step of a case study opens on that step', async ({ page }) => {
+  await page.goto('/work/purolator/#step-1-3')
+  const step = page.locator('#step-1-3')
+  await expect(step).toBeInViewport()
 })

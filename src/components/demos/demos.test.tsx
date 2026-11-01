@@ -8,7 +8,6 @@ import Reconcile from './Reconcile'
 import DispatchRun from './DispatchRun'
 import Extension from './Extension'
 import BattleshipMatch from './BattleshipMatch'
-import Shelter from './Shelter'
 import RouterApp from './RouterApp'
 import ReleaseRun from './ReleaseRun'
 import SdkRun from './SdkRun'
@@ -119,13 +118,6 @@ describe('demos', () => {
     expect(document.querySelector('.log')).toHaveTextContent('emit fire { index: 0 }')
     expect(document.querySelector('.log')).toHaveTextContent('shot_result { index: 0')
     expect(document.querySelector('.log')).toHaveTextContent('nextTurn: "you"')
-  })
-
-  it('shelter animals go for food and score when they eat', () => {
-    render(<Shelter />)
-    for (let i = 0; i < 12; i++) fireEvent.click(screen.getByRole('button', { name: 'Advance one tick' }))
-    expect(document.querySelector('.log')).toHaveTextContent('goToFood')
-    expect(document.querySelector('.log')).toHaveTextContent('XP')
   })
 
   it('routing app navigates without a reload and validates the form', () => {

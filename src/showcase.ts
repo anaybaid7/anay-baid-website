@@ -15,5 +15,5 @@ export const clip = (kind: DemoKind, theme: 'light' | 'dark', ext: 'webm' | 'mp4
 export const thumb = (kind: DemoKind, theme: 'light' | 'dark') => `/shots/${kind}-${theme}.webp`
 
 // the demos that have a recording: the featured ones and each entry's first
-const CLIPS: DemoKind[] = ['planner', 'evaluate', 'extension', 'pipeline', 'sdk', 'provision', 'stream', 'fraud', 'build', 'fsm', 'battleship', 'router']
+const CLIPS: DemoKind[] = ['planner', 'evaluate', 'extension', 'pipeline', 'sdk', 'provision', 'stream', 'fraud', 'build', 'copybook', 'battleship', 'router']
 export const hasClip = (kind: DemoKind) => CLIPS.includes(kind)

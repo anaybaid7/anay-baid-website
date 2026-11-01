@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { profile, experience, projects, education, skills, skillLabels, AREAS, type Area } from './data'
+import { profile, experience, projects, hackathonWins, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import ThemeToggle from './components/ThemeToggle'
 import { parsePeriod, monthIndex, monthLabel } from './timeline'
@@ -17,6 +17,7 @@ import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
 import { NOTES } from './decisions'
+import { caseFromUrl, casePath, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import { prerendered, useHydrated } from './hydrated'
@@ -24,6 +25,7 @@ import type { Action as TermAction } from './terminal'
 
 // the drawer and its demos load the first time someone opens one
 const DetailDrawer = lazy(() => import('./components/DetailDrawer'))
+const CaseStudy = lazy(() => import('./components/CaseStudy'))
 const Terminal = lazy(() => import('./components/Terminal'))
 
 const updated = new Date(__BUILD_DATE__).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
@@ -120,6 +122,9 @@ const lensFromUrl = (): Area | null => {
   const a = new URLSearchParams(location.search).get('for')
   return a && a in AREAS ? (a as Area) : null
 }
+
+// small counts read better as words in a sentence
+const word = (n: number) => ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][n] ?? String(n)
 
 const SECTION_LINKS = [['featured', 'Featured'], ['experience', 'Experience'], ['projects', 'Projects'], ['contact', 'Contact']] as const
 
@@ -413,7 +418,7 @@ function ProjectLinks({ p }: { p: (typeof projects)[number] }) {
   )
 }
 
-const wins = projects.filter((p) => p.award?.toLowerCase().includes('winner'))
+const wins = hackathonWins
 
 // the five things a recruiter checks first, answered before they scroll
 
@@ -439,7 +444,7 @@ function insideCommands(show: (d: Opened) => void): Command[] {
 
 // The three pieces of work to look at first: the problem, one decision and
 // what came of it, in the same order each time
-function Featured({ onOpen }: { onOpen: OpenFn }) {
+function Featured({ onOpen, onCase }: { onOpen: OpenFn; onCase: (id: string) => void }) {
   return (
     <section className="section featured" aria-labelledby="featured" data-part="featured">
       <h2 id="featured">Featured</h2>
@@ -473,6 +478,7 @@ function Featured({ onOpen }: { onOpen: OpenFn }) {
                   </dl>
                   <p className="entry-tabs">
                     <button type="button" className="primary" onClick={() => onOpen(f.id, 'try', f.kind)}>Try it</button>
+                    {hasCase(f.id) && <button type="button" onClick={() => onCase(f.id)}>Case study</button>}
                     <button type="button" onClick={() => onOpen(f.id, 'how')}>How it works</button>
                     <button type="button" onClick={() => onOpen(f.id, 'code')}>Code</button>
                   </p>
@@ -486,6 +492,9 @@ function Featured({ onOpen }: { onOpen: OpenFn }) {
   )
 }
 
+// short names so the row fits on one line; the full name is the title
+const LENS_SHORT: Record<Area, string> = { data: 'Data', backend: 'Backend', infra: 'Cloud', automation: 'Testing', frontend: 'Frontend' }
+
 // show the page through one area of work, for a role hiring for it
 function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) => void }) {
   return (
@@ -494,8 +503,8 @@ function Lens({ lens, onLens }: { lens: Area | null; onLens: (a: Area | null) =>
         <span className="lens-label">Hiring for</span>
         <button type="button" role="radio" aria-checked={lens === null} onClick={() => onLens(null)}>Anything</button>
         {(Object.keys(AREAS) as Area[]).map((a) => (
-          <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)}>
-            {AREAS[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
+          <button key={a} type="button" role="radio" aria-checked={lens === a} onClick={() => onLens(lens === a ? null : a)} title={AREAS[a]}>
+            {LENS_SHORT[a]} <span>{ENTRIES.filter((e) => e.areas.includes(a)).length}</span>
           </button>
         ))}
       </div>
@@ -549,6 +558,7 @@ export default function App() {
   const reading = useReading()
   const [, setMonthTick] = useState(0)
   const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
+  const [caseId, setCaseId] = useState<string | null>(() => (prerendered ? null : caseFromUrl()))
   const [filter, setFilter] = useState<string[]>(() => (prerendered ? [] : filterFromUrl()))
   const [lens, setLens] = useState<Area | null>(() => (prerendered ? null : lensFromUrl()))
   // the posting matcher is my own tool, only there with ?me in the URL
@@ -560,6 +570,7 @@ export default function App() {
   useLayoutEffect(() => {
     if (!prerendered) return
     setDetail(detailFromUrl())
+    setCaseId(caseFromUrl())
     setFilter(filterFromUrl())
     setLens(lensFromUrl())
     setOwner(ownerFromUrl())
@@ -594,6 +605,20 @@ export default function App() {
     }
     history.replaceState(null, '', url)
     if (next) setActiveJob(experience.findIndex((e) => `job-${slug(shortOrg(e.org))}` === next.id))
+  }, [])
+  // a case study lives in the URL as ?case=, like the drawer
+  const showCase = useCallback((id: string | null) => {
+    const url = new URL(location.href)
+    url.searchParams.delete('case')
+    // a step link only belongs to the case study it was made in
+    if (!id || !location.pathname.startsWith(casePath(id))) url.hash = ''
+    if (id) {
+      url.pathname = casePath(id)
+      for (const k of ['open', 'tab', 'demo', 'flow', 'step']) url.searchParams.delete(k)
+      setDetail(null)
+    } else url.pathname = '/'
+    history.replaceState(null, '', url)
+    setCaseId(id)
   }, [])
   const openDetail = useCallback(
     (id: string, tab?: Tab, demo?: DemoKind) => showDetail({ id, tab: tab ?? tabsFor(id)[1] ?? 'overview', demo }),
@@ -671,7 +696,7 @@ export default function App() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [])
 
-  // links like /#job-iotum or /#project-pashu open straight to that item
+  // links like /#job-iotum or /#project-legacybridge-ai open straight to that item
   useEffect(() => {
     const apply = () => {
       const h = decodeURIComponent(location.hash.slice(1))
@@ -736,6 +761,12 @@ export default function App() {
           goTo('experience')
         },
       })),
+      ...ENTRIES.filter((e) => hasCase(e.id)).map((e) => ({
+        group: 'Case studies',
+        label: `${e.title.replace(/ \(.*\)$/, '')} case study`,
+        keywords: 'case study write up deep dive',
+        run: () => showCase(e.id),
+      })),
       ...Object.entries(DETAILS).flatMap(([id, d]) =>
         (d.demos ?? []).map((demo) => ({
           group: 'Demos',
@@ -757,7 +788,7 @@ export default function App() {
         })),
       ),
     ]
-  }, [showDetail, showResume, applyFilter, applyLens, owner])
+  }, [showDetail, showResume, applyFilter, applyLens, owner, showCase])
   return (
     <>
       <div className="progress" aria-hidden="true" />
@@ -798,30 +829,13 @@ export default function App() {
             />
             <div className="hero-copy">
               <p className="lede">Software engineer for backend services and data pipelines.</p>
-              <p className="sub">
+              <p className="sub hero-facts">
                 On co{'\u2011'}op at Purolator, building the forecasting pipeline, the planning tools on top of it and
-                the AWS stack they run on.
+                the AWS stack they run on. Final year of CS at Waterloo, graduating April 2027, with{' '}
+                {word(experience.length)} co{'\u2011'}op terms
+                {wins.length > 0 && <> and {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>} behind me. Based in{' '}
+                {profile.location.replace(', ON', '')}.
               </p>
-              <dl className="hero-facts">
-                <div>
-                  <dt>Graduating</dt>
-                  <dd>April 2027, Waterloo CS</dd>
-                </div>
-                <div>
-                  <dt>Co{'\u2011'}op</dt>
-                  <dd>{experience.length} terms, {totalMonths()} months</dd>
-                </div>
-                {wins.length > 0 && (
-                  <div>
-                    <dt>Hackathons</dt>
-                    <dd>{plural(wins.length, 'win')}</dd>
-                  </div>
-                )}
-                <div>
-                  <dt>Based in</dt>
-                  <dd>{profile.location.replace(', ON', '')}</dd>
-                </div>
-              </dl>
               <div className="hero-orgs" role="group" aria-label="Co-op employers">
                 {experience.map((e, i) => (
                   <button key={e.org} type="button" onClick={() => openJob(i)} title={`${shortOrg(e.org)}, ${e.role}, ${shortPeriod(e.period)}`}>
@@ -841,7 +855,7 @@ export default function App() {
           </div>
         </section>
 
-        <Featured onOpen={openDetail} />
+        <Featured onOpen={openDetail} onCase={showCase} />
 
         {filter.length > 0 && (
           <div className="filterbar" role="status" data-part="filter">
@@ -1004,7 +1018,12 @@ export default function App() {
       <SettingsPanel />
       {detail && (
         <Suspense fallback={null}>
-          <DetailDrawer open={detail} onChange={showDetail} />
+          <DetailDrawer open={detail} onChange={showDetail} onCase={showCase} />
+        </Suspense>
+      )}
+      {caseId && (
+        <Suspense fallback={null}>
+          <CaseStudy key={caseId} id={caseId} onClose={() => showCase(null)} onNext={showCase} />
         </Suspense>
       )}
       {owner && <Matcher

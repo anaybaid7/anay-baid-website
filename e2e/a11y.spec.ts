@@ -35,7 +35,7 @@ const ENTRIES = [
   'project-insightvault',
   'project-starrez-enterprise-automation-suite',
   'project-ci-cd-build-automation-tool',
-  'project-pashu',
+  'project-legacybridge-ai',
   'project-client-side-routing-system',
 ]
 

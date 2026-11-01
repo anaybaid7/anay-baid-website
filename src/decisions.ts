@@ -142,29 +142,40 @@ export const NOTES: Record<string, Notes> = {
     ],
   },
 
-  'project-pashu': {
+  'project-legacybridge-ai': {
     decisions: [
       {
-        chose: 'A small state machine per animal, Wander, goToFood, goToWater and Dead',
-        over: 'scripted behaviour',
-        because: 'Health and water drain on their own and the state follows from them, so animals act on their own needs without per-animal scripting.',
+        chose: 'A REST layer in front of the mainframe',
+        over: 'rewriting the COBOL',
+        because: 'GETACCT keeps running exactly as it does today. The bridge calls it the way a terminal would, so the risky part of a modernization never starts.',
       },
       {
-        chose: 'Unity’s NavMesh for movement',
-        over: 'hand-written pathfinding',
-        because: 'It was a weekend hackathon, and NavMesh gave walking to the nearest bowl around walls for free.',
+        chose: 'Numeric ids as strings',
+        over: 'parsing every PIC 9 as a number',
+        because: 'ACCT-NUMBER is PIC 9(10) and starts with zeros. As a number 0012345678 turns into 12345678 and no longer matches the record key.',
       },
       {
-        chose: 'A WebGL build embedded on Wix',
-        over: 'a desktop download',
-        because: 'Judges could play it on any device without installing anything.',
+        chose: 'A five minute Redis cache on reads',
+        over: 'calling CICS on every request',
+        because: 'Mainframe time is billed by use, and the same account gets read over and over by a mobile app. Five minutes keeps balances fresh enough for a lookup.',
+      },
+      {
+        chose: 'Validation before the cache',
+        over: 'checking the number inside the connector',
+        because: 'A malformed number is a 400 in the route, so it never costs a Redis lookup or a CICS transaction.',
       },
     ],
     handles: [
-      'With no bowl out, a hungry animal keeps wandering and checks again every frame, so it heads for a bowl the moment one is placed.',
-      'XP below zero drops a level instead of going negative, and money below zero ends the game.',
+      'A 9(10)V99 balance is stored with no decimal point, so the last two digits are split off as cents instead of parsing the field as a float.',
+      'A date of all zeros means never and maps to null. An impossible date like 20101399 is reported on that field and the rest of the record still maps.',
+      'A down mainframe gets the connector’s two retries and then a 500 with a request id, never a stale or guessed balance.',
+      'An unknown account is the program’s INVALID KEY branch, returned as a 404 instead of an empty record.',
     ],
-    next: ['The nearest bowl is searched several times per frame for every animal. Caching it once per frame would scale to a bigger shelter.'],
+    next: [
+      'Send the source to Gemini for real. The weekend build scripted the analysis steps, so the model’s field map would be checked against the PIC clauses before anything is generated.',
+      'COMP-3 packed decimals, signed fields and REDEFINES, which real copybooks lean on and the sample layout does not use.',
+      'Write routes. Everything here is a read, and POST /transactions needs an idempotency key before it can safely retry against IMS.',
+    ],
   },
 
   'project-insightvault': {

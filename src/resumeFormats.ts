@@ -1,6 +1,6 @@
 // Every format the resume is published in, built from data.ts. Used by the
 // page and by the build (vite.config.ts), so nothing here touches the DOM.
-import { education, experience, profile, projects, skills, skillLabels } from './data'
+import { education, experience, profile, projects, hackathonWins, skills, skillLabels } from './data'
 import { parsePeriod } from './timeline'
 
 
@@ -71,9 +71,7 @@ export function jsonResume() {
         courses: ['CS 445 Software Requirements Specification', 'CS 446 Software Design and Architectures'],
       },
     ],
-    awards: projects
-      .filter((p) => p.award?.startsWith('Winner'))
-      .map((p) => ({ title: p.award!.replace('Winner, ', ''), awarder: p.period.split(',')[0], summary: p.title })),
+    awards: hackathonWins.map((w) => ({ title: w.title, awarder: w.event, summary: w.project })),
     skills: (Object.keys(skills) as (keyof typeof skills)[]).map((k) => ({ name: skillLabels[k], keywords: skills[k] })),
     projects: projects.map((p) => ({
       name: p.title,
