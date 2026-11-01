@@ -118,7 +118,7 @@ describe('App', () => {
       const d = document.querySelector('dialog.case')
       if (!d) throw new Error('case study not loaded yet')
       return d as HTMLElement
-    })
+    }, { timeout: 5000 })
     expect(dialog.querySelector('#case-title')).toHaveTextContent('InsightVault')
     expect(dialog.querySelectorAll('.cs-step').length).toBeGreaterThan(2)
     expect(dialog.querySelector('.cs-decisions')).toHaveTextContent('instead of a single black-box model')

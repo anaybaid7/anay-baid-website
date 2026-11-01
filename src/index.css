@@ -8153,3 +8153,59 @@ dialog.case[open] {
 :root[data-motion="reduced"] .cs-live {
   animation: none;
 }
+
+/* case study: reading progress, chapters and what to read next */
+.cs-progress {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  height: 3px;
+  margin-bottom: -3px;
+  background: var(--cobalt);
+  transform-origin: 0 50%;
+}
+.cs-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.cs-chapters button {
+  padding: 7px 12px;
+  border: 1.5px solid var(--line);
+  background: none;
+  color: var(--ink);
+  font: 650 14px var(--font);
+  cursor: pointer;
+}
+.cs-chapters button:hover {
+  border-color: var(--ink);
+}
+.cs-part[id] {
+  scroll-margin-top: 16px;
+}
+.cs-next {
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1.5px solid var(--ink);
+}
+.cs-next p {
+  margin: 0 0 6px;
+  color: var(--ink-3);
+  font-weight: 650;
+  font-size: 14px;
+}
+.cs-next button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 800 clamp(28px, 4vw, 48px) / 1.05 var(--font);
+  font-stretch: calc(118% * var(--wscale, 1));
+  letter-spacing: -0.02em;
+  text-align: left;
+  cursor: pointer;
+}
+.cs-next button:hover {
+  color: var(--cobalt);
+}

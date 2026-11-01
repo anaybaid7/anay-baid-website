@@ -132,7 +132,7 @@ export default defineConfig({
         // the full-size photo is only used for the share image, not the page
         // the event page's screenshots load when that page is opened, and
         // the demo screenshots load as they scroll into view
-        globIgnores: ['**/avatar.png', '**/og.png', '**/logos/*.png', '**/event-shots/**', '**/shots/**'],
+        globIgnores: ['**/avatar.png', '**/og.png', '**/logos/*.png', '**/event-shots/**', '**/shots/**', '**/og/**'],
         // Never cache the live GitHub API calls — that data should always be
         // fresh, or explicitly fail, not silently serve a stale snapshot.
         navigateFallbackDenylist: [/^\/api\//, /^\/purolator-intern-event/],

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DETAILS } from '../details'
 import { NOTES } from '../decisions'
+import { CASE_IDS } from '../cases'
 import { entryById } from '../entries'
 import { H, ICONS, W, layout, route } from './archLayout'
 import { TryIt } from './DetailDrawer'
@@ -52,13 +53,25 @@ function StoryDiagram({ id, at }: { id: string; at: At }) {
 
 // A long-form read of one piece of work: the problem, the system step by
 // step with the diagram following along, the decisions, and the demo.
-export default function CaseStudy({ id, onClose }: { id: string; onClose: () => void }) {
+export default function CaseStudy({ id, onClose, onNext }: { id: string; onClose: () => void; onNext: (id: string) => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const entry = entryById(id)!
   const detail = DETAILS[id]
   const notes = NOTES[id]
   const flows = detail.flows ?? []
   const [at, setAt] = useState<At>({ f: 0, s: 0 })
+  const [read, setRead] = useState(0)
+  const next = CASE_IDS[(CASE_IDS.indexOf(id) + 1) % CASE_IDS.length]
+
+  // how far through the read, for the bar along the top
+  useEffect(() => {
+    const d = dialog.current
+    if (!d) return
+    const onScroll = () => setRead(d.scrollTop / Math.max(1, d.scrollHeight - d.clientHeight))
+    d.addEventListener('scroll', onScroll, { passive: true })
+    return () => d.removeEventListener('scroll', onScroll)
+  }, [])
+  const jump = (part: string) => dialog.current?.querySelector(`#cs-${part}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   useEffect(() => {
     const d = dialog.current
@@ -85,6 +98,7 @@ export default function CaseStudy({ id, onClose }: { id: string; onClose: () => 
 
   return (
     <dialog ref={dialog} className="case" aria-labelledby="case-title" onClose={onClose}>
+      <div className="cs-progress" aria-hidden="true" style={{ transform: `scaleX(${read})` }} />
       <header className="cs-head">
         <p className="cs-kicker">Case study</p>
         <h2 id="case-title">{entry.title}</h2>
@@ -97,15 +111,21 @@ export default function CaseStudy({ id, onClose }: { id: string; onClose: () => 
         <button type="button" className="cs-close" onClick={() => dialog.current?.close()} autoFocus>
           Close
         </button>
+        <nav className="cs-chapters" aria-label="Chapters">
+          <button type="button" onClick={() => jump('problem')}>Problem</button>
+          <button type="button" onClick={() => jump('how')}>How it works</button>
+          <button type="button" onClick={() => jump('decisions')}>Decisions</button>
+          {detail.demos && <button type="button" onClick={() => jump('try')}>Try it</button>}
+        </nav>
       </header>
 
-      <section className="cs-part">
+      <section className="cs-part" id="cs-problem">
         <h3>The problem</h3>
         <p className="cs-lead">{entry.why}</p>
         {entry.description && <p>{entry.description}</p>}
       </section>
 
-      <section className="cs-part cs-story">
+      <section className="cs-part cs-story" id="cs-how">
         <h3>How it works</h3>
         <div className="cs-grid">
           <div className="cs-steps">
@@ -138,7 +158,7 @@ export default function CaseStudy({ id, onClose }: { id: string; onClose: () => 
         </div>
       </section>
 
-      <section className="cs-part">
+      <section className="cs-part" id="cs-decisions">
         <h3>Decisions</h3>
         <ol className="cs-decisions">
           {notes.decisions.map((d) => (
@@ -169,11 +189,18 @@ export default function CaseStudy({ id, onClose }: { id: string; onClose: () => 
       </section>
 
       {detail.demos && (
-        <section className="cs-part">
+        <section className="cs-part" id="cs-try">
           <h3>Try it</h3>
           <TryIt demos={detail.demos} />
         </section>
       )}
+
+      <footer className="cs-part cs-next">
+        <p>Next case study</p>
+        <button type="button" onClick={() => onNext(next)}>
+          {entryById(next)!.title.replace(/ \(.*\)$/, '')} →
+        </button>
+      </footer>
     </dialog>
   )
 }

@@ -180,3 +180,15 @@ test('the terminal runs commands and opens the drawer', async ({ page }) => {
   await cmd.press('Enter')
   await expect(page.locator('dialog.drawer .code figcaption')).toContainText('score.ts')
 })
+
+test('a case study opens from its own address and moves on to the next', async ({ page }) => {
+  await page.goto('/work/insightvault/')
+  await expect(page).toHaveTitle('InsightVault case study, Anay Baid')
+  const study = page.locator('dialog.case')
+  await expect(study).toBeVisible()
+  await expect(study.locator('#case-title')).toContainText('InsightVault')
+  await study.locator('.cs-next button').click()
+  await expect(page).toHaveURL(/\/work\/[a-z-]+\/$/)
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/$/)
+})

@@ -17,7 +17,7 @@ import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
 import { NOTES } from './decisions'
-import { caseFromUrl, hasCase } from './cases'
+import { caseFromUrl, casePath, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
 import Minimap from './components/Minimap'
 import { prerendered, useHydrated } from './hydrated'
@@ -603,11 +603,12 @@ export default function App() {
   // a case study lives in the URL as ?case=, like the drawer
   const showCase = useCallback((id: string | null) => {
     const url = new URL(location.href)
+    url.searchParams.delete('case')
     if (id) {
-      url.searchParams.set('case', id)
+      url.pathname = casePath(id)
       for (const k of ['open', 'tab', 'demo', 'flow', 'step']) url.searchParams.delete(k)
       setDetail(null)
-    } else url.searchParams.delete('case')
+    } else url.pathname = '/'
     history.replaceState(null, '', url)
     setCaseId(id)
   }, [])
@@ -1031,7 +1032,7 @@ export default function App() {
       )}
       {caseId && (
         <Suspense fallback={null}>
-          <CaseStudy key={caseId} id={caseId} onClose={() => showCase(null)} />
+          <CaseStudy key={caseId} id={caseId} onClose={() => showCase(null)} onNext={showCase} />
         </Suspense>
       )}
       {owner && <Matcher
