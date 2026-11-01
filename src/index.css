@@ -7712,7 +7712,7 @@ dd {
 }
 @media print {
   .letter a::after {
-    content: " (a2baid.netlify.app" attr(href) ")";
+    content: " (" attr(href) ")";
     font-weight: 400;
   }
 }

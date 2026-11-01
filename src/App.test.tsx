@@ -108,7 +108,7 @@ describe('App', () => {
   it('quotes and links the CS 445 reference letter', () => {
     render(<App />)
     const link = screen.getByRole('link', { name: 'Read the CS\u00a0445 reference letter' })
-    expect(link).toHaveAttribute('href', '/letters/Anay_Baid_CS445_Reference_Letter.pdf')
+    expect(link).toHaveAttribute('href', 'https://drive.google.com/file/d/1LcR_pz3wEXiGkZCNthVOnLUiVTHPnWZq/view')
     expect(document.querySelector('.letter blockquote')).toHaveTextContent('flawless across all eight deliverables')
   })
 
