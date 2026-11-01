@@ -25,6 +25,8 @@ import BattleshipMatch from './demos/BattleshipMatch'
 import DispatchRun from './demos/DispatchRun'
 import Copybook from './demos/Copybook'
 import Bridge from './demos/Bridge'
+import Screen3270 from './demos/Screen3270'
+import Generator from './demos/Generator'
 import RouterApp from './demos/RouterApp'
 import Evaluate from './demos/Evaluate'
 import Network from './demos/Network'
@@ -52,6 +54,8 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   battleship: BattleshipMatch,
   build: DispatchRun,
   copybook: Copybook,
+  screen3270: Screen3270,
+  generator: Generator,
   bridge: Bridge,
   router: RouterApp,
   evaluate: Evaluate,

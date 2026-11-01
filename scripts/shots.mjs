@@ -31,6 +31,8 @@ const SETUP = {
   graph: click('.demo .demo-primary'),
   sdk: click('.demo .demo-primary'),
   copybook: async (p) => p.locator('.cb-bytes span').nth(2).hover(),
+  screen3270: click('.t3270 .demo-primary'),
+  generator: async (p) => p.getByRole('button', { name: 'CUSTOMER, DB2' }).click(),
   bridge: async (p) => {
     await p.locator('.br-req .demo-primary').click()
     await p.locator('.br-req .demo-primary').click()
@@ -55,6 +57,8 @@ const FOCUS = {
   graph: '.jobs',
   showtime: '.pchart.st',
   copybook: '.cb-grid',
+  screen3270: '.t3-frame',
+  generator: '.gen-grid',
   bridge: '.br-grid',
   drift: '.drift-grid',
   observer: '.obs',
@@ -87,7 +91,7 @@ let entry = null
 for (const line of readFileSync('src/details.ts', 'utf8').split('\n')) {
   const id = line.match(/^  '([a-z0-9-]+)': \{/)
   if (id) entry = id[1]
-  const demo = line.match(/\{ kind: '([a-z]+)', name: '/)
+  const demo = line.match(/\{ kind: '([a-z0-9]+)', name: '/)
   if (demo && entry) tiles.push({ id: entry, kind: demo[1] })
 }
 

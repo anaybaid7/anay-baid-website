@@ -66,6 +66,8 @@ export type DemoKind =
   | 'battleship'
   | 'build'
   | 'copybook'
+  | 'screen3270'
+  | 'generator'
   | 'bridge'
   | 'router'
   | 'evaluate'
@@ -1144,11 +1146,39 @@ export const DETAILS: Record<string, Detail> = {
           },
         ],
       },
+      {
+        name: 'A green screen as a route',
+        summary: 'The AINQ inquiry screen, read from its BMS map and called as JSON.',
+        steps: [
+          {
+            from: 'bms',
+            to: 'analyzer',
+            title: 'Read the BMS map',
+            detail: 'Every DFHMDF macro is a field with a row, a column and a length. A label with ATTRB=UNPROT is typed by the operator, a labelled PROT field is filled by the program, and the rest is text painted on the screen.',
+            payload: { label: 'ACCTINQ map', code: "ACCTNO   DFHMDF POS=(03,17),LENGTH=10,ATTRB=UNPROT\nACCTNAME DFHMDF POS=(05,17),LENGTH=50,ATTRB=PROT\nBALANCE  DFHMDF POS=(07,17),LENGTH=15,ATTRB=PROT,\n               JUSTIFY=RIGHT" },
+          },
+          {
+            from: 'analyzer',
+            to: 'generator',
+            title: 'Inputs become the request, outputs the response',
+            detail: 'The transaction code AINQ becomes the path. Field names are expanded, so ACCTNO is accountNumber.',
+            payload: { label: 'route', code: 'POST /api/v1/mainframe/ainq\n{ "accountNumber": "0012345678" }\n\n200 OK\n{ "accountName": "MARIE TREMBLAY CHEQUING",\n  "balance": "15,432.50" }' },
+          },
+          {
+            from: 'conn',
+            to: 'bms',
+            title: 'The connector drives the screen',
+            detail: 'It types the number into ACCTNO, presses Enter, and reads ACCTNAME and BALANCE back off the screen, so the transaction runs exactly as it does for an operator.',
+          },
+        ],
+      },
     ],
     screens: 'legacybridge',
     demos: [
       { kind: 'copybook', name: 'Read a COBOL record' },
-      { kind: 'bridge', name: 'Call the generated route' },
+      { kind: 'screen3270', name: 'Run the green screen' },
+      { kind: 'generator', name: 'Generate the route' },
+      { kind: 'bridge', name: 'Call it and replay traffic' },
     ],
   },
 
@@ -1240,4 +1270,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'bridge', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'screen3270', 'generator', 'bridge', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']

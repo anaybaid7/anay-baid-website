@@ -10,6 +10,8 @@ import battleship from '../../battleship.ts?raw'
 import dispatch from './dispatch.ts?raw'
 import copybook from './copybook.ts?raw'
 import bridge from './bridge.ts?raw'
+import bms from './bms.ts?raw'
+import generate from './generate.ts?raw'
 import appStore from './appStore.ts?raw'
 import evaluate from './evaluate.ts?raw'
 import heatmap from './heatmap.ts?raw'
@@ -40,6 +42,8 @@ export const SOURCES: Partial<Record<DemoKind, Source>> = {
   battleship: { file: 'battleship.ts', source: battleship },
   build: { file: 'dispatch.ts', source: dispatch },
   copybook: { file: 'copybook.ts', source: copybook },
+  screen3270: { file: 'bms.ts', source: bms },
+  generator: { file: 'generate.ts', source: generate },
   bridge: { file: 'bridge.ts', source: bridge },
   router: { file: 'appStore.ts', source: appStore },
   evaluate: { file: 'evaluate.ts', source: evaluate },

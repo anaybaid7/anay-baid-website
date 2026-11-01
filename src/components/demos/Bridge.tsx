@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { handle, type Result, type World } from './bridge'
+import { handle, replay, type Result, type World } from './bridge'
 import { parse } from './copybook'
 import { COPYBOOK, RECORDS } from './getacct'
 import { Log, type LogLine } from '../sim/Log'
@@ -13,6 +13,8 @@ const TRY = [
   { label: 'Too short', no: '12345' },
 ]
 const STAGES: Result['steps'][number]['at'][] = ['api', 'zod', 'redis', 'cics', 'map']
+const TTLS = [0, 60, 300]
+const ttlName = (t: number) => (t ? `${t / 60} min` : 'no cache')
 const NAMES = { api: 'Express route', zod: 'Zod check', redis: 'Redis', cics: 'GETACCT on CICS', map: 'Record to JSON' }
 
 // The generated account route with a fake ACCTMAST behind it. Send the same
@@ -25,6 +27,9 @@ export default function Bridge() {
   const [last, setLast] = useState<Result | null>(null)
   const [log, setLog] = useState<LogLine[]>([])
   const [count, setCount] = useState({ requests: 0, hits: 0, calls: 0 })
+  const [ttl, setTtl] = useState(300)
+  const runs = useMemo(() => Object.fromEntries(TTLS.map((t) => [t, replay(FRESH, layout, t)])), [layout])
+  const run = runs[ttl]
 
   const send = () => {
     const r = handle(world, layout, no.trim(), `req-${count.requests + 1}`)
@@ -91,6 +96,27 @@ export default function Bridge() {
         </div>
       </div>
       <Log title="Request trace" lines={log} empty="No requests yet" />
+
+      <p className="demo-h br-replay-h">Replay 120 requests, one every 15 seconds</p>
+      <div className="demo-tabs" role="group" aria-label="Cache time to live">
+        {TTLS.map((t) => <button key={t} type="button" aria-pressed={ttl === t} onClick={() => setTtl(t)}>{ttlName(t)}</button>)}
+      </div>
+      <ol className="br-strip" aria-label={`${run.calls} of 120 requests reached the mainframe`}>
+        {run.out.map((o, i) => <li key={i} className={o} title={`#${i + 1} ${o === 'missing' ? 'not on file, 404' : o}`} />)}
+      </ol>
+      <p className="demo-legend"><i className="hit" /> Redis answered <i className="miss" /> GETACCT ran <i className="missing" /> not on file, GETACCT ran</p>
+      <table className="plan-table br-compare">
+        <thead><tr><th>Cache</th><th>Mainframe calls</th><th>Saved</th></tr></thead>
+        <tbody>
+          {TTLS.map((t) => (
+            <tr key={t} className={t === ttl ? 'picked' : ''}>
+              <td>{ttlName(t)}</td>
+              <td>{runs[t].calls} of 120</td>
+              <td>{Math.round((1 - runs[t].calls / 120) * 100)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
