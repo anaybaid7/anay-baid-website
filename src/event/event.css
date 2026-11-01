@@ -412,33 +412,37 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  column-gap: 26px;
+  row-gap: 4px;
 }
 .deck-divs button {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: var(--card);
+  display: inline-flex;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 6px 0 5px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
   font-size: 14px;
   font-weight: 600;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  color: var(--ink-2);
+  text-align: left;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 .deck-divs button span {
-  margin-left: 4px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 .deck-divs button:hover {
-  border-color: var(--cobalt);
+  color: var(--ink);
 }
 .deck-divs button[aria-pressed='true'] {
-  background: var(--cobalt);
-  border-color: var(--cobalt);
-  color: var(--on-cobalt);
+  color: var(--cobalt);
+  border-bottom-color: var(--cobalt);
 }
 .deck-divs button[aria-pressed='true'] span {
-  color: var(--on-cobalt);
-  opacity: 0.8;
+  color: var(--cobalt);
 }
 @keyframes dot-in {
   from { opacity: 0; transform: scale(0.3); }
