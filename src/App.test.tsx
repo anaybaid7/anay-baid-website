@@ -101,8 +101,8 @@ describe('App', () => {
     render(<App />)
     const facts = document.querySelector('.hero-facts')!
     expect(facts).toHaveTextContent('April 2027')
-    expect(facts).toHaveTextContent(`${experience.length} co-op terms`)
-    expect(facts).toHaveTextContent('2 hackathon wins')
+    expect(facts).toHaveTextContent(`${experience.length} terms`)
+    expect(facts).toHaveTextContent('2 wins')
   })
 
   it('opens a job from its logo under the intro', () => {
