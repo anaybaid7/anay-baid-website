@@ -126,7 +126,7 @@ function ForecastBoth({ nodes, onNode }: { nodes: ArchNode[]; onNode: (id: strin
 const SOURCE: Partial<Record<ScreenKind, string>> = {
   starrez: 'From the extension’s code',
   battleship: 'From the game’s code',
-  pashu: 'From the game’s code',
+  legacybridge: 'From the app’s code',
   iotum: 'Sketch of a host app on Iotum’s public SDK',
   nationwide: 'Sketch of the Intune and deployment views',
   cineplex: 'Layout sketch',

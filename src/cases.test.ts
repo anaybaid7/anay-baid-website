@@ -14,8 +14,8 @@ describe('case study addresses', () => {
   it('opens from its path or from ?case=', () => {
     history.replaceState(null, '', '/work/starrez/')
     expect(caseFromUrl()).toBe('project-starrez-enterprise-automation-suite')
-    history.replaceState(null, '', '/?case=project-pashu')
-    expect(caseFromUrl()).toBe('project-pashu')
+    history.replaceState(null, '', '/?case=project-legacybridge-ai')
+    expect(caseFromUrl()).toBe('project-legacybridge-ai')
     history.replaceState(null, '', '/work/nope/')
     expect(caseFromUrl()).toBeNull()
   })

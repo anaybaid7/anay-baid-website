@@ -232,23 +232,23 @@ export const projects: ProjectEntry[] = [
     code: 'https://github.com/anaybaid7/GitHub-Build-Trigger-Code-UOttaHack5',
   },
   {
-    title: 'Pashu (Animal Welfare Game)',
-    award: 'Winner, Best Gaming Hack (Big Blue Bubble)',
+    title: 'LegacyBridge AI',
     status: 'Ended',
-    period: 'HackWestern 9',
-    highlight: { value: 'Won', label: 'Best Gaming Hack at HackWestern 9' },
-    why: 'A shelter sim about animal welfare, built in a weekend.',
-    built: 'The gameplay loop and animal state machine in C#',
-    areas: ['frontend'],
+    period: 'ConUHacks X, January 2026',
+    highlight: { value: '0', label: 'lines of COBOL changed to put it behind REST' },
+    why: 'Banks still keep accounts in COBOL that nothing modern can call.',
+    built: 'A tool that turns a COBOL record layout into a REST route',
+    areas: ['frontend', 'backend'],
     description:
-      "A browser-based Unity game about animal welfare, built by a team of three at HackWestern 9.",
+      "A web app built at ConUHacks X for the Desjardins challenge. It walks a bank team from a legacy COBOL program to a REST API without touching the mainframe.",
     bullets: [
-      "Wrote the core gameplay loop in C#, with a finite-state machine driving NPC behavior and event-driven scoring.",
-      "Shipped a Unity WebGL build embedded in a Wix site so judges could play it in any browser.",
-      "Compressed textures and audio to keep the WebGL bundle small and load times short.",
+      "React and TypeScript app with four tools in one flow, a dashboard of legacy systems, an analyzer for COBOL, AS/400 DB2 and 3270 screen sources, a code generator and an API monitor.",
+      "The analyzer maps a COBOL record layout to a typed data model and suggests routes from it, so RECORD KEY IS ACCT-NUMBER becomes GET /api/v1/accounts/:accountNumber.",
+      "The generator writes the route as Express in TypeScript or FastAPI in Python, with Zod or Pydantic validation, a five minute Redis cache and a connector with a timeout and two retries.",
+      "The monitor charts requests, latency, errors and cache hits with Recharts, fed by simulated traffic for the demo.",
     ],
-    code: 'https://github.com/anaybaid7/HackWestern9-ProjectPashu',
-    tech: ['Unity', 'WebGL', 'C#', 'Wix'],
+    code: 'https://github.com/anaybaid7/legacybridge-ai-conuhacks10',
+    tech: ['React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Recharts'],
   },
   {
     title: 'Client-Side Routing System',
@@ -268,6 +268,12 @@ export const projects: ProjectEntry[] = [
   },
 ]
 
+// Hackathon wins, including ones whose project isn't shown above
+export const hackathonWins = [
+  { title: 'Best Use of GitHub', event: 'uOttaHack 5', project: 'CI/CD Build Automation Tool' },
+  { title: 'Best Gaming Hack (Big Blue Bubble)', event: 'HackWestern 9', project: 'Pashu' },
+]
+
 // Public repos shown in the Code section, with my own one-line summary.
 // Language and last push are read live from GitHub.
 export const repos = [
@@ -275,7 +281,7 @@ export const repos = [
   { name: 'battleship-purolator', about: 'Real-time two-player Battleship on Node, Express and Socket.IO, built for a Purolator intern event.' },
   { name: 'starrez-logger-prod', about: 'Manifest V3 Chrome extension that automates front desk logging in StarRez for UWaterloo Campus Housing.' },
   { name: 'GitHub-Build-Trigger-Code-UOttaHack5', about: 'Python tool that dispatches targeted GitHub Actions builds per environment. Best Use of GitHub at uOttaHack 5.' },
-  { name: 'HackWestern9-ProjectPashu', about: 'Unity and C# browser game with FSM-driven NPCs, shipped as a WebGL build. Best Gaming Hack at HackWestern 9.' },
+  { name: 'legacybridge-ai-conuhacks10', about: 'React and TypeScript app that maps COBOL record layouts to REST routes and generates the bridge code. Built at ConUHacks X.' },
   { name: 'anay-baid-website', about: 'This site, built with React, TypeScript and Vite.' },
 ]
 

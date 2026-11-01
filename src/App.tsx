@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { profile, experience, projects, education, skills, skillLabels, AREAS, type Area } from './data'
+import { profile, experience, projects, hackathonWins, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import ThemeToggle from './components/ThemeToggle'
 import { parsePeriod, monthIndex, monthLabel } from './timeline'
@@ -418,7 +418,7 @@ function ProjectLinks({ p }: { p: (typeof projects)[number] }) {
   )
 }
 
-const wins = projects.filter((p) => p.award?.toLowerCase().includes('winner'))
+const wins = hackathonWins
 
 // the five things a recruiter checks first, answered before they scroll
 
@@ -696,7 +696,7 @@ export default function App() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [])
 
-  // links like /#job-iotum or /#project-pashu open straight to that item
+  // links like /#job-iotum or /#project-legacybridge-ai open straight to that item
   useEffect(() => {
     const apply = () => {
       const h = decodeURIComponent(location.hash.slice(1))

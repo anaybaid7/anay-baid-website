@@ -30,7 +30,11 @@ const SETUP = {
   network: click('.demo .demo-primary'),
   graph: click('.demo .demo-primary'),
   sdk: click('.demo .demo-primary'),
-  fsm: click('.demo .demo-primary'),
+  copybook: async (p) => p.locator('.cb-bytes span').nth(2).hover(),
+  bridge: async (p) => {
+    await p.locator('.br-req .demo-primary').click()
+    await p.locator('.br-req .demo-primary').click()
+  },
   evaluate: async (p) => p.locator('.eval input[type=range]').fill('0.35'),
   heatmap: async (p) => p.locator('.heat-grid button').nth(1).click(),
   showtime: async (p) => p.locator('.showtime input[type=checkbox]').first().check(),
@@ -50,7 +54,8 @@ const FOCUS = {
   network: '.topo',
   graph: '.jobs',
   showtime: '.pchart.st',
-  fsm: '.shelter-grid',
+  copybook: '.cb-grid',
+  bridge: '.br-grid',
   drift: '.drift-grid',
   observer: '.obs',
   terraform: '.tfg',

@@ -49,7 +49,7 @@ export interface Flow {
   steps: FlowStep[]
 }
 
-export type ScreenKind = 'forecast-tool' | 'insightvault' | 'starrez' | 'battleship' | 'pashu' | 'iotum' | 'nationwide' | 'cineplex' | 'cicd' | 'routing'
+export type ScreenKind = 'forecast-tool' | 'insightvault' | 'starrez' | 'battleship' | 'legacybridge' | 'iotum' | 'nationwide' | 'cineplex' | 'cicd' | 'routing'
 
 export type DemoKind =
   | 'pipeline'
@@ -65,7 +65,8 @@ export type DemoKind =
   | 'extension'
   | 'battleship'
   | 'build'
-  | 'fsm'
+  | 'copybook'
+  | 'bridge'
   | 'router'
   | 'evaluate'
   | 'network'
@@ -1003,87 +1004,152 @@ export const DETAILS: Record<string, Detail> = {
     ],
   },
 
-  'project-pashu': {
+  'project-legacybridge-ai': {
     arch: {
       nodes: [
-        { id: 'player', label: 'Player', sub: 'Runs the shelter', kind: 'person', col: 0, row: 0, note: 'Builds the shelter, puts out food and water, and takes in animals.' },
-        { id: 'build', label: 'Build system', sub: 'Radial menu', kind: 'code', col: 1, row: 0, note: 'Places walls, bowls and decorations on the map.' },
-        { id: 'res', label: 'Food and water', sub: 'Resources', kind: 'store', col: 2, row: 0, note: 'Bowls the animals walk to. Each one is used up when an animal eats or drinks.' },
-        { id: 'npc', label: 'Animal state machine', sub: 'C#, NavMesh', kind: 'code', col: 1, row: 1, note: 'Each animal is in one state: Wander, goToFood, goToWater or Dead. Health and water drain every frame and pick the next state.' },
-        { id: 'stats', label: 'Stats', sub: 'XP, level, money', kind: 'store', col: 2, row: 1, note: 'XP goes up when animals eat, drink or get adopted, and down when one dies. Every 100 XP is a level.' },
-        { id: 'hud', label: 'HUD', sub: 'Unity UI', kind: 'client', col: 3, row: 1, note: 'Money, level, the XP bar, animal count and the date.' },
-        { id: 'time', label: 'Time manager', sub: 'Days and month end', kind: 'job', col: 1, row: 2, note: 'Advances a day every 30 seconds and pauses for the month-end bill.' },
-        { id: 'webgl', label: 'WebGL build', sub: 'Embedded on Wix', kind: 'file', col: 3, row: 2, note: 'Built for the browser so judges could play it anywhere.' },
+        { id: 'app', label: 'Bank app', sub: 'Web or mobile', kind: 'client', col: 0, row: 0, note: 'Anything that speaks HTTP and JSON. It never sees COBOL, fixed-width records or a 3270 screen.' },
+        { id: 'api', label: 'Generated route', sub: 'Express or FastAPI', kind: 'service', col: 1, row: 0, note: 'GET /api/v1/accounts/:accountNumber, written by the Generator in TypeScript or Python. Validates, checks the cache, calls the connector and maps the record.' },
+        { id: 'redis', label: 'Redis', sub: '5 minute TTL', kind: 'store', col: 2, row: 0, note: 'Keyed account:<number>. A hit answers without touching the mainframe, a miss is filled with SETEX 300 after the read.' },
+        { id: 'zod', label: 'Validation', sub: 'Zod or Pydantic', kind: 'code', col: 1, row: 1, note: 'The account number has to be exactly 10 digits before anything else runs. A bad one is a 400 that never reaches Redis or CICS.' },
+        { id: 'conn', label: 'Connector', sub: '5s timeout, 2 retries', kind: 'service', col: 2, row: 1, note: 'Runs the GETACCT program with ACCT-NUMBER zero padded to 10 digits and hands back the raw record.' },
+        { id: 'cics', label: 'GETACCT', sub: 'COBOL on CICS', kind: 'job', col: 3, row: 0, note: 'The existing account lookup. A random READ on the indexed ACCTMAST file by ACCT-NUMBER, unchanged.' },
+        { id: 'db2', label: 'AS/400 DB2', sub: 'CUSTMLIB.CUSTOMER', kind: 'store', col: 3, row: 1, note: 'The customer table, with indexes on name and email that the analyzer turns into search routes.' },
+        { id: 'bms', label: '3270 screen', sub: 'AINQ map', kind: 'client', col: 3, row: 2, note: 'The green screen account inquiry. Its BMS map fields become the request and response of a POST route.' },
+        { id: 'analyzer', label: 'Analyzer', sub: 'Reads the source', kind: 'code', col: 0, row: 2, note: 'Takes a COBOL program, a DB2 schema or a 3270 map, pulls out the data model field by field and suggests the routes.' },
+        { id: 'generator', label: 'Generator', sub: 'Writes the route', kind: 'code', col: 1, row: 2, note: 'Picks an endpoint and a language and outputs the route file, ready to copy or download as account-api.ts or .py.' },
+        { id: 'monitor', label: 'Monitor', sub: 'Recharts', kind: 'client', col: 2, row: 2, note: 'Requests per minute, latency, errors and cache hit rate, with a live list of calls. Fed by simulated traffic in the demo.' },
       ],
       edges: [
-        { from: 'player', to: 'build' },
-        { from: 'build', to: 'res' },
-        { from: 'res', to: 'npc' },
-        { from: 'npc', to: 'stats' },
-        { from: 'stats', to: 'hud' },
-        { from: 'time', to: 'stats' },
-        { from: 'hud', to: 'webgl' },
+        { from: 'app', to: 'api' },
+        { from: 'api', to: 'zod' },
+        { from: 'api', to: 'redis' },
+        { from: 'zod', to: 'conn' },
+        { from: 'conn', to: 'cics' },
+        { from: 'conn', to: 'db2' },
+        { from: 'conn', to: 'bms' },
+        { from: 'analyzer', to: 'generator', label: 'endpoints' },
+        { from: 'generator', to: 'zod', label: 'code' },
+        { from: 'conn', to: 'monitor' },
       ],
+      groups: [
+        { label: 'Mainframe, untouched', nodes: ['cics', 'db2', 'bms'] },
+        { label: 'LegacyBridge app', nodes: ['analyzer', 'generator', 'monitor'] },
+      ],
+      footnote: 'The weekend build is the LegacyBridge app. Its analysis steps and monitor traffic are scripted, and the generator holds one route per language. The demos here run the field mapping and that route for real.',
     },
     flows: [
       {
-        name: 'An animal gets hungry',
+        name: 'Reading GETACCT',
+        summary: 'From a COBOL record layout to a typed model and a list of routes.',
         steps: [
           {
-            from: 'player',
-            to: 'build',
-            title: 'Put out a food bowl',
-            detail: 'The player places a bowl from the radial build menu.',
+            from: 'cics',
+            to: 'analyzer',
+            title: 'Paste the program',
+            detail: 'The analyzer starts from the source a bank team already has. For GETACCT that is the FILE-CONTROL entry and the record layout of ACCTMAST.',
+            payload: { label: 'GETACCT.cbl', code: "SELECT ACCOUNT-FILE ASSIGN TO 'ACCTMAST'\n    ORGANIZATION IS INDEXED\n    ACCESS MODE IS RANDOM\n    RECORD KEY IS ACCT-NUMBER.\n01  ACCOUNT-RECORD.\n    05  ACCT-NUMBER   PIC 9(10).\n    05  ACCT-BALANCE  PIC 9(10)V99.\n    05  OPEN-DATE     PIC 9(8)." },
           },
           {
-            from: 'res',
-            to: 'npc',
-            title: 'Health drops below 50',
-            detail: 'Health and water drain every frame. Under 50, the animal switches to goToFood and the NavMesh agent heads for the closest bowl.',
-            payload: { label: 'AnimalController.cs', code: 'health -= Time.deltaTime * healthReductionSpeed;\nwater  -= Time.deltaTime * (healthReductionSpeed / 2);\nif (health < 50) { foodIndicator.SetActive(true); currentState = State.goToFood; }\nif (water  < 50) { waterIndicator.SetActive(true); currentState = State.goToWater; }' },
+            from: 'analyzer',
+            to: 'generator',
+            title: 'Map every PIC clause',
+            detail: 'PIC X is text. PIC 9 with a V has implied decimals, so 9(10)V99 is 12 bytes and a number. Eight digit dates are YYYYMMDD. Numeric ids stay strings so the leading zeros survive.',
+            payload: { label: 'extracted model', code: "accountNumber    string   ACCT-NUMBER     10 digits\naccountName      string   ACCT-NAME       max 50\nbalance          number   ACCT-BALANCE    decimal(12,2)\nopenDate         date     OPEN-DATE       YYYYMMDD\ncustomerId       string   CUSTOMER-ID     8 digits" },
           },
           {
-            from: 'npc',
-            to: 'stats',
-            title: 'It eats and the player scores',
-            detail: 'Within 2 units of the bowl, the bowl is used up, health resets to 100, the player gains XP and the animal goes back to wandering.',
-            payload: { label: 'AnimalController.cs', code: 'if (Vector3.Distance(transform.position, target) <= 2f) {\n  health = 100;\n  stats.XP += Random.Range(10, 20);\n  currentState = State.Wander;\n}' },
+            from: 'analyzer',
+            to: 'generator',
+            title: 'Suggest the routes',
+            detail: 'The record key becomes a lookup by id, the file becomes a paged list, and CUSTOMER-ID becomes a nested route under customers.',
+            payload: { label: 'suggested endpoints', code: 'GET /api/v1/accounts/:accountNumber\nGET /api/v1/accounts\nGET /api/v1/customers/:customerId/accounts' },
           },
           {
-            from: 'stats',
-            to: 'hud',
-            title: 'The HUD updates',
-            detail: 'XP past 100 rolls over into a level. If an animal is left until health or water hits zero, it dies and the player loses 75 XP.',
+            from: 'generator',
+            to: 'zod',
+            title: 'Write the route',
+            detail: 'Pick an endpoint and TypeScript or Python. Out comes a route file with its validation schema, the cache, the connector call and the error responses.',
+            payload: { label: 'account-api.ts', code: "const accountNumberSchema = z\n  .string()\n  .regex(/^\\d{10}$/, 'Account number must be 10 digits')" },
           },
         ],
       },
       {
-        name: 'Month end',
+        name: 'A cold request',
+        summary: 'Nothing cached yet, so the bridge goes all the way to CICS.',
         steps: [
           {
-            from: 'time',
-            to: 'stats',
-            title: 'The bill comes due',
-            detail: 'On the last day of the month time slows to a stop and a bill shows government funding per animal, donations and rent.',
-            payload: { label: 'TimeManager.cs', code: 'int govt = stats.animalCount * 100;\nint donations = Random.Range(100, 500);\nint rent = Random.Range(1000, 2000);\nbill = govt + donations - rent;' },
+            from: 'app',
+            to: 'api',
+            title: 'The app asks for an account',
+            detail: 'A plain HTTP GET with the account number in the path.',
+            payload: { label: 'request', code: 'GET /api/v1/accounts/0012345678' },
           },
           {
-            from: 'stats',
-            to: 'hud',
-            title: 'Pay it or go under',
-            detail: 'Paying adds the total to the balance. If money goes below zero, it is game over.',
+            from: 'api',
+            to: 'zod',
+            title: 'Validate first',
+            detail: 'Anything that is not exactly 10 digits is a 400 with the Zod errors attached, before Redis or the mainframe see it.',
           },
           {
-            from: 'hud',
-            to: 'webgl',
-            title: 'All of it runs in the browser',
-            detail: 'The Unity WebGL build is embedded in a Wix page, so it plays without installing anything.',
+            from: 'api',
+            to: 'redis',
+            title: 'Miss',
+            detail: 'account:0012345678 is not in Redis, so the route carries on to the connector.',
+          },
+          {
+            from: 'conn',
+            to: 'cics',
+            title: 'Run GETACCT',
+            detail: 'The connector runs the program with a 5 second timeout and 2 retries, padding the number to 10 digits the way the record stores it.',
+            payload: { label: 'connector', code: "new CobolConnector({\n  program: 'GETACCT',\n  timeout: 5000,\n  retries: 2,\n}).execute({ ACCT_NUMBER: accountNumber.padStart(10, '0') })" },
+          },
+          {
+            from: 'cics',
+            to: 'conn',
+            title: 'A fixed-width record comes back',
+            detail: '126 bytes, space padded, with the balance in cents and no decimal point.',
+            payload: { label: 'ACCTMAST record', code: '0012345678MARIE TREMBLAY CHEQUING                           000001543250CHECKING            ACTIVE    201803152026012387654321' },
+          },
+          {
+            from: 'api',
+            to: 'app',
+            title: 'Map it, cache it, answer',
+            detail: 'Fields are trimmed, the balance gets its two implied decimals, dates become ISO, and the result is stored with SETEX for five minutes.',
+            payload: { label: '200 OK', code: '{\n  "success": true,\n  "data": {\n    "accountNumber": "0012345678",\n    "balance": 15432.5,\n    "openDate": "2018-03-15",\n    "customerId": "87654321"\n  },\n  "metadata": { "source": "COBOL-CICS", "cached": false }\n}' },
+          },
+        ],
+      },
+      {
+        name: 'Cache hit, then an outage',
+        summary: 'The same account again, and then the mainframe goes quiet.',
+        steps: [
+          {
+            from: 'api',
+            to: 'redis',
+            title: 'Hit',
+            detail: 'Inside five minutes the same account comes straight from Redis with cached set to true, and the mainframe does no work.',
+            payload: { label: '200 OK', code: '"metadata": { "source": "COBOL-CICS", "cached": true }' },
+          },
+          {
+            from: 'conn',
+            to: 'cics',
+            title: 'The mainframe stops answering',
+            detail: 'For an account that is not cached, the connector times out at 5 seconds, retries twice, and gives up.',
+          },
+          {
+            from: 'api',
+            to: 'app',
+            title: 'A 500 with a request id',
+            detail: 'The app gets a clear failure it can retry, and support gets an id to look up. It never gets a guessed or stale balance.',
+            payload: { label: '500', code: '{\n  "error": "Internal Server Error",\n  "message": "Failed to retrieve account data from legacy system",\n  "requestId": "req-7"\n}' },
           },
         ],
       },
     ],
-    screens: 'pashu',
-    demos: [{ kind: 'fsm', name: 'Run the shelter' }],
+    screens: 'legacybridge',
+    demos: [
+      { kind: 'copybook', name: 'Read a COBOL record' },
+      { kind: 'bridge', name: 'Call the generated route' },
+    ],
   },
 
   'project-client-side-routing-system': {
@@ -1174,4 +1240,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'fsm', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'bridge', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']

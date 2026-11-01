@@ -20,7 +20,7 @@ describe('skill evidence', () => {
     expect(whereUsed('Kotlin')).toEqual([])
   })
   it('makes clean slugs', () => {
-    expect(slug('Pashu (Animal Welfare Game)')).toBe('pashu')
+    expect(slug('LegacyBridge AI')).toBe('legacybridge-ai')
     expect(slug('CI/CD Build Automation Tool')).toBe('ci-cd-build-automation-tool')
   })
 })
