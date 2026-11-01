@@ -773,7 +773,6 @@ export default function App() {
           <button type="button" className="search" onClick={() => setMenuOpen(true)}>
             Search <kbd>{hydrated && navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K'}</kbd>
           </button>
-          <a href={`mailto:${profile.email}`}>Email</a>
           <button type="button" onClick={showResume}>Resume</button>
           <button type="button" className="settings-open" popoverTarget="settings" title="Settings (,)">Settings</button>
           <ThemeToggle />
@@ -798,21 +797,36 @@ export default function App() {
               fetchPriority="high"
             />
             <div className="hero-copy">
-              <p className="lede">
-                Software engineer for backend services and data pipelines. On co-op at Purolator, building the
-                forecasting pipeline, the planning tools on top of it and the AWS stack they run on.
+              <p className="lede">Software engineer for backend services and data pipelines.</p>
+              <p className="sub">
+                On co{'\u2011'}op at Purolator, building the forecasting pipeline, the planning tools on top of it and
+                the AWS stack they run on.
               </p>
-              <p className="sub hero-facts">
-                <span>Waterloo CS, graduating April 2027</span>
-                <span>{plural(experience.length, 'co-op term')}, {totalMonths()} months</span>
-                {wins.length > 0 && <span>{plural(wins.length, 'hackathon win')}</span>}
-                <span>{profile.location.replace(', ON', '')}</span>
-              </p>
+              <dl className="hero-facts">
+                <div>
+                  <dt>Graduating</dt>
+                  <dd>April 2027, Waterloo CS</dd>
+                </div>
+                <div>
+                  <dt>Co{'\u2011'}op</dt>
+                  <dd>{experience.length} terms, {totalMonths()} months</dd>
+                </div>
+                {wins.length > 0 && (
+                  <div>
+                    <dt>Hackathons</dt>
+                    <dd>{plural(wins.length, 'win')}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Based in</dt>
+                  <dd>{profile.location.replace(', ON', '')}</dd>
+                </div>
+              </dl>
               <div className="hero-orgs" role="group" aria-label="Co-op employers">
                 {experience.map((e, i) => (
-                  <button key={e.org} type="button" onClick={() => openJob(i)} title={`${e.role}, ${shortPeriod(e.period)}`}>
+                  <button key={e.org} type="button" onClick={() => openJob(i)} title={`${shortOrg(e.org)}, ${e.role}, ${shortPeriod(e.period)}`}>
                     <img src={e.logo} alt="" width={20} height={20} />
-                    {shortOrg(e.org)}
+                    {shortOrg(e.org).split(' ')[0]}
                   </button>
                 ))}
               </div>
