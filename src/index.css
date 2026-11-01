@@ -7712,7 +7712,48 @@ dd {
 }
 @media print {
   .letter a::after {
-    content: " (a2baid.netlify.app" attr(href) ")";
+    content: " (" attr(href) ")";
     font-weight: 400;
+  }
+}
+
+/* employers under the intro, each opening its job */
+.hero-orgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 14px 0 0;
+}
+.hero-orgs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 600 15px var(--font);
+  cursor: pointer;
+}
+.hero-orgs button:hover {
+  color: var(--ink);
+}
+.hero-orgs img {
+  object-fit: contain;
+}
+/* each job tab carries its headline result */
+.xp-tabs .xp-result {
+  margin-top: 4px;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+.xp-tabs .xp-result em {
+  color: var(--cobalt);
+  font-style: normal;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .xp-tabs .xp-result {
+    display: none;
   }
 }

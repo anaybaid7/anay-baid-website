@@ -76,7 +76,7 @@ const educationSchema = z.object({
   logo: localAssetPath,
   highlights: z.array(z.string().min(1)).min(1),
   letter: z
-    .object({ href: localAssetPath, by: z.string().min(1), role: z.string().min(1), course: z.string().min(1), quote: z.string().min(1) })
+    .object({ href: urlString, by: z.string().min(1), role: z.string().min(1), course: z.string().min(1), quote: z.string().min(1) })
     .optional(),
 })
 

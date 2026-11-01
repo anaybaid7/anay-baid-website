@@ -105,10 +105,16 @@ describe('App', () => {
     expect(facts).toHaveTextContent('2 hackathon wins')
   })
 
+  it('opens a job from its logo under the intro', () => {
+    render(<App />)
+    fireEvent.click(within(screen.getByRole('group', { name: 'Co-op employers' })).getByRole('button', { name: /Iotum/ }))
+    expect(document.getElementById('job-iotum')).toHaveClass('on')
+  })
+
   it('quotes and links the CS 445 reference letter', () => {
     render(<App />)
     const link = screen.getByRole('link', { name: 'Read the CS\u00a0445 reference letter' })
-    expect(link).toHaveAttribute('href', '/letters/Anay_Baid_CS445_Reference_Letter.pdf')
+    expect(link).toHaveAttribute('href', 'https://drive.google.com/file/d/1LcR_pz3wEXiGkZCNthVOnLUiVTHPnWZq/view')
     expect(document.querySelector('.letter blockquote')).toHaveTextContent('flawless across all eight deliverables')
   })
 
