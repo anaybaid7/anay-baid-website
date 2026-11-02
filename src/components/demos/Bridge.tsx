@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { handle, replay, type Result, type World } from './bridge'
+import { BREAK_AFTER, BREAK_FOR, GENERATED, OUTAGE, handle, replay, type Opts, type Outcome, type Result, type World } from './bridge'
 import { parse } from './copybook'
 import { COPYBOOK, RECORDS } from './getacct'
 import { Log, type LogLine } from '../sim/Log'
@@ -12,10 +12,16 @@ const TRY = [
   { label: 'Not on file', no: '0000000001' },
   { label: 'Too short', no: '12345' },
 ]
-const STAGES: Result['steps'][number]['at'][] = ['api', 'zod', 'redis', 'cics', 'map']
-const TTLS = [0, 60, 300]
-const ttlName = (t: number) => (t ? `${t / 60} min` : 'no cache')
-const NAMES = { api: 'Express route', zod: 'Zod check', redis: 'Redis', cics: 'GETACCT on CICS', map: 'Record to JSON' }
+const STAGES: Result['steps'][number]['at'][] = ['api', 'zod', 'redis', 'breaker', 'cics', 'map']
+const NAMES = { api: 'Express route', zod: 'Zod check', redis: 'Redis', breaker: 'Breaker', cics: 'GETACCT on CICS', map: 'Record to JSON' }
+const SAYS: Record<Outcome, string> = { hit: 'answered from Redis', miss: 'GETACCT ran', missing: 'not on file, GETACCT ran', failed: 'timed out 3 times, 15s wait', shed: 'breaker open, failed fast' }
+// the generated route, then each change on top of it
+const PLANS: { name: string; opts: Opts }[] = [
+  { name: 'No cache', opts: { ...GENERATED, ttl: 0 } },
+  { name: 'Generated route, 5 min cache', opts: GENERATED },
+  { name: '+ remember 404s for 1 min', opts: { ...GENERATED, notFoundTtl: 60 } },
+  { name: `+ breaker, ${BREAK_AFTER} timeouts opens it ${BREAK_FOR}s`, opts: { ...GENERATED, notFoundTtl: 60, breaker: true } },
+]
 
 // The generated account route with a fake ACCTMAST behind it. Send the same
 // number twice to see the cache answer, move the clock past five minutes to
@@ -27,12 +33,13 @@ export default function Bridge() {
   const [last, setLast] = useState<Result | null>(null)
   const [log, setLog] = useState<LogLine[]>([])
   const [count, setCount] = useState({ requests: 0, hits: 0, calls: 0 })
-  const [ttl, setTtl] = useState(300)
-  const runs = useMemo(() => Object.fromEntries(TTLS.map((t) => [t, replay(FRESH, layout, t)])), [layout])
-  const run = runs[ttl]
+  const [plan, setPlan] = useState(1)
+  const runs = useMemo(() => PLANS.map((p) => replay(FRESH, layout, p.opts)), [layout])
+  const run = runs[plan]
+  const opts = PLANS[plan].opts
 
   const send = () => {
-    const r = handle(world, layout, no.trim(), `req-${count.requests + 1}`)
+    const r = handle(world, layout, no.trim(), `req-${count.requests + 1}`, opts)
     setWorld(r.world)
     setLast(r)
     const hit = r.steps.some((s) => s.text.startsWith('HIT'))
@@ -97,26 +104,34 @@ export default function Bridge() {
       </div>
       <Log title="Request trace" lines={log} empty="No requests yet" />
 
-      <p className="demo-h br-replay-h">Replay 120 requests, one every 15 seconds</p>
-      <div className="demo-tabs" role="group" aria-label="Cache time to live">
-        {TTLS.map((t) => <button key={t} type="button" aria-pressed={ttl === t} onClick={() => setTtl(t)}>{ttlName(t)}</button>)}
+      <p className="demo-h br-replay-h">Replay 120 requests, one every 15 seconds, with the mainframe down for requests {OUTAGE[0] + 1} to {OUTAGE[1]}</p>
+      <div className="br-plans" role="group" aria-label="Which version of the route">
+        {PLANS.map((p, i) => <button key={p.name} type="button" aria-pressed={plan === i} onClick={() => setPlan(i)}>{p.name}</button>)}
       </div>
-      <ol className="br-strip" aria-label={`${run.calls} of 120 requests reached the mainframe`}>
-        {run.out.map((o, i) => <li key={i} className={o} title={`#${i + 1} ${o === 'missing' ? 'not on file, 404' : o}`} />)}
-      </ol>
-      <p className="demo-legend"><i className="hit" /> Redis answered <i className="miss" /> GETACCT ran <i className="missing" /> not on file, GETACCT ran</p>
-      <table className="plan-table br-compare">
-        <thead><tr><th>Cache</th><th>Mainframe calls</th><th>Saved</th></tr></thead>
-        <tbody>
-          {TTLS.map((t) => (
-            <tr key={t} className={t === ttl ? 'picked' : ''}>
-              <td>{ttlName(t)}</td>
-              <td>{runs[t].calls} of 120</td>
-              <td>{Math.round((1 - runs[t].calls / 120) * 100)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="br-strip-wrap">
+        <ol className="br-strip" aria-label={`${run.calls} calls reached the mainframe`}>
+          {run.out.map((o, i) => <li key={i} className={`${o} ${i >= OUTAGE[0] && i < OUTAGE[1] ? 'down' : ''}`} title={`#${i + 1} ${SAYS[o]}`} />)}
+        </ol>
+      </div>
+      <p className="demo-legend">
+        {(Object.keys(SAYS) as Outcome[]).map((o) => <span key={o}><i className={o} /> {SAYS[o]}</span>)}
+      </p>
+      <div className="table-scroll">
+        <table className="plan-table br-compare">
+          <thead><tr><th>Route</th><th>Calls to CICS</th><th>Timed out</th><th>Callers waited</th></tr></thead>
+          <tbody>
+            {PLANS.map((p, i) => (
+              <tr key={p.name} className={i === plan ? 'picked' : ''} onClick={() => setPlan(i)}>
+                <td>{p.name}</td>
+                <td>{runs[i].calls}</td>
+                <td>{runs[i].failed}</td>
+                <td>{runs[i].waited}s</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="demo-note">Calls count each retry. The generated route stops at the cache. Remembering 404s and the breaker are what I’d add, and the buttons above use whichever version is picked here.</p>
     </div>
   )
 }

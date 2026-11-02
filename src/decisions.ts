@@ -175,6 +175,7 @@ export const NOTES: Record<string, Notes> = {
       'Send the source to Gemini for real. The weekend build scripted the analysis steps, so the model’s field map would be checked against the PIC clauses before anything is generated.',
       'COMP-3 packed decimals, signed fields and REDEFINES, which real copybooks lean on and the sample layout does not use.',
       'Write routes. Everything here is a read, and POST /transactions needs an idempotency key before it can safely retry against IMS.',
+      'Remember a 404 for a minute and put a circuit breaker in front of the connector. In the replay under Try it, the breaker cuts timeouts during an outage from 20 to 7.',
     ],
   },
 
