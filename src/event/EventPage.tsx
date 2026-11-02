@@ -5,6 +5,7 @@ import { deck, slides, type Point, type Slide, type Spot, type Step } from './co
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
 import Impact from './impact'
+import Units from './units'
 import Qr from './qr'
 import Presenter from './presenter'
 import { openChannel, openPresenter, type DeckMsg } from './channel'
@@ -294,6 +295,7 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
     <div className="deck-visual">
       {slide.steps && <Steps steps={slide.steps} spot={spot} setSpot={setSpot} />}
       {slide.visual === 'map' && <TerminalMap />}
+      {slide.visual === 'units' && <Units />}
       {slide.visual === 'impact' && <Impact />}
       {slide.visual === 'qr' && <Qr />}
       {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}

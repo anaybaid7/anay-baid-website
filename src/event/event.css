@@ -1087,6 +1087,107 @@
   }
 }
 
+/* pieces and stops: one street, a few addresses */
+.units {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: 700px;
+  cursor: default;
+}
+.units-pick {
+  display: flex;
+  gap: 32px;
+}
+.units-pick button {
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  font: 600 clamp(18px, 1.5vw, 22px) var(--font);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.units-pick b {
+  font-size: clamp(30px, 2.8vw, 44px);
+  font-weight: 760;
+  font-stretch: 112%;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.units-pick button:hover b,
+.units-pick button[aria-pressed='true'],
+.units-pick button[aria-pressed='true'] b {
+  color: var(--cobalt);
+}
+.units-pick button[aria-pressed='true'] {
+  border-bottom-color: var(--cobalt);
+}
+.units-street {
+  width: 100%;
+  overflow: visible;
+}
+.units-road { stroke: var(--ink-3); stroke-width: 2; }
+.units-lane { stroke: var(--line); stroke-width: 2; stroke-dasharray: 14 10; }
+.units-van path { fill: var(--cobalt); }
+.units-van rect { fill: var(--card); }
+.units-building {
+  fill: var(--card);
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+.units-box {
+  fill: var(--line);
+  transition: fill 0.2s ease;
+}
+.units-stop,
+.units-count {
+  font-size: 14px;
+  font-weight: 650;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.units-stop { fill: var(--cobalt); }
+.units-count { fill: var(--cobalt); }
+.show-pieces .units-box { fill: var(--cobalt); }
+.show-pieces .units-count { opacity: 1; }
+.show-stops .units-building {
+  fill: color-mix(in srgb, var(--cobalt) 12%, var(--card));
+  stroke: var(--cobalt);
+}
+.show-stops .units-stop { opacity: 1; }
+.units-why {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 0;
+}
+.units-why div {
+  padding-left: 14px;
+  border-left: 3px solid var(--line);
+  transition: border-color 0.2s ease;
+}
+.units-why div.on {
+  border-left-color: var(--cobalt);
+}
+.units-why dt {
+  font-weight: 700;
+  font-size: 17px;
+}
+.units-why dd {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+@media (max-width: 920px) {
+  .units-why {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* why it matters: the forecast slider */
 .impact {
   --low: #d64545;
