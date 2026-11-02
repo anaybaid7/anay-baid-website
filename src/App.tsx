@@ -16,6 +16,8 @@ import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
+import CountUp from './components/CountUp'
+import Lately from './components/Lately'
 import { NOTES } from './decisions'
 import { caseFromUrl, casePath, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
@@ -248,7 +250,7 @@ function Result({ h }: { h?: { value: string; label: string } }) {
   if (!h) return null
   return (
     <p className="entry-result">
-      <b>{h.value}</b> {h.label}
+      <CountUp value={h.value} /> {h.label}
     </p>
   )
 }
@@ -461,7 +463,7 @@ function Featured({ onOpen, onCase }: { onOpen: OpenFn; onCase: (id: string) => 
                 <div className="feature-text">
                   <p className="feature-where">{e.kind === 'job' ? `${e.title}, ${e.sub}` : 'Project'}</p>
                   <h3>{f.title}</h3>
-                  {e.highlight && <p className="entry-result"><b>{e.highlight.value}</b> {e.highlight.label}</p>}
+                  <Result h={e.highlight} />
                   <dl className="feature-case">
                     <div>
                       <dt>Problem</dt>
@@ -686,7 +688,8 @@ export default function App() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [])
   const selectJob = useCallback((i: number) => {
-    setActiveJob(i)
+    // the old panel lifts away and the new one settles in
+    withTransition(() => setActiveJob(i), 'job')
     history.replaceState(null, '', `#job-${slug(shortOrg(experience[i].org))}`)
   }, [])
   const openProject = useCallback((s: string) => {
@@ -886,7 +889,7 @@ export default function App() {
                   <li key={p.title} className={[entryClass(false, !fits(p.tech, filter)), FEATURED.some((f) => f.id === id) ? 'in-featured' : ''].join(' ')} data-areas={p.areas.join(' ')} id={id}>
                     {first && (
                       <button type="button" className="card-shot" onClick={() => openDetail(id, 'try', first.kind)} aria-label={`Try ${p.title}`}>
-                        <Shot kind={first.kind} />
+                        <Clip kind={first.kind} />
                       </button>
                     )}
                     <div className="entry-main">
@@ -965,6 +968,8 @@ export default function App() {
                 </div>
               </dl>
             </div>
+
+            <Lately user={profile.links.github.split('/').pop()!} />
           </div>
         </section>
       </main>
