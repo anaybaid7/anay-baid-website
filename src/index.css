@@ -5569,6 +5569,27 @@ button.thread-row:hover .thread-where b {
   background: var(--bad);
   border: 1.5px solid var(--bad);
 }
+.br-strip li.stale,
+.demo-legend i.stale {
+  background: repeating-linear-gradient(135deg, var(--cobalt) 0 3px, transparent 3px 6px);
+  border: 1.5px solid var(--cobalt);
+}
+.pay-req {
+  margin-top: 14px;
+}
+.pay-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.pay-steps li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pay-steps li.dup {
+  color: var(--bad);
+}
 .br-strip li.shed,
 .demo-legend i.shed {
   border: 1.5px dashed var(--bad);

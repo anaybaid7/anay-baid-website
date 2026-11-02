@@ -14,13 +14,14 @@ const TRY = [
 ]
 const STAGES: Result['steps'][number]['at'][] = ['api', 'zod', 'redis', 'breaker', 'cics', 'map']
 const NAMES = { api: 'Express route', zod: 'Zod check', redis: 'Redis', breaker: 'Breaker', cics: 'GETACCT on CICS', map: 'Record to JSON' }
-const SAYS: Record<Outcome, string> = { hit: 'answered from Redis', miss: 'GETACCT ran', missing: 'not on file, GETACCT ran', failed: 'timed out 3 times, 15s wait', shed: 'breaker open, failed fast' }
+const SAYS: Record<Outcome, string> = { hit: 'answered from Redis', miss: 'GETACCT ran', missing: 'not on file, GETACCT ran', failed: 'timed out 3 times, 15s wait', shed: 'breaker open, failed fast', stale: 'old copy, marked stale' }
 // the generated route, then each change on top of it
 const PLANS: { name: string; opts: Opts }[] = [
   { name: 'No cache', opts: { ...GENERATED, ttl: 0 } },
   { name: 'Generated route, 5 min cache', opts: GENERATED },
   { name: '+ remember 404s for 1 min', opts: { ...GENERATED, notFoundTtl: 60 } },
   { name: `+ breaker, ${BREAK_AFTER} timeouts opens it ${BREAK_FOR}s`, opts: { ...GENERATED, notFoundTtl: 60, breaker: true } },
+  { name: '+ last good copy when CICS is down', opts: { ...GENERATED, notFoundTtl: 60, breaker: true, staleFor: 1800 } },
 ]
 
 // The generated account route with a fake ACCTMAST behind it. Send the same
@@ -118,20 +119,21 @@ export default function Bridge() {
       </p>
       <div className="table-scroll">
         <table className="plan-table br-compare">
-          <thead><tr><th>Route</th><th>Calls to CICS</th><th>Timed out</th><th>Callers waited</th></tr></thead>
+          <thead><tr><th>Route</th><th>Calls to CICS</th><th>Timed out</th><th>Errors returned</th><th>Callers waited</th></tr></thead>
           <tbody>
             {PLANS.map((p, i) => (
               <tr key={p.name} className={i === plan ? 'picked' : ''} onClick={() => setPlan(i)}>
                 <td>{p.name}</td>
                 <td>{runs[i].calls}</td>
-                <td>{runs[i].failed}</td>
+                <td>{runs[i].timeouts}</td>
+                <td>{runs[i].errors}</td>
                 <td>{runs[i].waited}s</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="demo-note">Calls count each retry. The generated route stops at the cache. Remembering 404s and the breaker are what I’d add, and the buttons above use whichever version is picked here.</p>
+      <p className="demo-note">Calls count each retry. The generated route stops at the cache. Remembering 404s, the breaker and the stale fallback are what I’d add. A stale balance says so in its metadata, so a client can label it instead of passing it off as live, and the buttons above use whichever version is picked here.</p>
     </div>
   )
 }

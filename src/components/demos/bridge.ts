@@ -32,8 +32,10 @@ export interface Opts {
   ttl: number
   notFoundTtl: number
   breaker: boolean
+  // how long past expiry a cached copy can still answer when CICS can't
+  staleFor: number
 }
-export const GENERATED: Opts = { ttl: TTL, notFoundTtl: 0, breaker: false }
+export const GENERATED: Opts = { ttl: TTL, notFoundTtl: 0, breaker: false, staleFor: 0 }
 export const BREAK_AFTER = 3
 export const BREAK_FOR = 60 // seconds
 
@@ -45,6 +47,8 @@ export interface Result {
   steps: Step[]
   world: World
   mainframeCalls: number
+  timedOut: boolean
+  stale: boolean
 }
 
 export const cacheKey = (n: string) => `account:${n}`
@@ -52,7 +56,16 @@ export const cacheKey = (n: string) => `account:${n}`
 export function handle(world: World, layout: Layout, accountNumber: string, requestId: string, opts: Opts = GENERATED): Result {
   const { ttl } = opts
   const steps: Step[] = [{ at: 'api', text: `GET /api/v1/accounts/${accountNumber}` }]
-  const done = (status: Result['status'], body: Record<string, unknown>, w = world, calls = 0): Result => ({ status, body, steps, world: w, mainframeCalls: calls })
+  let timedOut = false
+  const done = (status: Result['status'], body: Record<string, unknown>, w = world, calls = 0, stale = false): Result => ({ status, body, steps, world: w, mainframeCalls: calls, timedOut, stale })
+  // an expired copy that is still young enough to fall back on
+  const fallback = (w: World, calls: number) => {
+    const old = w.cache[cacheKey(accountNumber)]
+    if (!opts.staleFor || !old?.value || w.now - old.expires > opts.staleFor) return null
+    const age = w.now - old.expires + ttl
+    steps.push({ at: 'redis', text: `serving the copy from ${Math.round(age / 60)} min ago, marked stale`, tone: 'warn' })
+    return done(200, { success: true, data: old.value, metadata: { source: 'COBOL-CICS', cached: true, stale: true, ageSeconds: age } }, w, calls, true)
+  }
 
   if (!/^\d{10}$/.test(accountNumber)) {
     steps.push({ at: 'zod', text: 'Account number must be 10 digits', tone: 'err' })
@@ -74,6 +87,8 @@ export function handle(world: World, layout: Layout, accountNumber: string, requ
 
   if (opts.breaker && (world.openUntil ?? 0) > world.now) {
     steps.push({ at: 'breaker', text: `open for ${world.openUntil! - world.now}s more, not calling GETACCT`, tone: 'warn' })
+    const old = fallback(world, 0)
+    if (old) return old
     return done(503, { error: 'Service Unavailable', message: 'Legacy system is down, try again shortly', requestId })
   }
 
@@ -84,6 +99,9 @@ export function handle(world: World, layout: Layout, accountNumber: string, requ
     if (trip) steps.push({ at: 'breaker', text: `${failures} failures in a row, open for ${BREAK_FOR}s`, tone: 'err' })
     // after a trip, one more failure is enough to open it again
     const w = { ...world, failures: trip ? BREAK_AFTER - 1 : failures, openUntil: trip ? world.now + BREAK_FOR : world.openUntil }
+    timedOut = true
+    const old = fallback(w, RETRIES + 1)
+    if (old) return old
     return done(500, { error: 'Internal Server Error', message: 'Failed to retrieve account data from legacy system', requestId }, w, RETRIES + 1)
   }
   world = { ...world, failures: 0 }
@@ -105,7 +123,7 @@ export function handle(world: World, layout: Layout, accountNumber: string, requ
   return done(200, { success: true, data: json, metadata: { source: 'COBOL-CICS', cached: false } }, next, 1)
 }
 
-export type Outcome = 'hit' | 'miss' | 'missing' | 'failed' | 'shed'
+export type Outcome = 'hit' | 'miss' | 'missing' | 'failed' | 'shed' | 'stale'
 export const OUTAGE = [60, 84] // requests sent while the mainframe is down
 
 // 120 reads, 15 seconds apart, mostly for a few busy accounts and some for
@@ -121,15 +139,20 @@ export function replay(world: World, layout: Layout, opts: Opts, n = 120, gap = 
   const out: Outcome[] = []
   let calls = 0
   let waited = 0
+  let timeouts = 0
   for (let i = 0; i < n; i++) {
     const r = rand()
     const no = r < 0.5 ? busy[0] : r < 0.75 ? busy[1] : r < 0.83 ? busy[2] : strays[Math.floor(rand() * strays.length)]
     w = { ...w, mainframeUp: i < OUTAGE[0] || i >= OUTAGE[1] }
     const res = handle(w, layout, no, `replay-${i}`, opts)
     calls += res.mainframeCalls
-    if (res.status === 500) waited += 5 * (RETRIES + 1)
-    out.push(res.status === 503 ? 'shed' : res.status === 500 ? 'failed' : !res.mainframeCalls ? 'hit' : res.status === 404 ? 'missing' : 'miss')
+    if (res.timedOut) {
+      timeouts++
+      waited += 5 * (RETRIES + 1)
+    }
+    out.push(res.stale ? 'stale' : res.status === 503 ? 'shed' : res.status === 500 ? 'failed' : !res.mainframeCalls ? 'hit' : res.status === 404 ? 'missing' : 'miss')
     w = { ...res.world, now: res.world.now + gap }
   }
-  return { out, calls, waited, failed: out.filter((o) => o === 'failed').length }
+  const count = (o: Outcome) => out.filter((x) => x === o).length
+  return { out, calls, waited, timeouts, errors: count('failed') + count('shed') }
 }
