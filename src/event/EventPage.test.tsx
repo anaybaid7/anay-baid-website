@@ -5,13 +5,17 @@ import { deck, slides } from './content'
 
 describe('EventPage', () => {
   it('shows the notes on the first click and moves on with the second', () => {
+    // a slide with nothing inside to step through
+    const n = slides.findIndex((s) => s.visual === 'map')
+    window.location.hash = `#${n + 1}`
     const { container } = render(<EventPage />)
     const slide = () => container.querySelector('.deck-slide') as HTMLElement
-    expect(screen.getByRole('heading', { level: 1, name: slides[0].title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: slides[n].title })).toBeInTheDocument()
     fireEvent.click(slide())
     expect(slide()).toHaveAccessibleName('Next slide')
     fireEvent.click(slide())
-    expect(screen.getByRole('heading', { level: 1, name: slides[1].title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: slides[n + 1].title })).toBeInTheDocument()
+    window.location.hash = ''
   })
 
   it('has a dot for every slide', () => {
@@ -58,9 +62,14 @@ describe('EventPage', () => {
     expect(found).toEqual([])
   })
 
-  it('fits a five to seven minute talk', () => {
-    const total = slides.reduce((n, s) => n + s.time, 0)
-    expect(total).toBeGreaterThanOrEqual(300)
-    expect(total).toBeLessThanOrEqual(420)
+  it('opens on the guessing game and shows the answer', () => {
+    window.location.hash = '#1'
+    const { container } = render(<EventPage />)
+    expect(screen.getByRole('heading', { level: 1, name: 'Guess next week' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Show what happened' }))
+    expect(container.querySelector('.guess-verdict')).toHaveTextContent('Thanksgiving')
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(container.querySelector('.guess-verdict')).toBeNull()
+    window.location.hash = ''
   })
 })

@@ -6,9 +6,8 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
-//   visual  'map' draws the terminal map, 'impact' the forecast slider,
+//   visual  'guess' is the opening game, 'map' the terminal map, 'impact' the forecast slider,
 //           'qr' a code that opens these slides on a phone (optional)
-//   time    about how many seconds to spend on the slide, for the presenter timer
 //   points  a short list shown on the slide itself, each opening a visual (optional)
 //   thumbs  small screenshots shown next to the points (optional)
 //   notes   talking points, shown when you click the slide
@@ -65,12 +64,29 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map' | 'impact' | 'qr'
+  visual?: 'guess' | 'map' | 'impact' | 'qr'
   points?: Point[]
   thumbs?: string[]
   notes: string[]
   spots?: Spot[]
-  time: number
+}
+
+// The opening game: eight weeks of one terminal and the week after, mock
+// numbers on the real 2026 calendar. `hint` is the earlier holiday week that
+// gets pointed out once the answer is shown
+export const guess = {
+  weeks: [
+    { label: 'Aug 17', value: 97000 },
+    { label: 'Aug 24', value: 99000 },
+    { label: 'Aug 31', value: 98000 },
+    { label: 'Sep 7', value: 81000, note: 'Labour Day' },
+    { label: 'Sep 14', value: 101000 },
+    { label: 'Sep 21', value: 102000 },
+    { label: 'Sep 28', value: 100000 },
+    { label: 'Oct 5', value: 104000 },
+  ],
+  hint: 3,
+  actual: { label: 'Oct 12', value: 85000, note: 'Monday was Thanksgiving, so the week only had four working days' },
 }
 
 // The forecast slider on the why it matters slide, mock numbers for one
@@ -86,11 +102,21 @@ export const deck = {
 
 export const slides: Slide[] = [
   {
+    label: 'Quick game',
+    title: 'Guess next week',
+    line: 'One terminal, the last eight weeks, how many parcels come in next week',
+    visual: 'guess',
+    notes: [
+      'Ask the room for a number, then drag the last bar to it',
+      'Most people go a little higher, it looks like a steady climb',
+      'Monday that week is Thanksgiving, and the dip in September was Labour Day',
+    ],
+  },
+  {
     label: 'Network Engineering, Purolator',
     title: 'Forecasting parcel volume',
     line: 'Every week our team works out how many parcels each of our 135 terminals will get, for pickup and delivery',
     visual: 'map',
-    time: 30,
     notes: [
       "I'm on co-op with this team, working on the tools we use to do it",
       'Pick a division on the map to light up its terminals',
@@ -101,7 +127,6 @@ export const slides: Slide[] = [
     title: 'One number sets up the whole day',
     line: 'Our forecast tells a terminal how many routes to run, so being off in either direction costs something',
     visual: 'impact',
-    time: 45,
     notes: [
       'Drag the forecast down and parcels wait a day',
       'Drag it up and vans go out half empty',
@@ -237,7 +262,6 @@ export const slides: Slide[] = [
         },
       },
     ],
-    time: 75,
     notes: [
       "Last week's real numbers go in, a forecast for the rest of the year comes out",
       'Most of the work is the cleaning and checking in between',
@@ -249,7 +273,6 @@ export const slides: Slide[] = [
     title: 'This year next to last year',
     line: 'Peak season in late November is the stretch the whole year gets planned around',
     image: '/event-shots/weekly-chart.webp',
-    time: 35,
     notes: [
       'Red is this year, blue is last year, the dashed line is our forecast',
     ],
@@ -264,7 +287,6 @@ export const slides: Slide[] = [
     title: "Adding what the model can't see",
     line: 'The model gets us close, then we add what only people know',
     image: '/event-shots/weekly-grid.webp',
-    time: 30,
     notes: [
       'The model only knows the past',
       'We know when a new client is starting or a sale date moves, so we adjust those weeks by hand',
@@ -280,7 +302,6 @@ export const slides: Slide[] = [
     title: 'Turning a week into days',
     line: 'Staffing happens by the day, so every week gets split into days',
     image: '/event-shots/shape-edit.webp',
-    time: 30,
     notes: [
       "Ops works day by day, so each terminal's week gets split into days",
       'The split comes from recent normal weeks with no holidays in them',
@@ -296,7 +317,6 @@ export const slides: Slide[] = [
     title: 'How close we got',
     line: 'Every day we line up what came in against what we said would',
     image: '/event-shots/accuracy.webp',
-    time: 30,
     notes: [
       'Every day we check what actually came in against what we forecast',
     ],
@@ -311,7 +331,6 @@ export const slides: Slide[] = [
     title: 'The same for the hubs',
     line: 'Hubs need their own forecast, so I built them a report in Power BI',
     image: '/event-shots/powerbi-overview.webp',
-    time: 30,
     notes: [
       'Hubs sort parcels between terminals, so they need a forecast too',
       'I built this report in Power BI so each hub can see its volume next to the forecast',
@@ -327,7 +346,6 @@ export const slides: Slide[] = [
     title: 'Week over week at a hub',
     line: 'Pick any two weeks and see what changed for each type of parcel',
     image: '/event-shots/powerbi-weekly-comparison.webp',
-    time: 20,
     notes: [
       'Pick any two weeks at a hub and see what changed for each type of parcel',
     ],
@@ -418,7 +436,6 @@ export const slides: Slide[] = [
       },
     ],
     thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/powerbi-overview.webp'],
-    time: 45,
     notes: [
       'Click a line to open it up',
       'Happy to show any of these properly after',
@@ -429,7 +446,6 @@ export const slides: Slide[] = [
     title: 'Thanks for listening',
     line: 'Scan to open these slides on your phone and click through anything I skipped',
     visual: 'qr',
-    time: 10,
     notes: [
       'Happy to take questions',
     ],

@@ -5,6 +5,7 @@ import { deck, slides, type Point, type Slide, type Spot, type Step } from './co
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
 import Impact from './impact'
+import Guess from './guess'
 import Qr from './qr'
 import Presenter from './presenter'
 import { openChannel, openPresenter, type DeckMsg } from './channel'
@@ -293,6 +294,7 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
   return (
     <div className="deck-visual">
       {slide.steps && <Steps steps={slide.steps} spot={spot} setSpot={setSpot} />}
+      {slide.visual === 'guess' && <Guess shown={spot === 0} onShow={(show) => setSpot(show ? 0 : null)} />}
       {slide.visual === 'map' && <TerminalMap />}
       {slide.visual === 'impact' && <Impact />}
       {slide.visual === 'qr' && <Qr />}
@@ -319,7 +321,8 @@ function Deck() {
   const slide = slides[at]
   const last = slides.length - 1
   // the parts a click steps through: zoom spots, steps, or points
-  const spots = slide.spots ?? slide.steps ?? slide.points ?? []
+  // the guessing game has one part, showing the answer
+  const spots = slide.spots ?? slide.steps ?? slide.points ?? (slide.visual === 'guess' ? ['answer'] : [])
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(last, i))

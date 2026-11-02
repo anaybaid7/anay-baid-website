@@ -935,6 +935,10 @@
 }
 
 @media (max-width: 920px) {
+  .guess-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .vz-table-wrap {
     overflow-x: auto;
   }
@@ -1085,6 +1089,138 @@
     stroke-dasharray: none;
     stroke-dashoffset: 0;
   }
+}
+
+/* the opening game: guess next week */
+.guess {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 700px;
+  cursor: default;
+}
+.guess-chart {
+  width: 100%;
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+}
+.guess-chart.shown {
+  cursor: default;
+}
+.guess-week rect {
+  fill: var(--line);
+  transition: fill 0.3s ease;
+}
+.guess-week.hint rect {
+  fill: color-mix(in srgb, var(--cobalt) 45%, var(--line));
+}
+.guess-tag {
+  fill: var(--cobalt);
+  font-size: 14px;
+  font-weight: 650;
+  animation: vz-fade 0.4s ease-out 0.5s both;
+}
+.guess-pick {
+  fill: color-mix(in srgb, var(--cobalt) 14%, transparent);
+  stroke: var(--cobalt);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  transition: y 0.08s linear, height 0.08s linear;
+}
+.shown .guess-pick {
+  fill: none;
+  stroke: var(--ink-3);
+}
+.guess-real {
+  fill: var(--cobalt);
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: vz-grow 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+.guess-val {
+  fill: var(--ink);
+  font-size: 17px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.guess-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+.guess-controls label {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.guess-controls label b {
+  margin-left: 6px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.guess-controls input {
+  width: 100%;
+  height: 28px;
+  accent-color: var(--cobalt);
+  cursor: pointer;
+}
+.guess-go {
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--cobalt);
+  color: var(--on-cobalt);
+  font: 650 16px var(--font);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.guess-go:hover {
+  background: var(--cobalt-deep);
+}
+.guess-go:active {
+  transform: scale(0.97);
+}
+.guess-result {
+  display: grid;
+  gap: 12px;
+  animation: step-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s both;
+}
+.guess-verdict {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  padding-left: 14px;
+  border-left: 4px solid var(--cobalt);
+}
+.guess-verdict b {
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-weight: 720;
+}
+.guess-verdict span {
+  color: var(--ink-2);
+}
+.guess-moral {
+  margin: 4px 0 0;
+  font-size: clamp(18px, 1.5vw, 22px);
+  font-weight: 650;
+}
+.guess-again {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  border-bottom: 1.5px solid var(--line);
+  background: none;
+  font: 600 14px var(--font);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.guess-again:hover {
+  color: var(--cobalt);
+  border-color: var(--cobalt);
 }
 
 /* why it matters: the forecast slider */
@@ -1282,7 +1418,7 @@
 .grid-list button {
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-areas: 'n label' 'n title' 'n time';
+  grid-template-areas: 'n label' 'n title';
   column-gap: 12px;
   row-gap: 2px;
   width: 100%;
@@ -1322,7 +1458,6 @@
 }
 .grid-label { grid-area: label; font-size: 13px; font-weight: 600; color: var(--cobalt); }
 .grid-title { grid-area: title; font-size: 16px; font-weight: 700; line-height: 1.25; }
-.grid-time { grid-area: time; font-size: 13px; color: var(--ink-3); }
 .keys-panel dl {
   margin: 0;
   display: grid;
@@ -1381,37 +1516,14 @@
 }
 .pv-top {
   grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
-  gap: 24px;
 }
-.pv-time { margin: 0; display: flex; align-items: baseline; gap: 10px; }
-.pv-time b {
-  font-size: 46px;
-  font-weight: 760;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-.pv-time span { color: var(--ink-3); }
-.pv-pace {
-  margin: 0;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--card);
-  font-weight: 650;
-  color: var(--ink-2);
-}
-.pv-pace.ok { color: #1f8a4c; background: color-mix(in srgb, #1f8a4c 12%, var(--card)); }
-.pv-pace.late { color: #c73b3b; background: color-mix(in srgb, #c73b3b 12%, var(--card)); }
-.pv-pace.early { color: var(--cobalt); background: var(--tint); }
 .pv-track {
   display: flex;
   gap: 4px;
   height: 8px;
 }
 .pv-track i {
-  flex-basis: 0;
+  flex: 1;
   border-radius: 4px;
   background: var(--line);
 }
@@ -1439,8 +1551,6 @@
   font-weight: 650;
   color: var(--cobalt);
 }
-.pv-label span { color: var(--ink-3); font-weight: 500; }
-.pv-label span.late { color: #c73b3b; }
 .pv-now h1 {
   margin: 0 0 22px;
   font-size: 40px;
@@ -1496,10 +1606,12 @@
   .qr { flex-direction: column; align-items: flex-start; }
   .qr-code { width: min(240px, 70%); }
   .pv { grid-template-columns: 1fr; }
-  .pv-top { grid-template-columns: auto 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   .impact-tiles i,
+  .guess-real,
+  .guess-tag,
+  .guess-result,
   .deck-pin,
   .grid-shade,
   .grid-panel,
