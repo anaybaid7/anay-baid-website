@@ -1244,51 +1244,9 @@ dialog::backdrop {
 
 
 /* ---- motion ----
-   Small and only where it says something. Sections draw their rule as they
-   arrive, entries rise into place, figures count up, and switching jobs
-   swaps the panel in place. All of it is scroll-driven CSS or
-   a view transition, so browsers without them get the plain page. */
-.count {
-  font-variant-numeric: tabular-nums;
-}
-.section {
-  position: relative;
-  border-top: 0;
-}
-.section::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: var(--ink);
-  transform-origin: left;
-}
-@keyframes rule-draw {
-  from { transform: scaleX(0); }
-}
-@keyframes reveal {
-  from { opacity: 0; translate: 0 18px; }
-}
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    :root:not([data-motion="reduced"]) .section::before {
-      animation: rule-draw linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 60%;
-    }
-    :root:not([data-motion="reduced"]) :is(.feature, .entries.cards > li, .about-grid > *) {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 35%;
-    }
-  }
-}
-@media print {
-  .section::before { display: none; }
-  .section { border-top: 1px solid #000; }
-  .feature, .entries.cards > li, .about-grid > * { animation: none !important; opacity: 1 !important; translate: none !important; }
-}
-
+   Only where it tells you something: where a jump landed, which section
+   you're in, and which job panel replaced which. Nothing animates on its
+   own while scrolling. */
 /* switching jobs: the old panel lifts away, then the new one settles in */
 .xp-panels > .entry:not(.off) {
   view-transition-name: xp-panel;

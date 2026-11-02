@@ -16,7 +16,6 @@ import { ENTRIES, entryById } from './entries'
 import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
-import CountUp from './components/CountUp'
 import Lately from './components/Lately'
 import { NOTES } from './decisions'
 import { caseFromUrl, casePath, hasCase } from './cases'
@@ -266,7 +265,7 @@ function Result({ h }: { h?: { value: string; label: string } }) {
   if (!h) return null
   return (
     <p className="entry-result">
-      <CountUp value={h.value} /> {h.label}
+      <b>{h.value}</b> {h.label}
     </p>
   )
 }
@@ -841,7 +840,7 @@ export default function App() {
       ...Object.entries(DETAILS).flatMap(([id, d]) =>
         (d.demos ?? []).map((demo) => ({
           group: 'Demos',
-          label: `Try ${demo.name.toLowerCase()}`,
+          label: demo.name,
           hint: entryById(id)?.title.replace(/ \(.*\)$/, ''),
           keywords: `demo try ${demo.kind}`,
           run: () => showDetail({ id, tab: 'try', demo: demo.kind }),

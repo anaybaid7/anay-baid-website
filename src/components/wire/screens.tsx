@@ -753,7 +753,7 @@ const nationwide: Screen[] = [
   {
     name: 'Policy settings',
     notes: [
-      { n: 1, title: 'Per setting', text: 'Which setting a device fails, not just that it fails.', node: 'intune' },
+      { n: 1, title: 'Per setting', text: 'The exact setting each device fails on.', node: 'intune' },
       { n: 2, title: 'Apps', text: 'Required apps pushed with the policy.', node: 'devices' },
     ],
     draw: () => (

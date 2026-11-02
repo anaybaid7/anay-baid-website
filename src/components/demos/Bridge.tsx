@@ -133,7 +133,7 @@ export default function Bridge() {
           </tbody>
         </table>
       </div>
-      <p className="demo-note">Calls count each retry. The generated route stops at the cache. Remembering 404s, the breaker and the stale fallback are what I’d add. A stale balance says so in its metadata, so a client can label it instead of passing it off as live, and the buttons above use whichever version is picked here.</p>
+      <p className="demo-note">Retries count as calls. The generated route stops at the cache, and the rows below it are what I’d add. A stale balance is flagged in its metadata so the app can label it. The buttons above use the version picked here.</p>
     </div>
   )
 }

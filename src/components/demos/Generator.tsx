@@ -44,7 +44,7 @@ export default function Generator() {
 
   return (
     <div className="demo gen">
-      <p className="demo-hint">Switch the source or the language and watch the route rewrite itself.</p>
+      <p className="demo-hint">Pick a source and a language.</p>
       <div className="gen-opts">
         <div className="demo-tabs" role="group" aria-label="Source">
           {SOURCES.map((s, i) => <button key={s.label} type="button" aria-pressed={src === i} onClick={() => setSrc(i)}>{s.label}</button>)}

@@ -310,9 +310,7 @@ export const allTech = Array.from(
   ]),
 ).sort()
 
-// Fail loudly, at load time, if a hand-edit to this file broke a real
-// invariant (an empty bullet list, a malformed link, a missing field) —
-// see data.schema.ts for what's actually checked and why.
+// in dev, stop on a broken edit to this file (see data.schema.ts)
 if (import.meta.env.DEV) {
   const { assertValidData } = await import('./data.schema')
   assertValidData({ profile, experience, projects, education, skills })
