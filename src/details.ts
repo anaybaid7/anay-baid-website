@@ -69,6 +69,7 @@ export type DemoKind =
   | 'screen3270'
   | 'generator'
   | 'bridge'
+  | 'payments'
   | 'router'
   | 'evaluate'
   | 'network'
@@ -1179,6 +1180,7 @@ export const DETAILS: Record<string, Detail> = {
       { kind: 'screen3270', name: 'Run the green screen' },
       { kind: 'generator', name: 'Generate the route' },
       { kind: 'bridge', name: 'Call it and replay traffic' },
+      { kind: 'payments', name: 'Retry a payment' },
     ],
   },
 
@@ -1270,4 +1272,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'screen3270', 'generator', 'bridge', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'screen3270', 'generator', 'bridge', 'payments', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']

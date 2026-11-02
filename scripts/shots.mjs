@@ -32,6 +32,7 @@ const SETUP = {
   sdk: click('.demo .demo-primary'),
   copybook: async (p) => p.locator('.cb-bytes span').nth(2).hover(),
   screen3270: click('.t3270 .demo-primary'),
+  payments: click('.pay .demo-primary'),
   generator: async (p) => p.getByRole('button', { name: 'CUSTOMER, DB2' }).click(),
   bridge: async (p) => {
     await p.locator('.br-req .demo-primary').click()

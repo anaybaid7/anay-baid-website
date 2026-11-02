@@ -141,3 +141,40 @@ export function endpoints(layout: Layout): Endpoint[] {
   }
   return out
 }
+
+// Mainframe files are EBCDIC, not ASCII. Code page 037 for the characters
+// these records use; anything else shows as 3F, the substitute byte.
+export function ebcdic(text: string) {
+  return [...text].map((c) => {
+    const n = c.charCodeAt(0)
+    let b = 0x3f
+    if (c === ' ') b = 0x40
+    else if (c >= '0' && c <= '9') b = 0xf0 + n - 48
+    else if (c >= 'A' && c <= 'I') b = 0xc1 + n - 65
+    else if (c >= 'J' && c <= 'R') b = 0xd1 + n - 74
+    else if (c >= 'S' && c <= 'Z') b = 0xe2 + n - 83
+    else if (c === '.') b = 0x4b
+    else if (c === '-') b = 0x60
+    return b.toString(16).toUpperCase().padStart(2, '0')
+  })
+}
+
+// COMP-3 packs two digits per byte and puts the sign in the last nibble,
+// C for positive and D for negative. PIC S9(10)V99 COMP-3 is 7 bytes
+// instead of 12.
+export function pack(digits: string, negative = false) {
+  const d = digits.length % 2 ? digits : `0${digits}`
+  const nibbles = [...d, negative ? 'D' : 'C']
+  const bytes: string[] = []
+  for (let i = 0; i < nibbles.length; i += 2) bytes.push(nibbles[i] + nibbles[i + 1])
+  return bytes
+}
+
+export function unpack(bytes: string[], scale: number) {
+  const nibbles = bytes.join('')
+  const sign = nibbles.slice(-1)
+  const digits = nibbles.slice(0, -1)
+  if (!/^\d+$/.test(digits) || !/[CDF]/.test(sign)) return null
+  const value = Number(digits) / 10 ** scale
+  return sign === 'D' ? -value : value
+}

@@ -27,6 +27,7 @@ import Copybook from './demos/Copybook'
 import Bridge from './demos/Bridge'
 import Screen3270 from './demos/Screen3270'
 import Generator from './demos/Generator'
+import Payments from './demos/Payments'
 import RouterApp from './demos/RouterApp'
 import Evaluate from './demos/Evaluate'
 import Network from './demos/Network'
@@ -57,6 +58,7 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   screen3270: Screen3270,
   generator: Generator,
   bridge: Bridge,
+  payments: Payments,
   router: RouterApp,
   evaluate: Evaluate,
   network: Network,
