@@ -85,7 +85,7 @@ describe('App', () => {
     render(<App />)
     const list = document.querySelector('.skill-list')!
     expect(list).toHaveTextContent('Languages & frameworks')
-    fireEvent.click(screen.getByRole('button', { name: 'Terraform' }))
+    fireEvent.click(within(list as HTMLElement).getByRole('button', { name: 'Terraform' }))
     expect(document.getElementById('job-iotum')).toHaveClass('dim')
     expect(document.getElementById('job-purolator')).not.toHaveClass('dim')
   })
@@ -101,7 +101,7 @@ describe('App', () => {
     render(<App />)
     const facts = document.querySelector('.hero-facts')!
     expect(facts).toHaveTextContent('April 2027')
-    expect(facts).toHaveTextContent('four co\u2011op terms')
+    expect(facts).toHaveTextContent('Four co\u2011op terms')
     expect(facts).toHaveTextContent('two hackathon wins')
   })
 
@@ -161,7 +161,7 @@ describe('App', () => {
 
   it('filters the page to one skill and puts it in the URL', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Terraform' }))
+    fireEvent.click(within(document.querySelector('.skill-list') as HTMLElement).getByRole('button', { name: 'Terraform' }))
     expect(document.querySelector('.filterbar')).toHaveTextContent('Showing work with Terraform')
     expect(document.getElementById('job-purolator')).not.toHaveClass('dim')
     expect(document.getElementById('job-iotum')).toHaveClass('dim')

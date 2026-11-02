@@ -240,6 +240,9 @@ button {
   max-width: 36em;
   color: var(--ink-2);
 }
+.hero-facts span {
+  display: block;
+}
 .hero-links {
   margin: 28px 0 0;
   display: flex;
@@ -454,6 +457,30 @@ button {
   margin: 14px 0 0;
   font-size: 15px;
   color: var(--ink-3);
+}
+.stack > span {
+  white-space: nowrap;
+}
+.stack button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.stack button:hover,
+.stack button:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--cobalt);
+}
+.stack button[aria-pressed="true"] {
+  color: var(--cobalt);
+  text-decoration-color: currentColor;
 }
 
 /* experience: a list of employers on the left, what I did on the right */
@@ -8285,6 +8312,50 @@ dd {
 }
 .hero-orgs button:hover {
   color: var(--ink);
+}
+/* hovering an employer shows the role and result before you click */
+.hero-orgs button {
+  position: relative;
+}
+.org-peek {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  min-width: 230px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink-2);
+  font: 450 13.5px/1.4 var(--font);
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  translate: 0 -4px;
+  pointer-events: none;
+  transition: opacity 0.15s, translate 0.15s;
+}
+.org-peek b {
+  color: var(--ink);
+  font-weight: 650;
+}
+.org-peek em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--cobalt);
+}
+.hero-orgs button:hover .org-peek,
+.hero-orgs button:focus-visible .org-peek {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 0.25s;
+}
+@media (hover: none), (max-width: 720px) {
+  .org-peek {
+    display: none;
+  }
 }
 .hero-orgs img {
   object-fit: contain;
