@@ -57,10 +57,4 @@ describe('EventPage', () => {
     walk(deck)
     expect(found).toEqual([])
   })
-
-  it('fits a five to seven minute talk', () => {
-    const total = slides.reduce((n, s) => n + s.time, 0)
-    expect(total).toBeGreaterThanOrEqual(300)
-    expect(total).toBeLessThanOrEqual(420)
-  })
 })

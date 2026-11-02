@@ -7,13 +7,13 @@
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
 //   visual  'map' draws the terminal map, 'units' the pieces and stops street,
-//           'impact' the forecast slider,
+//           'impact' the forecast slider, 'model' how the model learns,
 //           'qr' a code that opens these slides on a phone (optional)
-//   time    about how many seconds to spend on the slide, for the presenter timer
 //   points  a short list shown on the slide itself, each opening a visual (optional)
 //   thumbs  small screenshots shown next to the points (optional)
 //   notes   talking points, shown when you click the slide
 //   spots   parts of the screenshot to zoom into (optional, see below)
+//   stages  the steps the model slide walks through, one click each (optional)
 //
 // A spot is a box on the screenshot: x and y are where its top-left corner
 // sits, w and h its size, all as fractions of the picture (0 to 1). Clicking
@@ -57,6 +57,9 @@ export type Visual =
 // A step on the weekly cycle slide. Click it to open its title, text and visual.
 export type Step = { label: string; title: string; text: string; visual: Visual }
 
+// A stage on the model slide, walked through one click at a time
+export type Stage = { title: string; text: string }
+
 // A point on a slide's list. Click it to open its title, text and visual.
 export type Point = { label: string; title: string; text: string; visual: Visual }
 
@@ -66,12 +69,12 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map' | 'units' | 'impact' | 'qr'
+  visual?: 'map' | 'units' | 'impact' | 'model' | 'qr'
   points?: Point[]
   thumbs?: string[]
   notes: string[]
   spots?: Spot[]
-  time: number
+  stages?: Stage[]
 }
 
 // The pieces and stops slide: a few addresses on one street and how many
@@ -104,7 +107,6 @@ export const slides: Slide[] = [
     title: 'Forecasting parcel volume',
     line: 'Every week our team works out how many parcels each of our 135 terminals will get, for pickup and delivery',
     visual: 'map',
-    time: 30,
     notes: [
       "I'm on co-op with this team, working on the tools we use to do it",
       'Pick a division on the map to light up its terminals',
@@ -115,7 +117,6 @@ export const slides: Slide[] = [
     title: 'Pieces and stops',
     line: 'Everything we forecast comes down to these two, for pickup and for delivery',
     visual: 'units',
-    time: 30,
     notes: [
       'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces',
       'Pieces decide how much gets sorted and loaded, stops decide how many routes go out',
@@ -127,7 +128,6 @@ export const slides: Slide[] = [
     title: 'One number sets up the whole day',
     line: 'Our forecast tells a terminal how many routes to run, so being off in either direction costs something',
     visual: 'impact',
-    time: 45,
     notes: [
       'Drag the forecast down and parcels wait a day',
       'Drag it up and vans go out half empty',
@@ -179,11 +179,11 @@ export const slides: Slide[] = [
       {
         label: 'The model runs',
         title: 'What goes into the model',
-        text: 'Our model in R takes years of history plus what we know is coming and forecasts every terminal for the rest of the year',
+        text: 'Our model in R learns from years of history, the holidays and our biggest client\'s own forecast, and the next slide opens it up',
         visual: {
           kind: 'flow',
           alt: 'Inputs flowing into the R model and out as a forecast',
-          inputs: ['Cleaned weekly history', 'Holidays', 'Sales and events', 'Big client forecasts'],
+          inputs: ['Cleaned weekly history', 'Holidays by province', 'Big client forecast'],
           center: 'R model',
           outputs: ['A forecast for every terminal, every week'],
         },
@@ -263,7 +263,6 @@ export const slides: Slide[] = [
         },
       },
     ],
-    time: 75,
     notes: [
       "Last week's real numbers go in, a forecast for the rest of the year comes out",
       'Most of the work is the cleaning and checking in between',
@@ -271,11 +270,30 @@ export const slides: Slide[] = [
     ],
   },
   {
+    label: 'Machine learning',
+    title: 'How the model learns',
+    line: 'A model in R learns each terminal\'s pattern from its own past weeks, then runs it forward',
+    visual: 'model',
+    notes: [
+      "This is the machine learning part, it's a time series model that fits itself to history",
+      "It's not a black box, every part it learns is something you can point at on a chart",
+      'Under the hood it uses STL to pull out the yearly shape and ARIMA with holidays and the big client as extra inputs',
+    ],
+    stages: [
+      { title: 'Three years of weeks', text: 'Every terminal has its own history, this is one terminal from 2023 to now, one point per week' },
+      { title: 'Clean it up', text: "One-off events and outages come out first, so the model doesn't learn from weeks that won't happen again" },
+      { title: 'Learn the yearly shape', text: 'It finds the pattern that repeats every year, a quiet January, the summer dip and the climb into peak' },
+      { title: 'Learn the trend', text: 'Then how the terminal is growing or shrinking underneath that shape' },
+      { title: 'Learn holidays and the big client', text: "Then how much each holiday takes off, and how volume moves with our biggest client's own forecast" },
+      { title: 'Forecast forward', text: 'Put the parts back together and run them forward to the end of next year' },
+      { title: 'Then every terminal', text: 'One model for each terminal and each of the 8 numbers we forecast, about a thousand every run' },
+    ],
+  },
+  {
     label: 'The forecast tool',
     title: 'This year next to last year',
     line: 'Peak season in late November is the stretch the whole year gets planned around',
     image: '/event-shots/weekly-chart.webp',
-    time: 35,
     notes: [
       'Red is this year, blue is last year, the dashed line is our forecast',
     ],
@@ -290,7 +308,6 @@ export const slides: Slide[] = [
     title: "Adding what the model can't see",
     line: 'The model gets us close, then we add what only people know',
     image: '/event-shots/weekly-grid.webp',
-    time: 30,
     notes: [
       'The model only knows the past',
       'We know when a new client is starting or a sale date moves, so we adjust those weeks by hand',
@@ -306,7 +323,6 @@ export const slides: Slide[] = [
     title: 'Turning a week into days',
     line: 'Staffing happens by the day, so every week gets split into days',
     image: '/event-shots/shape-edit.webp',
-    time: 30,
     notes: [
       "Ops works day by day, so each terminal's week gets split into days",
       'The split comes from recent normal weeks with no holidays in them',
@@ -322,7 +338,6 @@ export const slides: Slide[] = [
     title: 'How close we got',
     line: 'Every day we line up what came in against what we said would',
     image: '/event-shots/accuracy.webp',
-    time: 30,
     notes: [
       'Every day we check what actually came in against what we forecast',
     ],
@@ -336,31 +351,17 @@ export const slides: Slide[] = [
     label: 'Hub Reporting',
     title: 'The same for the hubs',
     line: 'Hubs need their own forecast, so I built them a report in Power BI',
-    image: '/event-shots/powerbi-overview.webp',
-    time: 30,
+    image: '/event-shots/hub-reporting.webp',
     notes: [
       'Hubs sort parcels between terminals, so they need a forecast too',
-      'I built this report in Power BI so each hub can see its volume next to the forecast',
+      'Everything a hub needs is on one page, how close we were and what changed',
     ],
     spots: [
-      { x: 0, y: 0.16, w: 0.69, h: 0.44, title: 'Day by day', text: 'Each wave is a week, busy midweek and quiet on weekends, red is actual and black is forecast' },
-      { x: 0.69, y: 0.02, w: 0.31, h: 0.5, title: 'Week by week', text: "How far off each week was, and here they're all within about 3%" },
-      { x: 0, y: 0.61, w: 0.31, h: 0.39, title: 'Parcel types', text: 'Con, NonCon, mail and dangerous goods are handled differently, so the mix matters as much as the total' },
-    ],
-  },
-  {
-    label: 'Hub Reporting',
-    title: 'Week over week at a hub',
-    line: 'Pick any two weeks and see what changed for each type of parcel',
-    image: '/event-shots/powerbi-weekly-comparison.webp',
-    time: 20,
-    notes: [
-      'Pick any two weeks at a hub and see what changed for each type of parcel',
-    ],
-    spots: [
-      { x: 0.64, y: 0, w: 0.36, h: 0.15, title: 'Picking weeks', text: 'Choose a hub and any two weeks' },
-      { x: 0.57, y: 0.15, w: 0.43, h: 0.34, title: 'The total', text: 'Daily volume went up about 1.3% from one week to the next' },
-      { x: 0, y: 0.5, w: 0.47, h: 0.5, title: 'By type', text: 'Con and Mail went up the most while NonCon and Other dropped a little' },
+      { x: 0.006, y: 0.118, w: 0.614, h: 0.434, title: 'Day by day', text: 'Each wave is a week, busy midweek and quiet on weekends, red is actual and black is forecast' },
+      { x: 0.627, y: 0.118, w: 0.213, h: 0.434, title: 'Week by week', text: "How far off each week was, and here they're all within about 3%" },
+      { x: 0.006, y: 0.564, w: 0.494, h: 0.43, title: 'Parcel types', text: 'Con, NonCon, mail and dangerous goods are handled differently, so the mix matters as much as the total' },
+      { x: 0.627, y: 0.008, w: 0.369, h: 0.544, title: 'Two weeks', text: 'Pick any two weeks, here daily volume went up about 1.3%' },
+      { x: 0.506, y: 0.564, w: 0.49, h: 0.43, title: 'What moved', text: 'Con and Mail went up the most while NonCon and Other dropped a little' },
     ],
   },
   {
@@ -443,8 +444,7 @@ export const slides: Slide[] = [
         visual: { kind: 'image', src: '/event-shots/weekly-chart.webp', alt: 'The weekly forecast screen of the app' },
       },
     ],
-    thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/powerbi-overview.webp'],
-    time: 45,
+    thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/hub-reporting.webp'],
     notes: [
       'Click a line to open it up',
       'Happy to show any of these properly after',
@@ -455,7 +455,6 @@ export const slides: Slide[] = [
     title: 'Thanks for listening',
     line: 'Scan to open these slides on your phone and click through anything I skipped',
     visual: 'qr',
-    time: 10,
     notes: [
       'Happy to take questions',
     ],
