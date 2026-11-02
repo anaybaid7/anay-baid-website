@@ -5,6 +5,7 @@ import { deck, slides, type Point, type Slide, type Spot, type Step } from './co
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
 import Model from './model'
+import Backtest from './backtest'
 import Impact from './impact'
 import Units from './units'
 import Qr from './qr'
@@ -299,6 +300,7 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
       {slide.visual === 'units' && <Units />}
       {slide.visual === 'impact' && <Impact />}
       {slide.visual === 'model' && slide.stages && <Model stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
+      {slide.visual === 'backtest' && slide.stages && <Backtest stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'qr' && <Qr />}
       {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
