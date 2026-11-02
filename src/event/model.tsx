@@ -78,7 +78,7 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
           ))}
 
           {fit && !forecast && (
-            <text className="model-off" x={W - R} y={T - 14} textAnchor="end">Training error {mape(fit).toFixed(1)}% MAPE</text>
+            <text className="model-off" x={W - R} y={T - 14} textAnchor="end">Off by {mape(fit).toFixed(1)}% on average</text>
           )}
 
           {grid ? (
@@ -97,9 +97,9 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
             </g>
           ) : (
             [
-              { name: 'Seasonality, 52 weeks', f: season, a: 0.85, b: 1.45, on: 2 },
+              { name: 'Yearly pattern', f: season, a: 0.85, b: 1.45, on: 2 },
               { name: 'Trend', f: (w: number) => trend(w * 3), a: 0.98, b: 1.12, on: 3 },
-              { name: 'Regressors, holidays and client', f: (w: number) => holiday(w) * client(104 + w - 1), a: 0.6, b: 1.25, on: 4 },
+              { name: 'Holidays and big client', f: (w: number) => holiday(w) * client(104 + w - 1), a: 0.6, b: 1.25, on: 4 },
             ].map((p, i) => (
               <g key={p.name} className={`model-part${at === p.on ? ' on' : at > p.on ? ' done' : ''}`}>
                 <text x={panel(i)} y={PY - 10}>{p.name}</text>
@@ -109,7 +109,7 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
             ))
           )}
         </svg>
-        <p className="model-under">R forecast package, STL with ARIMA and regressors</p>
+        <p className="model-under">Built in R</p>
       </div>
     </div>
   )
