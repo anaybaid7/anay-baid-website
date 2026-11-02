@@ -1,40 +1,9 @@
 import type { Stage } from './content'
+import { ALL, HIST, ODD, clean, client, fits, holiday, mape, raw, season, trend, weekOf } from './series'
 
-// How the model learns: one terminal's weekly pieces, cleaned, then split into
-// the parts the model learns (yearly shape, trend, holidays and the big
-// client) and put back together to forecast. Every number here is mock data,
-// made up below so the parts add up the same way they do in the real model.
-
-const HIST = 52 * 3 + 43 // 2023 week 1 to 2026 week 43
-const ALL = HIST + 9 + 52 // forecast runs to the end of next year
-const LEVEL = 52_000
-
-const weekOf = (t: number) => (t % 52) + 1
-const yearOf = (t: number) => 2023 + Math.floor(t / 52)
-const bump = (w: number, at: number, width: number) => Math.exp(-(((w - at) / width) ** 2))
-
-// the yearly shape: quiet January, a summer dip, the climb into peak
-const season = (w: number) => 1 - 0.07 * bump(w, 2, 2.5) - 0.09 * bump(w, 31, 4) + 0.16 * bump(w, 46, 3) + 0.42 * bump(w, 49, 2)
-const trend = (t: number) => 1 + (0.035 * t) / 52
-// weeks with a stat holiday lose about a day, Christmas week loses more
-const HOLIDAYS = [1, 8, 14, 21, 27, 32, 36, 41]
-const holiday = (w: number) => (w === 52 ? 0.64 : HOLIDAYS.includes(w) ? 0.86 : 1)
-// the big client runs a sale every summer, the week moves a little each year
-const SALE: Record<number, number> = { 2023: 28, 2024: 29, 2025: 28, 2026: 28, 2027: 27 }
-const client = (t: number) => 1 + 0.22 * bump(weekOf(t), SALE[yearOf(t)], 0.8)
-const noise = (t: number) => 1 + 0.022 * Math.sin(t * 12.9898 + Math.sin(t * 78.233) * 4)
-
-// one-off weeks the cleaning step takes out: three events and an outage
-const ODD: Record<number, number> = { 18: 1.3, 91: 1.22, 118: 1.26, 128: 0.62 }
-
-const fits = [
-  (t: number) => LEVEL * 1.05 * season(weekOf(t)),
-  (t: number) => LEVEL * trend(t) * season(weekOf(t)),
-  (t: number) => LEVEL * trend(t) * season(weekOf(t)) * holiday(weekOf(t)) * client(t),
-]
-const clean = Array.from({ length: HIST }, (_, t) => fits[2](t) * noise(t))
-const raw = clean.map((v, t) => v * (ODD[t] ?? 1))
-const off = (fit: (t: number) => number) => (100 * clean.reduce((n, v, t) => n + Math.abs(fit(t) - v) / v, 0)) / HIST
+// Inside the forecast model: one terminal's weekly pieces, cleaned, then split
+// into the parts the model learns and put back together to forecast. The
+// series is mock, see series.ts.
 
 const W = 1000, L = 58, R = 12, T = 34, B = 300
 const lo = 30_000, hi = 92_000
@@ -51,6 +20,23 @@ const mini = (x0: number, f: (w: number) => number, a: number, b: number) =>
 
 const TERMINALS = 135, NUMBERS = 8
 
+// the numbered list of stages beside a model chart, the open one shows its text
+export function StageList({ stages, at, setAt }: { stages: Stage[]; at: number; setAt: (i: number) => void }) {
+  return (
+    <ol className="model-stages">
+      {stages.map((s, i) => (
+        <li key={s.title} className={i === at ? 'on' : i < at ? 'done' : ''}>
+          <button type="button" aria-pressed={i === at} onClick={() => setAt(i)}>
+            <span>{i + 1}</span>
+            {s.title}
+          </button>
+          {i === at && <p>{s.text}</p>}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 export default function Model({ stages, at, setAt }: { stages: Stage[]; at: number; setAt: (i: number) => void }) {
   const fit = at >= 2 ? fits[Math.min(at - 2, 2)] : null
   const forecast = at >= 5
@@ -59,17 +45,7 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
 
   return (
     <div className="model" onClick={(e) => e.stopPropagation()}>
-      <ol className="model-stages">
-        {stages.map((s, i) => (
-          <li key={s.title} className={i === at ? 'on' : i < at ? 'done' : ''}>
-            <button type="button" aria-pressed={i === at} onClick={() => setAt(i)}>
-              <span>{i + 1}</span>
-              {s.title}
-            </button>
-            {i === at && <p key={i}>{s.text}</p>}
-          </li>
-        ))}
-      </ol>
+      <StageList stages={stages} at={at} setAt={setAt} />
 
       <div className="model-figure">
         <svg className={`model-svg at-${at}`} viewBox={`0 0 ${W} 446`} role="img" aria-label="One terminal's weekly pieces and the model learning its parts">
@@ -102,7 +78,7 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
           ))}
 
           {fit && !forecast && (
-            <text className="model-off" x={W - R} y={T - 14} textAnchor="end">Off by {off(fit).toFixed(1)}% on past weeks</text>
+            <text className="model-off" x={W - R} y={T - 14} textAnchor="end">Training error {mape(fit).toFixed(1)}% MAPE</text>
           )}
 
           {grid ? (
@@ -117,13 +93,13 @@ export default function Model({ stages, at, setAt }: { stages: Stage[]; at: numb
                   style={{ animationDelay: `${(i % TERMINALS) * 6 + Math.floor(i / TERMINALS) * 30}ms` }}
                 />
               ))}
-              <text x={L} y={PY + 100}>{TERMINALS} terminals across, {NUMBERS} numbers down, about a thousand models</text>
+              <text x={L} y={PY + 100}>{TERMINALS} terminals across, {NUMBERS} numbers down, about a thousand models per run</text>
             </g>
           ) : (
             [
-              { name: 'Yearly shape', f: season, a: 0.85, b: 1.45, on: 2 },
+              { name: 'Seasonality, 52 weeks', f: season, a: 0.85, b: 1.45, on: 2 },
               { name: 'Trend', f: (w: number) => trend(w * 3), a: 0.98, b: 1.12, on: 3 },
-              { name: 'Holidays and the big client', f: (w: number) => holiday(w) * client(104 + w - 1), a: 0.6, b: 1.25, on: 4 },
+              { name: 'Regressors, holidays and client', f: (w: number) => holiday(w) * client(104 + w - 1), a: 0.6, b: 1.25, on: 4 },
             ].map((p, i) => (
               <g key={p.name} className={`model-part${at === p.on ? ' on' : at > p.on ? ' done' : ''}`}>
                 <text x={panel(i)} y={PY - 10}>{p.name}</text>

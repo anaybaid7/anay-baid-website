@@ -1282,6 +1282,22 @@
 .model-grid rect { fill: var(--cobalt); opacity: 0; animation: model-cell 0.3s ease forwards; }
 .model-grid text { fill: var(--ink-2); font-size: 15px; font-weight: 650; }
 @keyframes model-cell { to { opacity: 0.85; } }
+.model-train { fill: var(--ink-3); }
+.bt-actual { opacity: 1; }
+.model-fit.tone-py { stroke: #2a9a5a; }
+.model-fit.tone-prophet { stroke: #c98516; }
+.model-fit.dim { opacity: 0.3; }
+.bt-table { width: 100%; border-collapse: collapse; font-size: clamp(13px, 0.95vw, 15px); font-variant-numeric: tabular-nums; }
+.bt-table th, .bt-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.bt-table thead th { font-size: 12px; font-weight: 650; color: var(--ink-3); }
+.bt-table td:nth-child(n + 3), .bt-table thead th:nth-child(n + 3) { text-align: right; }
+.bt-table tbody tr { color: var(--ink-3); transition: color 0.2s ease, background 0.2s ease; }
+.bt-table tbody tr.on { color: var(--ink); }
+.bt-table tbody tr.best { background: var(--tint); }
+.bt-table tbody th { font-weight: 700; white-space: nowrap; }
+.bt-table i { display: inline-block; width: 14px; height: 3px; margin: 0 8px 4px 0; vertical-align: middle; background: var(--cobalt); }
+.bt-table i.tone-py { background: #2a9a5a; }
+.bt-table i.tone-prophet { background: #c98516; }
 .model-under { margin: 0; text-align: right; font-size: 13px; color: var(--ink-3); }
 @media (max-width: 920px) {
   .model { grid-template-columns: 1fr; gap: 14px; height: auto; }

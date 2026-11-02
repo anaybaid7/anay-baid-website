@@ -7,7 +7,8 @@
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
 //   visual  'map' draws the terminal map, 'units' the pieces and stops street,
-//           'impact' the forecast slider, 'model' how the model learns,
+//           'impact' the forecast slider, 'model' inside the forecast model,
+//           'backtest' three models scored on held out weeks,
 //           'qr' a code that opens these slides on a phone (optional)
 //   points  a short list shown on the slide itself, each opening a visual (optional)
 //   thumbs  small screenshots shown next to the points (optional)
@@ -69,7 +70,7 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map' | 'units' | 'impact' | 'model' | 'qr'
+  visual?: 'map' | 'units' | 'impact' | 'model' | 'backtest' | 'qr'
   points?: Point[]
   thumbs?: string[]
   notes: string[]
@@ -271,22 +272,40 @@ export const slides: Slide[] = [
   },
   {
     label: 'Machine learning',
-    title: 'How the model learns',
-    line: 'A model in R learns each terminal\'s pattern from its own past weeks, then runs it forward',
+    title: 'Inside the forecast model',
+    line: 'Every terminal gets its own time series model, trained on its own weekly history',
     visual: 'model',
     notes: [
-      "This is the machine learning part, it's a time series model that fits itself to history",
-      "It's not a black box, every part it learns is something you can point at on a chart",
-      'Under the hood it uses STL to pull out the yearly shape and ARIMA with holidays and the big client as extra inputs',
+      'One series per terminal and per number we forecast, so the model learns each place on its own',
+      'STL splits the series into seasonality and trend, then ARIMA models what is left with holidays and the big client as regressors',
+      'Every part it learns is something you can point at, which is why ops trusts it',
     ],
     stages: [
-      { title: 'Three years of weeks', text: 'Every terminal has its own history, this is one terminal from 2023 to now, one point per week' },
-      { title: 'Clean it up', text: "One-off events and outages come out first, so the model doesn't learn from weeks that won't happen again" },
-      { title: 'Learn the yearly shape', text: 'It finds the pattern that repeats every year, a quiet January, the summer dip and the climb into peak' },
-      { title: 'Learn the trend', text: 'Then how the terminal is growing or shrinking underneath that shape' },
-      { title: 'Learn holidays and the big client', text: "Then how much each holiday takes off, and how volume moves with our biggest client's own forecast" },
-      { title: 'Forecast forward', text: 'Put the parts back together and run them forward to the end of next year' },
-      { title: 'Then every terminal', text: 'One model for each terminal and each of the 8 numbers we forecast, about a thousand every run' },
+      { title: 'Training data', text: 'Three years of weekly pieces for one terminal, one point per week' },
+      { title: 'Cleaning', text: 'Event volume gets subtracted and outliers replaced, so the model trains on normal weeks only' },
+      { title: 'Seasonality', text: 'STL pulls out the 52 week pattern, a quiet January, the summer dip and the climb into peak' },
+      { title: 'Trend', text: 'The slow growth underneath, what is left once the season comes out' },
+      { title: 'Regressors', text: "ARIMA on the rest, with holiday flags by province and the big client's weekly forecast as inputs" },
+      { title: 'Forecast', text: 'All the parts recombined and projected to the end of next year' },
+      { title: 'At scale', text: '135 terminals times 8 numbers, about a thousand models every run' },
+    ],
+  },
+  {
+    label: 'Machine learning',
+    title: 'Backtesting three models',
+    line: 'I rebuilt the model in Python and set Prophet up next to it, then score all three on weeks they never trained on',
+    visual: 'backtest',
+    notes: [
+      'A model can look great on the weeks it trained on and still miss new ones, so the test hides the last 26 weeks',
+      'The Python port runs inside the forecast app, so we can retrain without leaving it',
+      'Numbers here are mock, the real scoring runs per terminal against what actually came in',
+    ],
+    stages: [
+      { title: 'Hold out 26 weeks', text: 'Train on every week before the line, then forecast the 26 after it without seeing them' },
+      { title: 'R model', text: "The team's production model, STL with ARIMA and the holiday and client regressors" },
+      { title: 'Python port', text: 'My rebuild of it in Python with statsmodels STL and pmdarima auto ARIMA, so it runs inside the forecast app' },
+      { title: 'Prophet', text: 'Fits a trend with changepoints and Fourier terms for the year, with holidays as their own effects' },
+      { title: 'Score them', text: 'MAPE says how far off on average, bias says if a model runs high or low, which decides spare vans or late parcels' },
     ],
   },
   {
