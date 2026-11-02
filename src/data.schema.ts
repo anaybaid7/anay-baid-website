@@ -1,12 +1,8 @@
 import { z } from 'zod'
 
-// Runtime schema for the content in data.ts. This isn't decorative — data.ts
-// is hand-edited prose (job bullets, project blurbs, links) with no compiler
-// checking its *shape*, only its TypeScript types, which don't catch things
-// like an empty bullet list or a link that isn't a real URL. This schema
-// runs once at module load (see the `assertValidData` call at the bottom of
-// data.ts) and throws a specific, readable error the moment content breaks
-// a real invariant, instead of that mistake silently reaching production.
+// Checks the content in data.ts when it loads in dev. TypeScript catches the
+// types but not an empty bullet list or a link that isn't a URL, so those
+// throw here with the field that broke.
 
 const urlString = z.url({ error: 'must be a valid absolute URL' })
 

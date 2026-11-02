@@ -94,6 +94,35 @@ button {
   height: 76px;
   font-size: 15px;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--paper);
+  /* paint the bar edge to edge while the content stays in the column */
+  box-shadow: 0 0 0 100vmax var(--paper);
+  clip-path: inset(0 -100vmax);
+  transition: transform 0.22s var(--ease-out, ease-out);
+}
+/* the hairline is a border image pushed out to the screen edges, which
+   paints wide without making the page scroll sideways */
+.top {
+  border-bottom: 1px solid transparent;
+}
+.top[data-stuck] {
+  border-image: linear-gradient(var(--line), var(--line)) 0 0 1 0 / 0 0 1px 0 / 0 100vmax;
+}
+.top[data-hidden]:not(:focus-within) {
+  transform: translateY(-100%);
+}
+.section > h2 {
+  transition: top 0.22s ease-out;
+}
+@media print {
+  .top {
+    position: static;
+    box-shadow: none;
+    clip-path: none;
+  }
 }
 .top-name {
   font-weight: 700;
@@ -256,7 +285,7 @@ button {
 .section > h2 {
   margin: 0;
   position: sticky;
-  top: 24px;
+  top: calc(var(--head-h, 0px) + 24px);
   align-self: start;
   font-size: 26px;
   line-height: 1.15;
@@ -280,7 +309,7 @@ button {
   gap: 0 32px;
   padding: 34px 0;
   border-top: 1px solid var(--line);
-  scroll-margin-top: 24px;
+  scroll-margin-top: 100px;
 }
 .entries > .entry:first-child,
 .entry.solo {
@@ -1213,6 +1242,72 @@ dialog::backdrop {
   animation-duration: 0.22s;
 }
 
+
+/* ---- motion ----
+   Only where it tells you something: where a jump landed, which section
+   you're in, and which job panel replaced which. Nothing animates on its
+   own while scrolling. */
+/* switching jobs: the old panel lifts away, then the new one settles in */
+.xp-panels > .entry:not(.off) {
+  view-transition-name: xp-panel;
+}
+::view-transition-old(xp-panel) {
+  animation: 0.1s ease-in both xp-out;
+}
+::view-transition-new(xp-panel) {
+  animation: 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) 0.09s both xp-in;
+}
+::view-transition-group(xp-panel) {
+  animation-duration: 0.33s;
+}
+/* the rest of the page just reflows, no whole-page crossfade */
+:root[data-vt="job"]::view-transition-old(root) {
+  display: none;
+}
+:root[data-vt="job"]::view-transition-new(root) {
+  animation: none;
+}
+@keyframes xp-out {
+  to { opacity: 0; translate: 0 -6px; }
+}
+@keyframes xp-in {
+  from { opacity: 0; translate: 0 10px; }
+}
+
+.lately > ol {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lately li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.lately a {
+  font-weight: 650;
+  color: var(--ink);
+}
+.lately span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.lately ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+}
+.lately small,
+.lately-wait {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
 /* rows that don't match the stack filter step back */
 .entry {
   transition: opacity 0.2s;
@@ -2103,10 +2198,29 @@ label {
   color: var(--ink);
   border-left: 1.5px solid var(--ink);
 }
+.drawer {
+  /* closing slides back out the way it came, where the browser can
+     animate a dialog leaving the top layer */
+  transform: translateX(40px);
+  opacity: 0;
+  transition: transform 0.18s ease-in, opacity 0.16s ease-in, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+}
+.drawer::backdrop {
+  opacity: 0;
+  transition: opacity 0.18s, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+}
+.drawer[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .drawer[open]::backdrop {
+    opacity: 0;
+  }
+}
 .drawer[open] {
   transform: none;
   opacity: 1;
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease-out;
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease-out, overlay 0.24s allow-discrete, display 0.24s allow-discrete;
 }
 @starting-style {
   .drawer[open] {
@@ -7831,9 +7945,10 @@ button:focus-visible > .shot {
   font-size: 18px;
 }
 .about-grid > [data-part="education"] {
-  grid-row: span 2;
+  grid-row: span 3;
 }
-.about-grid > [data-part="colophon"] {
+.about-grid > [data-part="colophon"],
+.about-grid > .lately {
   grid-column: 2;
   padding-top: 22px;
   border-top: 1.5px solid var(--line);
@@ -7984,6 +8099,40 @@ button:focus-visible > .shot {
   text-decoration-thickness: 2px;
   text-underline-offset: 6px;
 }
+/* once the page is live the underline becomes one bar that slides */
+.top-sections[data-slide] {
+  position: relative;
+}
+.top-sections[data-slide] a[aria-current] {
+  text-decoration: none;
+}
+.top-sections[data-slide]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: var(--bar-w, 0);
+  height: 2px;
+  background: var(--cobalt);
+  transform: translateX(var(--bar-x, 0));
+  transition: transform 0.28s var(--ease-out), width 0.28s var(--ease-out);
+}
+
+/* where a jump landed */
+.arrived {
+  animation: arrived 1.4s ease-out;
+}
+@keyframes arrived {
+  0%,
+  35% {
+    outline: 2px solid var(--cobalt);
+    outline-offset: 10px;
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 14px;
+  }
+}
 
 /* ---- craft: motion and type details ---- */
 :root {
@@ -8017,14 +8166,27 @@ button:focus-visible > .shot {
   transform: scale(0.97);
 }
 /* switching jobs eases the new one in */
-.xp-panels > .entry:not(.off) {
+:root:not([data-vt]) .xp-panels > .entry:not(.off) {
   animation: rise 0.22s var(--ease-out);
 }
 /* the featured and drawer clips say they can be tried */
-.feature-shot {
+.feature-shot,
+.card-shot {
   position: relative;
+  overflow: hidden;
 }
-.feature-shot::after {
+.feature-shot :is(img, video),
+.card-shot :is(img, video) {
+  transition: transform 0.45s var(--ease-out);
+}
+@media (hover: hover) {
+  .feature-shot:hover :is(img, video),
+  .card-shot:hover :is(img, video) {
+    transform: scale(1.015);
+  }
+}
+.feature-shot::after,
+.card-shot::after {
   content: "Try it →";
   position: absolute;
   right: 0;
@@ -8038,12 +8200,15 @@ button:focus-visible > .shot {
   transition: opacity 0.18s var(--ease-out), transform 0.18s var(--ease-out);
 }
 .feature-shot:hover::after,
-.feature-shot:focus-visible::after {
+.feature-shot:focus-visible::after,
+.card-shot:hover::after,
+.card-shot:focus-visible::after {
   opacity: 1;
   transform: none;
 }
 @media (hover: none) {
-  .feature-shot::after {
+  .feature-shot::after,
+  .card-shot::after {
     opacity: 1;
     transform: none;
   }

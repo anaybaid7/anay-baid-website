@@ -108,13 +108,16 @@ if (typeof matchMedia === 'function') {
 
 // run a DOM change inside a view transition where the browser has them, so
 // switching theme, view or filter crossfades instead of jumping
-export function withTransition(change: () => void) {
-  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+// kind tags the transition on <html data-vt> so CSS can style each one
+export function withTransition(change: () => void, kind?: string) {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } }
   if (!doc.startViewTransition || calm(state)) {
     change()
     return
   }
-  doc.startViewTransition(() => flushSync(change))
+  if (kind) document.documentElement.dataset.vt = kind
+  const t = doc.startViewTransition(() => flushSync(change))
+  if (kind) t.finished.finally(() => delete document.documentElement.dataset.vt)
 }
 
 export function setSettings(patch: Partial<Settings>) {
