@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { profile, experience, projects, hackathonWins, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import ThemeToggle from './components/ThemeToggle'
@@ -68,10 +68,10 @@ function useVisitorTime(tick: string) {
 }
 
 function replyNote(hour: number, weekend: boolean) {
-  if (hour >= 23 || hour < 7) return "It's late here, so I'll see your email in the morning."
-  if (weekend) return "It's the weekend here, but I check email and usually reply the same day."
-  if (hour >= 9 && hour < 17) return "I'm at work right now and usually reply within a few hours."
-  return 'I usually reply the same day.'
+  if (hour >= 23 || hour < 7) return "It's late here, I'll see your email in the morning"
+  if (weekend) return "It's the weekend here, I still reply the same day"
+  if (hour >= 9 && hour < 17) return "I'm at work right now, expect a reply within a few hours"
+  return 'I usually reply the same day'
 }
 
 function CopyEmail() {
@@ -106,6 +106,28 @@ function Bullets({ items }: { items: string[] }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+// the tech under an entry, each one a filter for everything else that used it
+function Stack({ tech, filter, onFilter }: { tech: string[]; filter: string[]; onFilter: (skills: string[]) => void }) {
+  return (
+    <p className="stack">
+      {tech.map((t, i) => {
+        const on = filter.includes(t)
+        const n = whereUsed(t).length
+        return (
+          <Fragment key={t}>
+            <span>
+              <button type="button" aria-pressed={on} onClick={() => onFilter(on ? [] : [t])} title={n > 1 ? `${t} shows up in ${n} places, show only those` : `Show only ${t}`}>
+                {t}
+              </button>
+              {i < tech.length - 1 && ','}
+            </span>{' '}
+          </Fragment>
+        )
+      })}
+    </p>
   )
 }
 
@@ -341,7 +363,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: number; onPick: (i: number, instant?: boolean) => void; filter: string[]; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
+function Experience({ active, onPick, filter, onFilter, onOpen, lens, onLens }: { active: number; onPick: (i: number, instant?: boolean) => void; filter: string[]; onFilter: (skills: string[]) => void; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
   // one job at a time, picked from the list on the left or the timeline
   const shown = active >= 0 ? active : 0
   const id = (i: number) => `job-${slug(shortOrg(experience[i].org))}`
@@ -409,7 +431,7 @@ function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: 
                   <Result h={e.highlight} />
                   <p className="entry-why"><span>The problem</span> {e.why}</p>
                   <Bullets items={e.bullets} />
-                  <p className="stack">{e.tech.join(', ')}</p>
+                  <Stack tech={e.tech} filter={filter} onFilter={onFilter} />
                   <EntryWork id={id(i)} onOpen={onOpen} />
                 </div>
               </div>
@@ -899,18 +921,25 @@ export default function App() {
               fetchPriority="high"
             />
             <div className="hero-copy">
-              <p className="lede">Software engineer for backend services and data pipelines.</p>
+              <p className="lede">Software engineer for backend services and data pipelines</p>
               <p className="sub hero-facts">
-                I work on Purolator’s forecasting pipeline, the planning tools that use it, and the AWS
-                infrastructure. Final{'\u2011'}year CS at Waterloo, graduating April 2027.{' '}
-                {cap(word(experience.length))} co{'\u2011'}op terms
-                {wins.length > 0 && <>, {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>}.
+                <span>Forecasting pipeline, planning tools and AWS infrastructure at Purolator</span>
+                <span>Final{'\u2011'}year CS at Waterloo, graduating April 2027</span>
+                <span>
+                  {cap(word(experience.length))} co{'\u2011'}op terms
+                  {wins.length > 0 && <>, {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>}
+                </span>
               </p>
               <div className="hero-orgs" role="group" aria-label="Co-op employers">
                 {experience.map((e, i) => (
-                  <button key={e.org} type="button" onClick={() => openJob(i)} title={`${shortOrg(e.org)}, ${e.role}, ${shortPeriod(e.period)}`}>
+                  <button key={e.org} type="button" onClick={() => openJob(i)} aria-describedby={`peek-${i}`}>
                     <img src={e.logo} alt="" width={20} height={20} />
                     {shortOrg(e.org).split(' ')[0]}
+                    <span className="org-peek" id={`peek-${i}`} aria-hidden="true">
+                      <b>{e.role}</b>
+                      <span>{shortPeriod(e.period)}</span>
+                      {e.highlight && <span><em>{e.highlight.value}</em> {e.highlight.label}</span>}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -943,7 +972,7 @@ export default function App() {
           </div>
         )}
 
-        <Experience active={activeJob} onPick={selectJob} filter={filter} onOpen={openDetail} lens={lens} onLens={applyLens} />
+        <Experience active={activeJob} onPick={selectJob} filter={filter} onFilter={applyFilter} onOpen={openDetail} lens={lens} onLens={applyLens} />
 
         <section className="section" aria-labelledby="projects" data-part="projects">
           <h2 id="projects">More projects</h2>
@@ -972,7 +1001,7 @@ export default function App() {
                         <p className="entry-why"><span>Why I built it</span> {p.why}</p>
                         <Bullets items={p.bullets} />
                       </div>
-                      <p className="stack">{p.tech.join(', ')}</p>
+                      <Stack tech={p.tech} filter={filter} onFilter={applyFilter} />
                       <p className="entry-tabs">
                         {first && <button type="button" onClick={() => openDetail(id, 'try', first.kind)}>Try it</button>}
                         <button type="button" onClick={() => openDetail(id, 'how')}>How it works</button>
@@ -1039,7 +1068,7 @@ export default function App() {
 
       <footer className="foot" id="contact">
         <div className="wrap">
-          <p className="foot-ask">Email is the quickest way to reach me.</p>
+          <p className="foot-ask">Email is the quickest way to reach me</p>
           <p className="foot-mail">
             <a href={`mailto:${profile.email}`}>{profile.email}</a>
           </p>
@@ -1059,10 +1088,10 @@ export default function App() {
           <p className="foot-note">
             {hydrated ? (
               <>
-                {replyNote(hour, weekend)} It's {time} in Toronto{visitorTime && <>, {visitorTime} where you are</>}.
+                {replyNote(hour, weekend)}<br />It's {time} in Toronto{visitorTime && <>, {visitorTime} where you are</>}
               </>
             ) : (
-              'I usually reply within a day.'
+              'I usually reply within a day'
             )}
           </p>
           <div className="foot-row">
