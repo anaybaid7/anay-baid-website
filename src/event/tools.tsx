@@ -4,8 +4,6 @@ import { slides } from './content'
 // Small helpers for presenting: every slide at once (G), a pointer for the
 // projector (L) and the list of keys (?).
 
-const mins = (secs: number) => (secs >= 60 ? `${Math.floor(secs / 60)}m ${secs % 60}s` : `${secs}s`)
-
 export function SlideGrid({ at, onPick, onClose }: { at: number; onPick: (i: number) => void; onClose: () => void }) {
   return (
     <div className="grid-shade" onClick={onClose}>
@@ -20,7 +18,6 @@ export function SlideGrid({ at, onPick, onClose }: { at: number; onPick: (i: num
                 <span className="grid-n">{i + 1}</span>
                 <span className="grid-label">{s.label}</span>
                 <span className="grid-title">{s.title}</span>
-                <span className="grid-time">{mins(s.time)}</span>
               </button>
             </li>
           ))}

@@ -4,6 +4,7 @@ import { profile } from '../data'
 import { deck, slides, type Point, type Slide, type Spot, type Step } from './content'
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
+import Model from './model'
 import Impact from './impact'
 import Units from './units'
 import Qr from './qr'
@@ -297,11 +298,15 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
       {slide.visual === 'map' && <TerminalMap />}
       {slide.visual === 'units' && <Units />}
       {slide.visual === 'impact' && <Impact />}
+      {slide.visual === 'model' && slide.stages && <Model stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'qr' && <Qr />}
       {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
   )
 }
+
+// steps and stages open on the first one, so the slide never starts empty
+const opensOn = (s: Slide) => (s.steps || s.stages ? 0 : null)
 
 // /purolator-intern-event?presenter opens the presenter view instead
 export default function EventPage() {
@@ -311,8 +316,7 @@ export default function EventPage() {
 function Deck() {
   const [at, setAt] = useState(fromHash)
   const [notes, setNotes] = useState(false)
-  // the weekly cycle opens on its first step, so the slide never starts empty
-  const [spot, setSpot] = useState<number | null>(() => (slides[fromHash()].steps ? 0 : null))
+  const [spot, setSpot] = useState<number | null>(() => opensOn(slides[fromHash()]))
   const [back, setBack] = useState(false)
   const [panel, setPanel] = useState<'grid' | 'keys' | null>(null)
   const [pointer, setPointer] = useState(false)
@@ -320,15 +324,15 @@ function Deck() {
   const stage = useRef<HTMLDivElement>(null)
   const slide = slides[at]
   const last = slides.length - 1
-  // the parts a click steps through: zoom spots, steps, or points
-  const spots = slide.spots ?? slide.steps ?? slide.points ?? []
+  // the parts a click steps through: zoom spots, steps, stages or points
+  const spots = slide.spots ?? slide.steps ?? slide.stages ?? slide.points ?? []
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(last, i))
     setBack(n < at)
     setAt(n)
     setNotes(false)
-    setSpot(slides[n].steps ? 0 : null)
+    setSpot(opensOn(slides[n]))
     history.replaceState(null, '', `#${n + 1}`)
   }, [last, at])
 
@@ -413,7 +417,7 @@ function Deck() {
     if (next) new Image().src = next
   }, [at])
 
-  const layout = slide.image || slide.steps ? 'is-stack' : 'is-split'
+  const layout = slide.image || slide.steps || slide.stages ? 'is-stack' : 'is-split'
 
   return (
     <>
@@ -505,7 +509,7 @@ function Deck() {
             </span>
             <button type="button" onClick={() => setNotes((v) => !v)} aria-pressed={notes}>Notes</button>
             <button type="button" onClick={() => setPanel('grid')}>Slides</button>
-            <button type="button" onClick={openPresenter} title="Notes, next slide and a timer in a new window">Presenter</button>
+            <button type="button" onClick={openPresenter} title="Notes and the next slide in a new window">Presenter</button>
             <button type="button" onClick={fullscreen}>Full screen</button>
             <button type="button" className="deck-arrow" onClick={() => go(at + 1)} disabled={at === last} aria-label="Next slide">→</button>
           </div>
