@@ -126,6 +126,7 @@ const lensFromUrl = (): Area | null => {
 
 // small counts read better as words in a sentence
 const word = (n: number) => ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][n] ?? String(n)
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 // a short outline on the thing a link or search just jumped to, once the
 // scroll has landed, so the eye knows where it ended up
@@ -900,11 +901,10 @@ export default function App() {
             <div className="hero-copy">
               <p className="lede">Software engineer for backend services and data pipelines.</p>
               <p className="sub hero-facts">
-                On co{'\u2011'}op at Purolator, building the forecasting pipeline, the planning tools on top of it and
-                the AWS stack they run on. Final year of CS at Waterloo, graduating April 2027, with{' '}
-                {word(experience.length)} co{'\u2011'}op terms
-                {wins.length > 0 && <> and {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>} behind me. Based in{' '}
-                {profile.location.replace(', ON', '')}.
+                I work on Purolator’s forecasting pipeline, the planning tools that use it, and the AWS
+                infrastructure. Final{'\u2011'}year CS at Waterloo, graduating April 2027.{' '}
+                {cap(word(experience.length))} co{'\u2011'}op terms
+                {wins.length > 0 && <>, {word(wins.length)} hackathon {wins.length === 1 ? 'win' : 'wins'}</>}.
               </p>
               <div className="hero-orgs" role="group" aria-label="Co-op employers">
                 {experience.map((e, i) => (
