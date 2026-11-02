@@ -6,7 +6,8 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
-//   visual  'map' draws the terminal map, 'impact' the forecast slider,
+//   visual  'map' draws the terminal map, 'units' the pieces and stops street,
+//           'impact' the forecast slider,
 //           'qr' a code that opens these slides on a phone (optional)
 //   time    about how many seconds to spend on the slide, for the presenter timer
 //   points  a short list shown on the slide itself, each opening a visual (optional)
@@ -65,12 +66,25 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map' | 'impact' | 'qr'
+  visual?: 'map' | 'units' | 'impact' | 'qr'
   points?: Point[]
   thumbs?: string[]
   notes: string[]
   spots?: Spot[]
   time: number
+}
+
+// The pieces and stops slide: a few addresses on one street and how many
+// parcels go to each, mock numbers
+export type Building = 'house' | 'apartments' | 'shop' | 'office'
+export const units: { stops: { kind: Building; pieces: number }[] } = {
+  stops: [
+    { kind: 'house', pieces: 1 },
+    { kind: 'apartments', pieces: 4 },
+    { kind: 'shop', pieces: 2 },
+    { kind: 'office', pieces: 6 },
+    { kind: 'house', pieces: 1 },
+  ],
 }
 
 // The forecast slider on the why it matters slide, mock numbers for one
@@ -94,6 +108,18 @@ export const slides: Slide[] = [
     notes: [
       "I'm on co-op with this team, working on the tools we use to do it",
       'Pick a division on the map to light up its terminals',
+    ],
+  },
+  {
+    label: 'Two numbers',
+    title: 'Pieces and stops',
+    line: 'Everything we forecast comes down to these two, for pickup and for delivery',
+    visual: 'units',
+    time: 30,
+    notes: [
+      'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces',
+      'Pieces decide how much gets sorted and loaded, stops decide how many routes go out',
+      'Click either number to see it on the street',
     ],
   },
   {
