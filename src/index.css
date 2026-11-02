@@ -103,19 +103,13 @@ button {
   clip-path: inset(0 -100vmax);
   transition: transform 0.22s var(--ease-out, ease-out);
 }
-.top::before {
-  content: "";
-  position: absolute;
-  left: -100vmax;
-  right: -100vmax;
-  bottom: 0;
-  height: 1px;
-  background: var(--line);
-  opacity: 0;
-  transition: opacity 0.2s;
+/* the hairline is a border image pushed out to the screen edges, which
+   paints wide without making the page scroll sideways */
+.top {
+  border-bottom: 1px solid transparent;
 }
-.top[data-stuck]::before {
-  opacity: 1;
+.top[data-stuck] {
+  border-image: linear-gradient(var(--line), var(--line)) 0 0 1 0 / 0 0 1px 0 / 0 100vmax;
 }
 .top[data-hidden]:not(:focus-within) {
   transform: translateY(-100%);
