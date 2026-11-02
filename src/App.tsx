@@ -1023,10 +1023,6 @@ export default function App() {
                   <dd>One data file builds the page, the <a href={FILES.text}>plain text resume</a> and the <a href={FILES.json}>JSON Resume</a></dd>
                 </div>
                 <div>
-                  <dt>Tested</dt>
-                  <dd>Every push runs lint, type checks, unit tests, and browser tests with accessibility scans</dd>
-                </div>
-                <div>
                   <dt>Source</dt>
                   <dd>
                     <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">anay-baid-website</a>, and the rest on{' '}
