@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { profile, experience, projects, hackathonWins, education, skills, skillLabels, AREAS, type Area } from './data'
 import { downloadResume } from './downloadResume'
 import ThemeToggle from './components/ThemeToggle'
@@ -127,6 +127,22 @@ const lensFromUrl = (): Area | null => {
 
 // small counts read better as words in a sentence
 const word = (n: number) => ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][n] ?? String(n)
+
+// a short outline on the thing a link or search just jumped to, once the
+// scroll has landed, so the eye knows where it ended up
+function arrive(el: Element | null) {
+  if (!el) return
+  const ctrl = new AbortController()
+  const mark = () => {
+    ctrl.abort()
+    el.classList.remove('arrived')
+    void (el as HTMLElement).offsetWidth
+    el.classList.add('arrived')
+    window.setTimeout(() => el.classList.remove('arrived'), 1400)
+  }
+  const fallback = window.setTimeout(mark, 900)
+  window.addEventListener('scrollend', () => (window.clearTimeout(fallback), mark()), { once: true, signal: ctrl.signal })
+}
 
 const SECTION_LINKS = [['featured', 'Featured'], ['experience', 'Experience'], ['projects', 'Projects'], ['contact', 'Contact']] as const
 
@@ -325,7 +341,7 @@ function Timeline({ active, onPick, filter = [] }: { active: number; onPick: (i:
   )
 }
 
-function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: number; onPick: (i: number) => void; filter: string[]; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
+function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: number; onPick: (i: number, instant?: boolean) => void; filter: string[]; onOpen: OpenFn; lens: Area | null; onLens: (a: Area | null) => void }) {
   // one job at a time, picked from the list on the left or the timeline
   const shown = active >= 0 ? active : 0
   const id = (i: number) => `job-${slug(shortOrg(experience[i].org))}`
@@ -334,7 +350,7 @@ function Experience({ active, onPick, filter, onOpen, lens, onLens }: { active: 
     if (!step) return
     e.preventDefault()
     const next = (shown + step + experience.length) % experience.length
-    onPick(next)
+    onPick(next, true)
     document.getElementById(`tab-${id(next)}`)?.focus()
   }
   return (
@@ -558,6 +574,53 @@ export default function App() {
   const [termOpen, setTermOpen] = useState(false)
   const hydrated = useHydrated()
   const reading = useReading()
+  // The header sticks to the top and steps out of the way while reading
+  // down, then comes back as soon as you scroll up. Section headings move
+  // down by its height while it's showing so the two never overlap.
+  const head = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = head.current
+    if (!el) return
+    let last = scrollY
+    let frame = 0
+    const update = () => {
+      const y = scrollY
+      if (y < 160 || y < last - 4) delete el.dataset.hidden
+      else if (y > last + 4) el.dataset.hidden = ''
+      el.toggleAttribute('data-stuck', y > 8)
+      const showing = y > 8 && el.dataset.hidden === undefined
+      document.documentElement.style.setProperty('--head-h', showing ? `${el.offsetHeight}px` : '0px')
+      last = y
+    }
+    const onScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(update)
+    }
+    update()
+    addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  // one bar under the section links that slides to whichever is current
+  const sectionNav = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    const nav = sectionNav.current
+    if (!nav) return
+    const place = () => {
+      const a = nav.querySelector<HTMLElement>('a[aria-current]')
+      nav.dataset.slide = ''
+      nav.style.setProperty('--bar-x', a ? `${a.offsetLeft}px` : '0px')
+      nav.style.setProperty('--bar-w', a ? `${a.offsetWidth}px` : '0px')
+    }
+    place()
+    // link widths settle once the web font is in, and change on resize
+    document.fonts?.ready.then(place)
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [reading])
   const [, setMonthTick] = useState(0)
   const [detail, setDetail] = useState<Opened | null>(() => (prerendered ? null : detailFromUrl()))
   const [caseId, setCaseId] = useState<string | null>(() => (prerendered ? null : caseFromUrl()))
@@ -655,7 +718,7 @@ export default function App() {
       if (t instanceof HTMLElement && t.closest('input, textarea, select, [contenteditable], dialog[open]')) return
       const step = (dir: 1 | -1) => {
         const rows = Array.from(document.querySelectorAll<HTMLElement>('.entries > .entry:not(.dim):not(.off)'))
-        const line = 80
+        const line = 110
         const at = rows.findIndex((r) => r.getBoundingClientRect().top > line + 4)
         const current = at === -1 ? rows.length : at
         const target = dir === 1 ? rows[current] : rows[Math.max(0, current - 2)]
@@ -685,11 +748,15 @@ export default function App() {
     const id = `job-${slug(shortOrg(experience[i].org))}`
     setActiveJob(i)
     history.replaceState(null, '', `#${id}`)
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const el = document.getElementById(id)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    arrive(el)
   }, [])
-  const selectJob = useCallback((i: number) => {
-    // the old panel lifts away and the new one settles in
-    withTransition(() => setActiveJob(i), 'job')
+  const selectJob = useCallback((i: number, instant = false) => {
+    // the old panel lifts away and the new one settles in, except when
+    // stepping through with the arrow keys, which should feel immediate
+    if (instant) setActiveJob(i)
+    else withTransition(() => setActiveJob(i), 'job')
     history.replaceState(null, '', `#job-${slug(shortOrg(experience[i].org))}`)
   }, [])
   const openProject = useCallback((s: string) => {
@@ -697,6 +764,7 @@ export default function App() {
     const el = document.querySelector<HTMLElement>(`[data-feature="project-${s}"]`) ?? document.getElementById(`project-${s}`)
     history.replaceState(null, '', `#project-${s}`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    arrive(el)
   }, [])
 
   // links like /#job-iotum or /#project-legacybridge-ai open straight to that item
@@ -796,9 +864,9 @@ export default function App() {
     <>
       <div className="progress" aria-hidden="true" />
       <a className="skip" href="#experience">Skip to experience</a>
-      <header className="top wrap">
+      <header className="top wrap" ref={head}>
         <span className="top-name">Anay Baid</span>
-        <nav className="top-sections" aria-label="Sections">
+        <nav className="top-sections" aria-label="Sections" ref={sectionNav}>
           {SECTION_LINKS.map(([id, label]) => (
             <a key={id} href={`#${id}`} aria-current={reading === id ? 'location' : undefined}>{label}</a>
           ))}

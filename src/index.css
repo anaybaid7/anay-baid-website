@@ -94,6 +94,41 @@ button {
   height: 76px;
   font-size: 15px;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--paper);
+  /* paint the bar edge to edge while the content stays in the column */
+  box-shadow: 0 0 0 100vmax var(--paper);
+  clip-path: inset(0 -100vmax);
+  transition: transform 0.22s var(--ease-out, ease-out);
+}
+.top::before {
+  content: "";
+  position: absolute;
+  left: -100vmax;
+  right: -100vmax;
+  bottom: 0;
+  height: 1px;
+  background: var(--line);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.top[data-stuck]::before {
+  opacity: 1;
+}
+.top[data-hidden]:not(:focus-within) {
+  transform: translateY(-100%);
+}
+.section > h2 {
+  transition: top 0.22s ease-out;
+}
+@media print {
+  .top {
+    position: static;
+    box-shadow: none;
+    clip-path: none;
+  }
 }
 .top-name {
   font-weight: 700;
@@ -256,7 +291,7 @@ button {
 .section > h2 {
   margin: 0;
   position: sticky;
-  top: 24px;
+  top: calc(var(--head-h, 0px) + 24px);
   align-self: start;
   font-size: 26px;
   line-height: 1.15;
@@ -280,7 +315,7 @@ button {
   gap: 0 32px;
   padding: 34px 0;
   border-top: 1px solid var(--line);
-  scroll-margin-top: 24px;
+  scroll-margin-top: 100px;
 }
 .entries > .entry:first-child,
 .entry.solo {
@@ -2211,10 +2246,29 @@ label {
   color: var(--ink);
   border-left: 1.5px solid var(--ink);
 }
+.drawer {
+  /* closing slides back out the way it came, where the browser can
+     animate a dialog leaving the top layer */
+  transform: translateX(40px);
+  opacity: 0;
+  transition: transform 0.18s ease-in, opacity 0.16s ease-in, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+}
+.drawer::backdrop {
+  opacity: 0;
+  transition: opacity 0.18s, overlay 0.18s allow-discrete, display 0.18s allow-discrete;
+}
+.drawer[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .drawer[open]::backdrop {
+    opacity: 0;
+  }
+}
 .drawer[open] {
   transform: none;
   opacity: 1;
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease-out;
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease-out, overlay 0.24s allow-discrete, display 0.24s allow-discrete;
 }
 @starting-style {
   .drawer[open] {
@@ -8092,6 +8146,40 @@ button:focus-visible > .shot {
   text-decoration-color: var(--cobalt);
   text-decoration-thickness: 2px;
   text-underline-offset: 6px;
+}
+/* once the page is live the underline becomes one bar that slides */
+.top-sections[data-slide] {
+  position: relative;
+}
+.top-sections[data-slide] a[aria-current] {
+  text-decoration: none;
+}
+.top-sections[data-slide]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: var(--bar-w, 0);
+  height: 2px;
+  background: var(--cobalt);
+  transform: translateX(var(--bar-x, 0));
+  transition: transform 0.28s var(--ease-out), width 0.28s var(--ease-out);
+}
+
+/* where a jump landed */
+.arrived {
+  animation: arrived 1.4s ease-out;
+}
+@keyframes arrived {
+  0%,
+  35% {
+    outline: 2px solid var(--cobalt);
+    outline-offset: 10px;
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 14px;
+  }
 }
 
 /* ---- craft: motion and type details ---- */
