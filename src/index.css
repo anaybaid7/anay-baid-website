@@ -1213,6 +1213,114 @@ dialog::backdrop {
   animation-duration: 0.22s;
 }
 
+
+/* ---- motion ----
+   Small and only where it says something. Sections draw their rule as they
+   arrive, entries rise into place, figures count up, and switching jobs
+   swaps the panel in place. All of it is scroll-driven CSS or
+   a view transition, so browsers without them get the plain page. */
+.count {
+  font-variant-numeric: tabular-nums;
+}
+.section {
+  position: relative;
+  border-top: 0;
+}
+.section::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--ink);
+  transform-origin: left;
+}
+@keyframes rule-draw {
+  from { transform: scaleX(0); }
+}
+@keyframes reveal {
+  from { opacity: 0; translate: 0 18px; }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion="reduced"]) .section::before {
+      animation: rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    :root:not([data-motion="reduced"]) :is(.feature, .entries.cards > li, .about-grid > *) {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+@media print {
+  .section::before { display: none; }
+  .section { border-top: 1px solid #000; }
+  .feature, .entries.cards > li, .about-grid > * { animation: none !important; opacity: 1 !important; translate: none !important; }
+}
+
+/* switching jobs: the old panel lifts away, then the new one settles in */
+.xp-panels > .entry:not(.off) {
+  view-transition-name: xp-panel;
+}
+::view-transition-old(xp-panel) {
+  animation: 0.1s ease-in both xp-out;
+}
+::view-transition-new(xp-panel) {
+  animation: 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) 0.09s both xp-in;
+}
+::view-transition-group(xp-panel) {
+  animation-duration: 0.33s;
+}
+/* the rest of the page just reflows, no whole-page crossfade */
+:root[data-vt="job"]::view-transition-old(root) {
+  display: none;
+}
+:root[data-vt="job"]::view-transition-new(root) {
+  animation: none;
+}
+@keyframes xp-out {
+  to { opacity: 0; translate: 0 -6px; }
+}
+@keyframes xp-in {
+  from { opacity: 0; translate: 0 10px; }
+}
+
+.lately > ol {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lately li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.lately a {
+  font-weight: 650;
+  color: var(--ink);
+}
+.lately span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.lately ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+}
+.lately small,
+.lately-wait {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
 /* rows that don't match the stack filter step back */
 .entry {
   transition: opacity 0.2s;
@@ -7831,9 +7939,10 @@ button:focus-visible > .shot {
   font-size: 18px;
 }
 .about-grid > [data-part="education"] {
-  grid-row: span 2;
+  grid-row: span 3;
 }
-.about-grid > [data-part="colophon"] {
+.about-grid > [data-part="colophon"],
+.about-grid > .lately {
   grid-column: 2;
   padding-top: 22px;
   border-top: 1.5px solid var(--line);
@@ -8017,14 +8126,27 @@ button:focus-visible > .shot {
   transform: scale(0.97);
 }
 /* switching jobs eases the new one in */
-.xp-panels > .entry:not(.off) {
+:root:not([data-vt]) .xp-panels > .entry:not(.off) {
   animation: rise 0.22s var(--ease-out);
 }
 /* the featured and drawer clips say they can be tried */
-.feature-shot {
+.feature-shot,
+.card-shot {
   position: relative;
+  overflow: hidden;
 }
-.feature-shot::after {
+.feature-shot :is(img, video),
+.card-shot :is(img, video) {
+  transition: transform 0.45s var(--ease-out);
+}
+@media (hover: hover) {
+  .feature-shot:hover :is(img, video),
+  .card-shot:hover :is(img, video) {
+    transform: scale(1.015);
+  }
+}
+.feature-shot::after,
+.card-shot::after {
   content: "Try it →";
   position: absolute;
   right: 0;
@@ -8038,12 +8160,15 @@ button:focus-visible > .shot {
   transition: opacity 0.18s var(--ease-out), transform 0.18s var(--ease-out);
 }
 .feature-shot:hover::after,
-.feature-shot:focus-visible::after {
+.feature-shot:focus-visible::after,
+.card-shot:hover::after,
+.card-shot:focus-visible::after {
   opacity: 1;
   transform: none;
 }
 @media (hover: none) {
-  .feature-shot::after {
+  .feature-shot::after,
+  .card-shot::after {
     opacity: 1;
     transform: none;
   }
