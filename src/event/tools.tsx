@@ -49,11 +49,11 @@ export function Pointer({ stage }: { stage: RefObject<HTMLElement | null> }) {
 }
 
 const KEYS: [string, string][] = [
-  ['Space or click', 'Notes, then each part, then the next slide'],
+  ['Enter or click', 'Each part of the slide, then the next slide'],
+  ['N', 'Show or hide the notes'],
   ['← →', 'Previous or next slide'],
   ['1 to 9', 'Open that part of the slide'],
   ['Esc', 'Close what is open'],
-  ['N', 'Show or hide the notes'],
   ['G', 'All slides'],
   ['P', 'Presenter view in a new window'],
   ['L', 'Pointer'],

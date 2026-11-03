@@ -12,14 +12,34 @@ const sources = readdirSync(dir).filter((f) => f.endsWith('.tsx')).map((f) => re
 const shared = ['top', 'top-name', 'top-time', 'foot', 'foot-row', 'foot-links', 'deck-headline', 'tone-r']
 
 describe('EventPage', () => {
-  it('shows the notes on the first click and moves on with the second', () => {
+  it('shows the notes only on N', () => {
     const { container } = render(<EventPage />)
     const slide = () => container.querySelector('.deck-slide') as HTMLElement
-    expect(screen.getByRole('heading', { level: 1, name: slides[0].title })).toBeInTheDocument()
-    fireEvent.click(slide())
-    expect(slide()).toHaveAccessibleName('Next slide')
-    fireEvent.click(slide())
+    expect(slide()).not.toHaveClass('with-notes')
+    fireEvent.keyDown(window, { key: 'Enter' })
     expect(screen.getByRole('heading', { level: 1, name: slides[1].title })).toBeInTheDocument()
+    expect(slide()).not.toHaveClass('with-notes')
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(slide()).toHaveClass('with-notes')
+    fireEvent.keyDown(window, { key: 'n' })
+    expect(slide()).not.toHaveClass('with-notes')
+    window.location.hash = ''
+  })
+
+  it('walks every part of a slide on Enter before the next slide', () => {
+    const n = slides.findIndex((s) => s.visual === 'model')
+    window.location.hash = `#${n + 1}`
+    const { container } = render(<EventPage />)
+    const stages = slides[n].stages!
+    for (let i = 1; i < stages.length; i++) {
+      fireEvent.keyDown(window, { key: 'Enter' })
+      expect(container.querySelector('.model-stages li.on')).toHaveTextContent(stages[i].title)
+    }
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(screen.getByRole('heading', { level: 1, name: slides[n + 1].title })).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: ' ' })
+    expect(screen.getByRole('heading', { level: 1, name: slides[n + 1].title })).toBeInTheDocument()
+    window.location.hash = ''
   })
 
   it('has a dot for every slide', () => {
