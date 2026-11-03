@@ -137,87 +137,10 @@
   color: var(--ink-2);
   text-wrap: pretty;
 }
-.deck-points {
-  list-style: none;
-  margin: 28px 0 0;
-  padding: 0;
-  font-size: clamp(18px, 1.5vw, 22px);
-  line-height: 1.35;
-}
-.deck-points li {
-  border-top: 1px solid var(--line);
-}
-.deck-points button {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  padding: 14px 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  color: inherit;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-.deck-points button::after {
-  content: '+';
-  color: var(--ink-3);
-  font-weight: 500;
-  transition: transform 0.2s ease;
-}
-.deck-points button:hover,
-.deck-points li.on button {
-  color: var(--cobalt);
-}
-.deck-points li.on button::after {
-  transform: rotate(45deg);
-  color: var(--cobalt);
-}
-
-/* what opens next to a point */
-.point-detail {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 18px;
-  width: 100%;
-  height: min(560px, calc(var(--stage) - 40px));
-  padding: 24px 26px;
-  background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgb(11 31 68 / 0.06), 0 8px 30px rgb(11 31 68 / 0.08);
-  animation: step-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
-  cursor: default;
-}
-.point-visual {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 0;
-  overflow: hidden;
-}
-/* pictures scale to fit the panel both ways */
-.point-visual > .vz-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
 .step-visual .vz-svg {
   width: 100%;
   height: 100%;
 }
-.point-visual .vz-img {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 6px;
-  box-shadow: 0 4px 18px rgb(11 31 68 / 0.14);
-}
-.deck-points li:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
 .deck-visual {
   display: grid;
   place-items: center;
@@ -528,7 +451,8 @@
   padding: 0;
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   position: relative;
   align-self: center;
 }
@@ -662,9 +586,6 @@
 @keyframes vz-flow {
   to { stroke-dashoffset: -12; }
 }
-.vz-bar rect { fill: var(--line); }
-.vz-bar.accent rect { fill: var(--cobalt); }
-.vz-val { fill: var(--ink); font-size: 14px; font-weight: 650; }
 .vz-table-wrap {
   width: 100%;
 }
@@ -713,12 +634,6 @@
 @keyframes vz-draw { to { stroke-dashoffset: 0; } }
 @keyframes vz-fade { from { opacity: 0; } }
 .vz-mark { animation: vz-fade 0.3s ease-out 0.8s both; }
-.vz-bar rect {
-  transform-box: fill-box;
-  transform-origin: bottom;
-  animation: vz-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-@keyframes vz-grow { from { transform: scaleY(0); } }
 .vz-table tbody tr { animation: vz-fade 0.3s ease-out both; }
 .vz-barcell { white-space: nowrap; }
 .vz-track {
@@ -736,54 +651,6 @@
   height: 100%;
   border-radius: 3px;
   background: var(--cobalt);
-}
-
-/* wireframes: plain boxes in the page's own type */
-.vz-wire text { fill: var(--ink-2); font-size: 15px; }
-.vz-wire .wf.text.strong, .vz-wire text.title { fill: var(--ink); font-weight: 650; }
-.vz-wire .wf.text.lg { font-size: 20px; }
-.vz-wire .wf.text.faint { fill: var(--ink-3); }
-.vz-wire g.wf rect { fill: var(--card); stroke: var(--ink-3); stroke-width: 1.3; }
-.vz-wire g.wf.box > rect { fill: none; stroke: var(--line); stroke-width: 1.6; }
-.vz-wire g.wf.button.strong rect { fill: var(--cobalt); stroke: var(--cobalt); }
-.vz-wire g.wf.button.strong text { fill: var(--on-cobalt); font-weight: 650; }
-.vz-wire g.wf.input text { fill: var(--ink); }
-.wf-chev { fill: none; stroke: var(--ink-3); stroke-width: 1.6; }
-.wf-rule { stroke: var(--line); stroke-width: 1.5; }
-.wf-mark { fill: var(--cobalt); opacity: 0.12; }
-.wf-fill { fill: var(--line); }
-.wf-fill.accent { fill: var(--cobalt); opacity: 0.55; }
-.wf-ink { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linejoin: round; }
-.wf-ink.accent { stroke: var(--cobalt); }
-.wf-ink.thick { stroke-width: 9; }
-.vz-img {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 6px 24px rgb(11 31 68 / 0.16);
-}
-
-/* closing slide: the app and the dashboard, stacked like windows */
-.deck-work {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 11;
-}
-.deck-thumb {
-  position: absolute;
-  width: 78%;
-  border-radius: 8px;
-  box-shadow: 0 18px 50px rgb(11 31 68 / 0.22), 0 2px 6px rgb(11 31 68 / 0.12);
-  background: #fff;
-}
-.deck-thumb.t0 {
-  left: 0;
-  bottom: 0;
-  z-index: 1;
-}
-.deck-thumb.t1 {
-  right: 0;
-  top: 0;
 }
 
 /* speaker notes, sliding in from the right */
@@ -1015,6 +882,7 @@
     top: 2px;
   }
   .deck-steps {
+    grid-auto-flow: row;
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 8px 0;
@@ -1044,10 +912,6 @@
     gap: 18px;
     padding: 18px;
   }
-  .point-detail {
-    height: auto;
-    padding: 18px;
-  }
   .deck-bar {
     flex-wrap: wrap;
     height: auto;
@@ -1072,11 +936,9 @@
   .deck-callout,
   .deck-map circle,
   .step-detail,
-  .point-detail,
   .vz-edge,
   .vz-line,
   .vz-mark,
-  .vz-bar rect,
   .vz-table tbody tr {
     animation: none;
     transition: none;

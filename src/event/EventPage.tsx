@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ME, type PointerEvent as PE } from 'react'
 import ThemeToggle from '../components/ThemeToggle.tsx'
 import { profile } from '../data'
-import { deck, slides, type Point, type Slide, type Spot, type Step } from './content'
+import { deck, slides, type Slide, type Spot, type Step } from './content'
 import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
 import Model from './model'
@@ -232,16 +232,7 @@ function TerminalMap() {
   )
 }
 
-// The closing slide: the two things I built, stacked like windows.
-function Work({ thumbs }: { thumbs: string[] }) {
-  return (
-    <div className="deck-work">
-      {thumbs.map((t, i) => <img key={t} src={t} alt="" className={`deck-thumb t${i}`} />)}
-    </div>
-  )
-}
-
-// The weekly cycle. Each step opens its own picture under the line.
+// The steps of the week. Each one opens its own picture under the line.
 function Steps({ steps, spot, setSpot }: { steps: Step[]; spot: number | null; setSpot: (i: number | null) => void }) {
   const open = spot === null ? null : steps[spot]
   return (
@@ -276,21 +267,6 @@ function Steps({ steps, spot, setSpot }: { steps: Step[]; spot: number | null; s
   )
 }
 
-// What opens next to a point on the list.
-function PointDetail({ point }: { point: Point }) {
-  return (
-    <div className="point-detail" onClick={(e) => e.stopPropagation()}>
-      <div className="point-visual">
-        <VisualView v={point.visual} />
-      </div>
-      <div className="step-copy">
-        <h2>{point.title}</h2>
-        <p>{point.text}</p>
-      </div>
-    </div>
-  )
-}
-
 function Visual({ slide, spot, setSpot }: ShotProps) {
   if (slide.image) return <Shot slide={slide} spot={spot} setSpot={setSpot} key={slide.image} />
   return (
@@ -302,7 +278,6 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
       {slide.visual === 'model' && slide.stages && <Model stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'backtest' && slide.stages && <Backtest stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'qr' && <Qr />}
-      {slide.points && spot !== null ? <PointDetail point={slide.points[spot]} key={spot} /> : slide.thumbs && <Work thumbs={slide.thumbs} />}
     </div>
   )
 }
@@ -326,8 +301,8 @@ function Deck() {
   const stage = useRef<HTMLDivElement>(null)
   const slide = slides[at]
   const last = slides.length - 1
-  // the parts a click steps through: zoom spots, steps, stages or points
-  const spots = slide.spots ?? slide.steps ?? slide.stages ?? slide.points ?? []
+  // the parts a click steps through: zoom spots, steps or stages
+  const spots = slide.spots ?? slide.steps ?? slide.stages ?? []
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(last, i))
@@ -463,21 +438,6 @@ function Deck() {
                       </li>
                     ))}
                   </ol>
-                )}
-                {slide.points && (
-                  <ul className="deck-points">
-                    {slide.points.map((p, i) => (
-                      <li key={p.label} className={i === spot ? 'on' : ''}>
-                        <button
-                          type="button"
-                          aria-expanded={i === spot}
-                          onClick={(e) => { e.stopPropagation(); setSpot(i === spot ? null : i) }}
-                        >
-                          {p.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
                 )}
               </div>
               <Visual slide={slide} spot={spot} setSpot={setSpot} />
