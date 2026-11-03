@@ -551,10 +551,16 @@
   color: var(--ink-2);
 }
 .step-visual {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: 0;
   height: 100%;
+}
+/* charts scale to the panel instead of setting its height */
+.step-visual > .vz-svg {
+  position: absolute;
+  inset: 0;
 }
 
 /* the pictures themselves */
@@ -912,6 +918,10 @@
     gap: 18px;
     padding: 18px;
   }
+  .step-visual > .vz-svg {
+    position: static;
+    height: auto;
+  }
   .deck-bar {
     flex-wrap: wrap;
     height: auto;
@@ -927,6 +937,17 @@
   .deck-section {
     display: none;
   }
+}
+/* laptops and projectors under 820px tall: tighten the steps so the open
+   step fits above the slide bar */
+@media (max-height: 820px) and (min-width: 921px) {
+  .deck-cycle { gap: 14px; }
+  .deck-steps button { gap: 8px; }
+  .step-num { width: 38px; height: 38px; }
+  .step-detail { padding: 16px 24px; }
+  .vz-table th,
+  .vz-table td { padding: 5px 12px; }
+  .vz-table { font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .deck-slide,
@@ -1081,6 +1102,122 @@
 .scale-sum button span { font-size: clamp(15px, 1.15vw, 18px); line-height: 1.35; }
 .scale-sum .total button { max-width: none; }
 .scale-sum .total b { font-size: clamp(72px, 7.6vw, 128px); color: var(--cobalt); }
+
+/* how the model learns: stages on the left, one terminal's weeks on the right */
+.model {
+  display: grid;
+  grid-template-columns: minmax(240px, 3fr) minmax(0, 8fr);
+  gap: 36px;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  cursor: default;
+}
+.model-stages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+.model-stages li {
+  border-left: 3px solid var(--line);
+  padding-left: 14px;
+  transition: border-color 0.2s ease;
+}
+.model-stages li.done { border-left-color: color-mix(in srgb, var(--cobalt) 40%, var(--line)); }
+.model-stages li.on { border-left-color: var(--cobalt); }
+.model-stages button {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: 600 clamp(14px, 1.1vw, 17px) var(--font);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.model-stages button span {
+  color: var(--cobalt);
+  font-variant-numeric: tabular-nums;
+}
+.model-stages li.done button,
+.model-stages button:hover { color: var(--ink-2); }
+.model-stages li.on button { color: var(--ink); font-weight: 700; }
+.model-stages p {
+  margin: 0 0 8px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  font-size: clamp(14px, 1vw, 16px);
+  animation: deck-up 0.24s ease;
+}
+.model-figure {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: 4px;
+}
+.model-svg {
+  width: 100%;
+  max-height: calc(var(--stage) - 170px);
+  overflow: visible;
+}
+.model-raw { fill: none; stroke: var(--ink-2); stroke-width: 1.6; stroke-linejoin: round; transition: opacity 0.3s ease; }
+.model-raw.ghost { opacity: 0.22; }
+.model-clean { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; animation: vz-fade 0.4s ease; }
+.at-2 .model-clean, .at-3 .model-clean, .at-4 .model-clean { opacity: 0.45; }
+.model-fit {
+  fill: none;
+  stroke: var(--cobalt);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: vz-draw 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.model-odd { fill: none; stroke: #d64545; stroke-width: 2.4; animation: vz-fade 0.3s ease; }
+.model-tick { stroke: var(--cobalt); stroke-width: 2; }
+.model-off { fill: var(--cobalt); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.model-ahead rect { fill: var(--tint); opacity: 0.7; }
+.model-ahead line { stroke: var(--cobalt); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.model-ahead text { fill: var(--cobalt); font-size: 14px; font-weight: 700; }
+.model-part { opacity: 0.32; transition: opacity 0.3s ease; }
+.model-part.done { opacity: 0.6; }
+.model-part.on { opacity: 1; }
+.model-part text { fill: var(--ink-2); font-size: 14px; font-weight: 650; }
+.model-part.on text { fill: var(--cobalt); }
+.model-part line { stroke: var(--line); stroke-width: 1; }
+.model-part path { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-linejoin: round; }
+.model-part.on path { stroke: var(--cobalt); stroke-width: 2.6; }
+.model-grid rect { fill: var(--cobalt); opacity: 0; animation: model-cell 0.3s ease forwards; }
+.model-grid text { fill: var(--ink-2); font-size: 15px; font-weight: 650; }
+@keyframes model-cell { to { opacity: 0.85; } }
+.model-train { fill: var(--ink-3); }
+.bt-actual { opacity: 1; }
+.model-fit.tone-py { stroke: #2a9a5a; }
+.model-fit.tone-prophet { stroke: #c98516; }
+.model-fit.dim { opacity: 0.3; }
+.bt-table { width: 100%; border-collapse: collapse; font-size: clamp(13px, 0.95vw, 15px); font-variant-numeric: tabular-nums; }
+.bt-table th, .bt-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.bt-table thead th { font-size: 12px; font-weight: 650; color: var(--ink-3); }
+.bt-table td:nth-child(n + 3), .bt-table thead th:nth-child(n + 3) { text-align: right; }
+.bt-table tbody tr { color: var(--ink-3); transition: color 0.2s ease, background 0.2s ease; }
+.bt-table tbody tr.on { color: var(--ink); }
+.bt-table tbody tr.best { background: var(--tint); }
+.bt-table tbody th { font-weight: 700; white-space: nowrap; }
+.bt-table i { display: inline-block; width: 14px; height: 3px; margin: 0 8px 4px 0; vertical-align: middle; background: var(--cobalt); }
+.bt-table i.tone-py { background: #2a9a5a; }
+.bt-table i.tone-prophet { background: #c98516; }
+.model-under { margin: 0; text-align: right; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 920px) {
+  .model { grid-template-columns: 1fr; gap: 14px; height: auto; }
+  .model-stages li:not(.on) p { display: none; }
+}
 
 /* closing slide: scan to open the slides */
 .qr {
