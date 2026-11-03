@@ -949,128 +949,88 @@
   }
 }
 
-/* pieces and stops: one street, a few addresses */
+/* pieces per stop: the ratio and what moving it does */
 .units {
   display: grid;
-  gap: 18px;
+  gap: 28px;
   width: 100%;
-  max-width: 700px;
+  max-width: 640px;
   cursor: default;
 }
-.units-pick {
+.units-ratio {
   display: flex;
-  gap: 32px;
+  align-items: center;
+  gap: 24px;
 }
-.units-pick button {
-  padding: 0 0 6px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  background: none;
-  font: 600 clamp(18px, 1.5vw, 22px) var(--font);
+.units-frac {
+  display: grid;
+  font-size: clamp(16px, 1.3vw, 20px);
   color: var(--ink-2);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  text-align: center;
 }
-.units-pick b {
-  font-size: clamp(30px, 2.8vw, 44px);
+.units-frac span { padding: 6px 4px; font-variant-numeric: tabular-nums; }
+.units-frac span + span { border-top: 3px solid var(--ink); }
+.units-frac b {
+  display: block;
+  font-size: clamp(34px, 3.4vw, 54px);
   font-weight: 760;
   font-stretch: 112%;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.units-eq { font-size: clamp(30px, 3vw, 46px); color: var(--ink-3); }
+.units-pps {
+  margin: 0;
+  display: grid;
+  font-size: clamp(16px, 1.3vw, 20px);
+  font-weight: 600;
+  color: var(--cobalt);
+}
+.units-pps b {
+  font-size: clamp(64px, 6.4vw, 104px);
+  font-weight: 800;
+  font-stretch: 115%;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.units-routes { display: grid; gap: 10px; }
+.units-routes > p:first-child {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.units-routes > p:first-child b {
+  font-size: clamp(30px, 2.8vw, 44px);
+  font-weight: 760;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-.units-pick button:hover b,
-.units-pick button[aria-pressed='true'],
-.units-pick button[aria-pressed='true'] b {
-  color: var(--cobalt);
-}
-.units-pick button[aria-pressed='true'] {
-  border-bottom-color: var(--cobalt);
-}
-.units-street {
-  width: 100%;
-  overflow: visible;
-}
-.units-road { stroke: var(--ink-3); stroke-width: 2; }
-.units-lane { stroke: var(--line); stroke-width: 2; stroke-dasharray: 14 10; }
-.units-van path { fill: var(--cobalt); }
-.units-van rect { fill: var(--card); }
-.units-building {
-  fill: var(--card);
-  stroke: var(--ink-3);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-  transition: fill 0.2s ease, stroke 0.2s ease;
-}
-.units-box {
-  fill: var(--line);
-  transition: fill 0.2s ease;
-}
-.units-stop,
-.units-count {
-  font-size: 14px;
-  font-weight: 650;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.units-stop { fill: var(--cobalt); }
-.units-count { fill: var(--cobalt); }
-.show-pieces .units-box { fill: var(--cobalt); }
-.show-pieces .units-count { opacity: 1; }
-.show-stops .units-building {
-  fill: color-mix(in srgb, var(--cobalt) 12%, var(--card));
-  stroke: var(--cobalt);
-}
-.show-stops .units-stop { opacity: 1; }
-.units-pick { align-items: baseline; flex-wrap: wrap; }
-.units-ratio {
-  margin: 0;
-  font: 600 clamp(18px, 1.5vw, 22px) var(--font);
-  color: var(--cobalt);
-}
-.units-ratio b {
-  font-size: clamp(30px, 2.8vw, 44px);
-  font-weight: 760;
-  font-stretch: 112%;
-  font-variant-numeric: tabular-nums;
-}
-.units-street { max-height: 210px; }
-.units-day {
-  display: grid;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.units-sum {
-  margin: 0;
-  font-size: clamp(15px, 1.15vw, 18px);
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-.units-sum b { color: var(--ink); font-weight: 720; }
-.units-routes {
-  display: grid;
-  grid-template-columns: repeat(18, minmax(0, 1fr));
-  gap: 5px;
-}
-.units-routes i {
-  aspect-ratio: 1.7;
-  border-radius: 4px;
+.units-bar {
+  height: 14px;
+  border-radius: 7px;
   background: var(--line);
-  opacity: 0.6;
-  transition: background 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
 }
-.units-routes i.on { background: var(--cobalt); opacity: 1; }
+.units-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+  background: var(--cobalt);
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 .units-verdict {
   margin: 0;
-  display: grid;
-  gap: 2px;
   font-size: clamp(18px, 1.6vw, 24px);
   font-weight: 720;
 }
-.units-verdict span { font-size: 15px; font-weight: 500; color: var(--ink-2); }
+.units-verdict.good { color: #2a9a5a; }
+.units-verdict.bad { color: #d64545; }
 .units-slider { display: grid; gap: 6px; }
-.units-slider > span:first-child { font-size: 15px; font-weight: 650; }
-.units-slider input { width: 100%; height: 26px; accent-color: var(--cobalt); cursor: pointer; }
+.units-slider input { width: 100%; height: 28px; accent-color: var(--cobalt); cursor: pointer; }
 .units-ends { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-3); }
 
 /* why it matters: the forecast slider */

@@ -6,7 +6,7 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
-//   visual  'map' draws the terminal map, 'units' the pieces and stops street,
+//   visual  'map' draws the terminal map, 'units' the pieces per stop ratio,
 //           'impact' the forecast slider, 'model' inside the forecast model,
 //           'backtest' three models scored on held out weeks,
 //           'qr' a code that opens these slides on a phone (optional)
@@ -52,21 +52,10 @@ export type Slide = {
   stages?: Stage[]
 }
 
-// The pieces per stop slide: a few addresses on one street and how many
-// parcels go to each, then one terminal's day, mock numbers
-export type Building = 'house' | 'apartments' | 'shop' | 'office'
-export const units: { stops: { kind: Building; pieces: number }[]; day: { pieces: number; perRoute: number; pps: number } } = {
-  stops: [
-    { kind: 'house', pieces: 1 },
-    { kind: 'apartments', pieces: 4 },
-    { kind: 'shop', pieces: 2 },
-    { kind: 'office', pieces: 6 },
-    { kind: 'house', pieces: 1 },
-  ],
-  // one terminal's day, a route fits about 120 stops, so 1.25 pieces a stop
-  // is the same 150 pieces a route the forecast slider uses
-  day: { pieces: 4200, perRoute: 120, pps: 1.25 },
-}
+// The pieces per stop slide, one terminal's day, mock numbers. A route fits
+// about 120 stops, so 1.25 pieces a stop is the same 150 pieces a route the
+// forecast slider uses
+export const units = { pieces: 4200, perRoute: 120, pps: 1.25 }
 
 // The forecast slider on the why it matters slide, mock numbers for one
 // terminal on one day
@@ -96,10 +85,10 @@ export const slides: Slide[] = [
     line: 'A route only fits so many stops, so the more pieces each stop takes, the fewer routes the same parcels need',
     visual: 'units',
     notes: [
-      'A piece is one parcel, a stop is one address, and an office tower can be one stop with a lot of pieces',
+      'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces and a house is usually one',
       'A stop takes about the same time whether it drops one box or six, so density is where the cost is',
       'Online orders to homes are mostly one piece per stop, so in peak stops climb faster than pieces, which is why we forecast both',
-      'Drag it, going from 1.25 to 1.5 pieces per stop saves 4 routes at one terminal in one day',
+      'Drag it toward dense, going from 1.25 to 1.5 pieces per stop saves 4 routes at one terminal in one day',
     ],
   },
   {
