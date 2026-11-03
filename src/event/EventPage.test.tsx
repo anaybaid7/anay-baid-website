@@ -41,14 +41,24 @@ describe('EventPage', () => {
     window.location.hash = ''
   })
 
-  it('walks a model slide stage by stage', () => {
-    const n = slides.findIndex((s) => s.stages?.length)
+  it('walks the model slide stage by stage', () => {
+    const n = slides.findIndex((s) => s.visual === 'model')
     window.location.hash = `#${n + 1}`
     const { container } = render(<EventPage />)
     const stages = slides[n].stages!
     expect(container.querySelector('.model-stages li.on')).toHaveTextContent(stages[0].title)
     fireEvent.click(screen.getByRole('button', { name: new RegExp(stages[2].title) }))
     expect(container.querySelector('.model-stages li.on')).toHaveTextContent(stages[2].text)
+    window.location.hash = ''
+  })
+
+  it('builds the scale slide up one term per click', () => {
+    const n = slides.findIndex((s) => s.visual === 'scale')
+    window.location.hash = `#${n + 1}`
+    const { container } = render(<EventPage />)
+    expect(container.querySelectorAll('.scale-sum li.on')).toHaveLength(1)
+    fireEvent.keyDown(window, { key: '4' })
+    expect(container.querySelectorAll('.scale-sum li.on')).toHaveLength(4)
     window.location.hash = ''
   })
 

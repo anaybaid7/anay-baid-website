@@ -6,7 +6,7 @@ import { canadaPath, divisions, mapSize, terminals } from './map'
 import VisualView from './visuals'
 import Model from './model'
 import Backtest from './backtest'
-import Impact from './impact'
+import Scale from './scale'
 import Units from './units'
 import Qr from './qr'
 import Presenter from './presenter'
@@ -274,7 +274,7 @@ function Visual({ slide, spot, setSpot }: ShotProps) {
       {slide.steps && <Steps steps={slide.steps} spot={spot} setSpot={setSpot} />}
       {slide.visual === 'map' && <TerminalMap />}
       {slide.visual === 'units' && <Units />}
-      {slide.visual === 'impact' && <Impact />}
+      {slide.visual === 'scale' && slide.stages && <Scale stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'model' && slide.stages && <Model stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'backtest' && slide.stages && <Backtest stages={slide.stages} at={spot ?? 0} setAt={setSpot} />}
       {slide.visual === 'qr' && <Qr />}

@@ -7,7 +7,7 @@
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
 //   visual  'map' draws the terminal map, 'units' the pieces per stop ratio,
-//           'impact' the forecast slider, 'model' inside the forecast model,
+//           'scale' how much gets forecast each run, 'model' inside the forecast model,
 //           'backtest' three models scored on held out weeks,
 //           'qr' a code that opens these slides on a phone (optional)
 //   notes   talking points, shown when you click the slide
@@ -46,20 +46,15 @@ export type Slide = {
   line?: string
   image?: string
   steps?: Step[]
-  visual?: 'map' | 'units' | 'impact' | 'model' | 'backtest' | 'qr'
+  visual?: 'map' | 'units' | 'scale' | 'model' | 'backtest' | 'qr'
   notes: string[]
   spots?: Spot[]
   stages?: Stage[]
 }
 
 // The pieces per stop slide, one terminal's day, mock numbers. A route fits
-// about 120 stops, so 1.25 pieces a stop is the same 150 pieces a route the
-// forecast slider uses
+// about 120 stops, so 1.25 pieces a stop is about 150 pieces a route
 export const units = { pieces: 4200, perRoute: 120, pps: 1.25 }
-
-// The forecast slider on the why it matters slide, mock numbers for one
-// terminal on one day
-export const impact = { pieces: 4200, perRoute: 150, range: 20 }
 
 export const deck = {
   title: 'Forecasting the network',
@@ -92,14 +87,58 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'Why it matters',
-    title: 'One number sets up the whole day',
-    line: 'Our forecast tells a terminal how many routes to run, so being off in either direction costs something',
-    visual: 'impact',
+    label: 'Why a model',
+    title: 'Too many numbers to do by hand',
+    line: 'Every run forecasts each terminal, each number and each week ahead',
+    visual: 'scale',
     notes: [
-      'Drag the forecast down and parcels wait a day',
-      'Drag it up and vans go out half empty',
-      'A few percent either way adds up fast across 135 terminals',
+      'The 8 are pieces and stops, for delivery and pickup, for our own routes and for agents',
+      'Nobody can set 65,880 numbers by hand every week, so a model does the first pass',
+      'People only adjust the weeks the model cannot know about, like a new client or a sale moving',
+    ],
+    stages: [
+      { title: '135', text: 'terminals' },
+      { title: '8', text: 'numbers for each one' },
+      { title: '61', text: 'weeks ahead, the rest of this year and all of next' },
+      { title: '65,880', text: 'forecasts every run' },
+    ],
+  },
+  {
+    label: 'Machine learning',
+    title: 'Inside the forecast model',
+    line: 'Every terminal gets its own machine learning model, trained on its own weekly history',
+    visual: 'model',
+    notes: [
+      'This is the machine learning part, the model learns each terminal from its own past',
+      "It's not a black box, every part it learns is something you can point at on the chart",
+      'If anyone asks, it uses STL to split out the yearly pattern and ARIMA with holidays and the big client as extra inputs',
+    ],
+    stages: [
+      { title: 'Training data', text: 'Three years of weekly pieces for one terminal, this is what the model learns from' },
+      { title: 'Cleaning', text: 'One-off events and outages come out first, so it only learns from normal weeks' },
+      { title: 'Yearly pattern', text: 'It learns what repeats every year, a quiet January, the summer dip and the climb into peak' },
+      { title: 'Trend', text: 'Then the slow growth underneath that pattern' },
+      { title: 'Holidays and big client', text: "Then how much each holiday takes off, and how volume follows our biggest client's own forecast" },
+      { title: 'Forecast', text: 'Put the parts back together and run them forward to the end of next year' },
+      { title: 'At scale', text: 'One model per terminal and per number we forecast, about a thousand trained every run' },
+    ],
+  },
+  {
+    label: 'Machine learning',
+    title: "Testing on weeks it hasn't seen",
+    line: 'I rebuilt the model in Python and added Prophet, then tested all three on weeks they never trained on',
+    visual: 'backtest',
+    notes: [
+      'A model can look great on the weeks it learned from and still miss new ones, so we hide the last 26 weeks and see',
+      'Numbers here are mock, the real test runs for each terminal against what actually came in',
+      'If anyone asks, the Python version uses statsmodels and pmdarima, and Prophet is open source from Meta',
+    ],
+    stages: [
+      { title: 'Hide 26 weeks', text: 'Train on everything before the line, then forecast the 26 weeks after it blind' },
+      { title: 'Our R model', text: 'The model the team runs today' },
+      { title: 'My Python version', text: 'The same model rebuilt in Python, so it runs right inside the forecast app' },
+      { title: 'Prophet', text: "Meta's open source forecasting model, made for weekly business data with seasons and holidays" },
+      { title: 'Compare', text: 'How far off each one was on average, and whether it ran high or low, which means spare vans or late parcels' },
     ],
   },
   {
@@ -148,7 +187,7 @@ export const slides: Slide[] = [
       {
         label: 'The models run',
         title: 'Running the models',
-        text: "One button runs the team's R model from the app, I took out its old database and Java setup so it reads straight from files",
+        text: "One button runs the team's R model from the app, I took out its old database and Java setup so it reads straight from files, and my Python version and Prophet run next to it",
         visual: {
           kind: 'flow',
           alt: 'Inputs going into the app and out to three models',
@@ -173,45 +212,7 @@ export const slides: Slide[] = [
     notes: [
       "Last week's real numbers go in, a forecast for the rest of the year comes out",
       'Before this it was scripts run one by one, now each step is a button in order',
-      'The next two slides open up the models',
-    ],
-  },
-  {
-    label: 'Machine learning',
-    title: 'Inside the forecast model',
-    line: 'Every terminal gets its own machine learning model, trained on its own weekly history',
-    visual: 'model',
-    notes: [
-      'This is the machine learning part, the model learns each terminal from its own past',
-      "It's not a black box, every part it learns is something you can point at on the chart",
-      'If anyone asks, it uses STL to split out the yearly pattern and ARIMA with holidays and the big client as extra inputs',
-    ],
-    stages: [
-      { title: 'Training data', text: 'Three years of weekly pieces for one terminal, this is what the model learns from' },
-      { title: 'Cleaning', text: 'One-off events and outages come out first, so it only learns from normal weeks' },
-      { title: 'Yearly pattern', text: 'It learns what repeats every year, a quiet January, the summer dip and the climb into peak' },
-      { title: 'Trend', text: 'Then the slow growth underneath that pattern' },
-      { title: 'Holidays and big client', text: "Then how much each holiday takes off, and how volume follows our biggest client's own forecast" },
-      { title: 'Forecast', text: 'Put the parts back together and run them forward to the end of next year' },
-      { title: 'At scale', text: 'One model per terminal and per number we forecast, about a thousand trained every run' },
-    ],
-  },
-  {
-    label: 'Machine learning',
-    title: "Testing on weeks it hasn't seen",
-    line: 'I rebuilt the model in Python and added Prophet, then tested all three on weeks they never trained on',
-    visual: 'backtest',
-    notes: [
-      'A model can look great on the weeks it learned from and still miss new ones, so we hide the last 26 weeks and see',
-      'Numbers here are mock, the real test runs for each terminal against what actually came in',
-      'If anyone asks, the Python version uses statsmodels and pmdarima, and Prophet is open source from Meta',
-    ],
-    stages: [
-      { title: 'Hide 26 weeks', text: 'Train on everything before the line, then forecast the 26 weeks after it blind' },
-      { title: 'Our R model', text: 'The model the team runs today' },
-      { title: 'My Python version', text: 'The same model rebuilt in Python, so it runs right inside the forecast app' },
-      { title: 'Prophet', text: "Meta's open source forecasting model, made for weekly business data with seasons and holidays" },
-      { title: 'Compare', text: 'How far off each one was on average, and whether it ran high or low, which means spare vans or late parcels' },
+      'The next few slides are the app itself',
     ],
   },
   {

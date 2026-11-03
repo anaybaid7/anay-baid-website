@@ -1033,121 +1033,54 @@
 .units-slider input { width: 100%; height: 28px; accent-color: var(--cobalt); cursor: pointer; }
 .units-ends { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-3); }
 
-/* why it matters: the forecast slider */
-.impact {
-  --low: #d64545;
-  --high: #c98516;
-  --ok: #2a9a5a;
-  display: grid;
+.units-note { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+/* too many numbers: the count built up one term per click */
+.scale { width: 100%; cursor: default; }
+.scale-sum {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px 22px;
+}
+.scale-sum li {
+  display: flex;
+  align-items: flex-start;
   gap: 22px;
-  width: 100%;
-  max-width: 660px;
-  cursor: default;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.impact-read {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
-}
-.impact-read p {
-  margin: 0;
+.scale-sum li.on { opacity: 1; transform: none; }
+.scale-sum li.total { flex-basis: 100%; padding-top: 12px; border-top: 1px solid var(--line); }
+.scale-sum .scale-op { font-size: clamp(36px, 3.6vw, 58px); line-height: 1; color: var(--ink-3); }
+.scale-sum button {
   display: grid;
   gap: 4px;
-}
-.impact-read span {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-3);
-}
-.impact-read b {
-  font-size: clamp(28px, 2.6vw, 40px);
-  font-weight: 760;
-  font-stretch: 112%;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-.impact-tiles {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  gap: 6px;
-}
-.impact-tiles i {
-  aspect-ratio: 1.7;
-  border-radius: 5px;
-  background: var(--cobalt);
-  animation: tile-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.impact-tiles i.spare {
-  background: color-mix(in srgb, var(--high) 14%, transparent);
-  outline: 2px dashed var(--high);
-  outline-offset: -2px;
-}
-.impact-tiles i.missing {
-  background: color-mix(in srgb, var(--low) 12%, transparent);
-  outline: 2px dashed var(--low);
-  outline-offset: -2px;
-}
-@keyframes tile-in {
-  from { opacity: 0; transform: scale(0.6); }
-}
-.impact-verdict {
-  margin: 0;
-  display: grid;
-  gap: 2px;
-  padding-left: 14px;
-  border-left: 4px solid var(--ok);
-}
-.impact-verdict b {
-  font-size: clamp(20px, 1.8vw, 26px);
-  font-weight: 720;
-}
-.impact-verdict span {
+  max-width: 220px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
   color: var(--ink-2);
-}
-.impact-verdict.low { border-color: var(--low); }
-.impact-verdict.high { border-color: var(--high); }
-.impact-slider {
-  display: grid;
-  gap: 8px;
-}
-.impact-off {
-  font-size: 15px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-}
-.impact-slider input {
-  width: 100%;
-  height: 28px;
-  accent-color: var(--cobalt);
   cursor: pointer;
 }
-.impact-ends {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  color: var(--ink-3);
+.scale-sum b {
+  font-size: clamp(48px, 5vw, 80px);
+  font-weight: 800;
+  font-stretch: 115%;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
-.impact-ends button {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 3px 12px;
-  background: var(--card);
-  font: inherit;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-.impact-ends button:hover {
-  border-color: var(--cobalt);
-  color: var(--cobalt);
-}
-.impact-note {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-3);
-}
+.scale-sum button span { font-size: clamp(15px, 1.15vw, 18px); line-height: 1.35; }
+.scale-sum .total button { max-width: none; }
+.scale-sum .total b { font-size: clamp(72px, 7.6vw, 128px); color: var(--cobalt); }
 
 /* closing slide: scan to open the slides */
 .qr {
@@ -1413,15 +1346,15 @@
 .pv-keys { margin: 8px 0 0; font-size: 13px; color: var(--ink-3); }
 
 @media (max-width: 920px) {
-  .impact-tiles { gap: 4px; }
   .qr { flex-direction: column; align-items: flex-start; }
   .qr-code { width: min(240px, 70%); }
   .pv { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .scale-sum li { transition: none; }
   .model-fit { animation: none; stroke-dashoffset: 0; }
   .model-grid rect { animation: none; opacity: 0.85; }
-  .impact-tiles i,
+  .scale-sum li,
   .deck-pin,
   .grid-shade,
   .grid-panel,
