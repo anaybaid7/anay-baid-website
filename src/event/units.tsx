@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { units, type Building } from './content'
 
-// Pieces and stops: one short street, a few addresses and the parcels going
-// to each. Click a number to see what it counts. Mock numbers from content.ts.
+// Pieces per stop: one short street shows what a piece and a stop are, then
+// one terminal's day shows what density does to the number of routes. Mock
+// numbers from content.ts.
 
 type Mode = 'pieces' | 'stops' | null
 
@@ -17,11 +18,22 @@ function shape(kind: Building, x: number) {
   return `M${x},${base} v-150 h64 v150 z`
 }
 const width = (kind: Building) => (kind === 'house' ? 60 : kind === 'shop' ? 70 : kind === 'apartments' ? 58 : 64)
+const fmt = (n: number) => Math.round(n).toLocaleString('en-CA')
+
+// the same day's parcels at a given density: how many stops, how many routes
+const plan = (pps: number) => {
+  const stops = units.day.pieces / pps
+  return { stops, routes: Math.ceil(stops / units.day.perRoute) }
+}
+const MOST = plan(1).routes
 
 export default function Units() {
   const [mode, setMode] = useState<Mode>(null)
+  const [pps, setPps] = useState(units.day.pps)
   const pieces = units.stops.reduce((n, s) => n + s.pieces, 0)
   const toggle = (m: Mode) => setMode((cur) => (cur === m ? null : m))
+  const now = plan(pps)
+  const diff = now.routes - plan(units.day.pps).routes
 
   // spread the stops along the street, each one after the last
   const placed = units.stops.map((s, i) => ({
@@ -38,6 +50,9 @@ export default function Units() {
         <button type="button" aria-pressed={mode === 'stops'} onClick={() => toggle('stops')}>
           <b>{units.stops.length}</b> stops
         </button>
+        <p className="units-ratio">
+          <b>{(pieces / units.stops.length).toFixed(1)}</b> pieces per stop
+        </p>
       </div>
 
       <svg className={`units-street${mode ? ` show-${mode}` : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`A street with ${units.stops.length} stops and ${pieces} pieces`}>
@@ -75,16 +90,32 @@ export default function Units() {
         })}
       </svg>
 
-      <dl className="units-why">
-        <div className={mode === 'pieces' ? 'on' : ''}>
-          <dt>A piece is one parcel</dt>
-          <dd>Pieces fill the dock and the trucks, so they're planned in pieces per hour</dd>
+      <div className="units-day">
+        <p className="units-sum">
+          {fmt(units.day.pieces)} pieces ÷ {pps.toFixed(2)} = <b>{fmt(now.stops)} stops</b> ÷ {units.day.perRoute} a route = <b>{now.routes} routes</b>
+        </p>
+        <div className="units-routes" aria-hidden="true">
+          {Array.from({ length: MOST }, (_, i) => <i key={i} className={i < now.routes ? 'on' : ''} />)}
         </div>
-        <div className={mode === 'stops' ? 'on' : ''}>
-          <dt>A stop is one address</dt>
-          <dd>Stops are where a courier pulls over, so routes are planned in stops per hour</dd>
-        </div>
-      </dl>
+        <p className="units-verdict" aria-live="polite">
+          {diff === 0 ? 'Same parcels, same routes' : `Same parcels, ${Math.abs(diff)} ${diff < 0 ? 'fewer' : 'more'} routes`}
+          <span>Each route carries about {fmt(units.day.pieces / now.routes)} pieces</span>
+        </p>
+        <label className="units-slider">
+          <span>Pieces per stop</span>
+          <input
+            type="range"
+            min={1}
+            max={2}
+            step={0.05}
+            value={pps}
+            onChange={(e) => setPps(Number(e.target.value))}
+            aria-label="Pieces per stop"
+          />
+          <span className="units-ends"><span>Spread out</span><span>Dense</span></span>
+        </label>
+        <p className="impact-note">One terminal on one day, each block is a route, mock numbers</p>
+      </div>
     </div>
   )
 }

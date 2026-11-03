@@ -52,10 +52,10 @@ export type Slide = {
   stages?: Stage[]
 }
 
-// The pieces and stops slide: a few addresses on one street and how many
-// parcels go to each, mock numbers
+// The pieces per stop slide: a few addresses on one street and how many
+// parcels go to each, then one terminal's day, mock numbers
 export type Building = 'house' | 'apartments' | 'shop' | 'office'
-export const units: { stops: { kind: Building; pieces: number }[] } = {
+export const units: { stops: { kind: Building; pieces: number }[]; day: { pieces: number; perRoute: number; pps: number } } = {
   stops: [
     { kind: 'house', pieces: 1 },
     { kind: 'apartments', pieces: 4 },
@@ -63,6 +63,9 @@ export const units: { stops: { kind: Building; pieces: number }[] } = {
     { kind: 'office', pieces: 6 },
     { kind: 'house', pieces: 1 },
   ],
+  // one terminal's day, a route fits about 120 stops, so 1.25 pieces a stop
+  // is the same 150 pieces a route the forecast slider uses
+  day: { pieces: 4200, perRoute: 120, pps: 1.25 },
 }
 
 // The forecast slider on the why it matters slide, mock numbers for one
@@ -88,14 +91,15 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'Two numbers',
-    title: 'Pieces and stops',
-    line: 'Everything we forecast comes down to these two, for pickup and for delivery',
+    label: 'The core number',
+    title: 'Pieces per stop',
+    line: 'A route only fits so many stops, so the more pieces each stop takes, the fewer routes the same parcels need',
     visual: 'units',
     notes: [
-      'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces',
-      'Pieces decide how much gets sorted and loaded, stops decide how many routes go out',
-      'Click either number to see it on the street',
+      'A piece is one parcel, a stop is one address, and an office tower can be one stop with a lot of pieces',
+      'A stop takes about the same time whether it drops one box or six, so density is where the cost is',
+      'Online orders to homes are mostly one piece per stop, so in peak stops climb faster than pieces, which is why we forecast both',
+      'Drag it, going from 1.25 to 1.5 pieces per stop saves 4 routes at one terminal in one day',
     ],
   },
   {
