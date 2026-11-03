@@ -42,7 +42,7 @@ export default function Presenter() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'PageDown') send({ type: 'cmd', cmd: 'next' })
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') send({ type: 'cmd', cmd: 'prev' })
-      else if (e.key === ' ' || e.key === 'Enter') send({ type: 'cmd', cmd: 'advance' })
+      else if (e.key === 'Enter') send({ type: 'cmd', cmd: 'advance' })
       else return
       e.preventDefault()
     }
@@ -92,7 +92,7 @@ export default function Presenter() {
           <button type="button" onClick={() => send({ type: 'cmd', cmd: 'prev' })} disabled={at === 0}>Back</button>
           <button type="button" className="primary" onClick={() => send({ type: 'cmd', cmd: 'advance' })}>Next</button>
         </div>
-        <p className="pv-keys">Arrow keys change slides, space steps through the parts</p>
+        <p className="pv-keys">Enter steps through each part then the next slide, arrow keys jump between slides</p>
       </aside>
     </main>
   )

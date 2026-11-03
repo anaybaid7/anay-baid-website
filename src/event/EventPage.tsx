@@ -308,20 +308,18 @@ function Deck() {
     const n = Math.max(0, Math.min(last, i))
     setBack(n < at)
     setAt(n)
-    setNotes(false)
     setSpot(opensOn(slides[n]))
     history.replaceState(null, '', `#${n + 1}`)
   }, [last, at])
 
-  // Each click shows the next thing: the notes, then each part of the
-  // screenshot zoomed in, then the next slide.
+  // Enter or a click shows the next part of the slide, and after the last
+  // part the next slide. Notes are separate, on N.
   const nextSpot = spot === null ? 0 : spot + 1
   const advance = useCallback(() => {
-    if (!notes && slide.notes.length) setNotes(true)
-    else if (nextSpot < spots.length) setSpot(nextSpot)
+    if (nextSpot < spots.length) setSpot(nextSpot)
     else if (at < last) go(at + 1)
-  }, [notes, slide, nextSpot, spots.length, at, last, go])
-  const step = !notes && slide.notes.length ? 'notes' : nextSpot < spots.length ? 'zoom' : 'next'
+  }, [nextSpot, spots.length, at, last, go])
+  const step = nextSpot < spots.length ? 'part' : 'next'
 
   const fullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen()
@@ -333,10 +331,12 @@ function Deck() {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const k = e.key
       const t = e.target instanceof Element ? e.target : null
+      // Enter always moves the deck on, even from a focused button or slider
+      if (k === 'Enter' && !t?.closest('input:not([type="range"]), textarea, select')) { e.preventDefault(); advance(); return }
       // the slider and other fields keep their own keys
       if (t?.closest('input, textarea, select')) return
-      // a focused button already handles its own space and enter
-      if ((k === ' ' || k === 'Enter') && t?.closest('button')) return
+      // space does nothing on the deck, so a stray press never scrolls the page
+      if (k === ' ' && !t?.closest('button')) { e.preventDefault(); return }
       if (k === 'g' || k === 'G') { setPanel((p) => (p === 'grid' ? null : 'grid')); return }
       if (k === '?') { setPanel((p) => (p === 'keys' ? null : 'keys')); return }
       if (panel) { if (k === 'Escape') setPanel(null); return }
@@ -344,8 +344,7 @@ function Deck() {
       if (k === 'l' || k === 'L') { setPointer((v) => !v); return }
       if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(at + 1) }
       else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(at - 1) }
-      else if (k === ' ' || k === 'Enter') { e.preventDefault(); advance() }
-      else if (k === 'n' || k === 'N' || k === 'ArrowDown' || k === 'ArrowUp') { e.preventDefault(); setNotes((v) => !v) }
+      else if (k === 'n' || k === 'N') { e.preventDefault(); setNotes((v) => !v) }
       else if (k === 'Escape' && spot !== null) setSpot(null)
       else if (/^[1-9]$/.test(k) && +k <= spots.length) setSpot(+k - 1)
       else if (k === 'Home') go(0)
@@ -414,7 +413,7 @@ function Deck() {
             onClick={advance}
             role="button"
             tabIndex={0}
-            aria-label={step === 'notes' ? 'Show the notes' : step === 'zoom' ? 'Zoom into the next part' : 'Next slide'}
+            aria-label={step === 'part' ? 'Next part of this slide' : 'Next slide'}
             key={at}
           >
             <div className="deck-main">
