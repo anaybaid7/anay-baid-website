@@ -70,7 +70,7 @@ export default function Units() {
         />
         <span className="units-ends"><span>Spread out</span><span>Dense</span></span>
       </label>
-      <p className="impact-note">One terminal on one day, a route fits about {perRoute} stops, mock numbers</p>
+      <p className="units-note">One terminal on one day, a route fits about {perRoute} stops, mock numbers</p>
     </div>
   )
 }
