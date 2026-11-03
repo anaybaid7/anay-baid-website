@@ -30,17 +30,25 @@ describe('EventPage', () => {
     window.location.hash = ''
   })
 
-  it('opens a step and a point with their own picture', () => {
-    for (const key of ['steps', 'points'] as const) {
-      const n = slides.findIndex((s) => s[key]?.length)
-      window.location.hash = `#${n + 1}`
-      const { container, unmount } = render(<EventPage />)
-      const item = slides[n][key]![1]
-      fireEvent.click(screen.getByRole('button', { name: new RegExp(item.label.slice(0, 12)) }))
-      expect(container).toHaveTextContent(item.title)
-      expect(container.querySelector('.vz-svg, .vz-table, .vz-img')).not.toBeNull()
-      unmount()
-    }
+  it('opens a step with its own picture', () => {
+    const n = slides.findIndex((s) => s.steps?.length)
+    window.location.hash = `#${n + 1}`
+    const { container } = render(<EventPage />)
+    const step = slides[n].steps![1]
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(step.label) }))
+    expect(container).toHaveTextContent(step.title)
+    expect(container.querySelector('.vz-svg, .vz-table')).not.toBeNull()
+    window.location.hash = ''
+  })
+
+  it('walks a model slide stage by stage', () => {
+    const n = slides.findIndex((s) => s.stages?.length)
+    window.location.hash = `#${n + 1}`
+    const { container } = render(<EventPage />)
+    const stages = slides[n].stages!
+    expect(container.querySelector('.model-stages li.on')).toHaveTextContent(stages[0].title)
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(stages[2].title) }))
+    expect(container.querySelector('.model-stages li.on')).toHaveTextContent(stages[2].text)
     window.location.hash = ''
   })
 

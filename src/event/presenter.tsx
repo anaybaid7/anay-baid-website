@@ -8,7 +8,7 @@ import { openChannel, type DeckMsg } from './channel'
 // what's inside a slide to click through, in order
 const parts = (at: number) => {
   const s = slides[at]
-  const list: { title: string; label?: string }[] = s.spots ?? s.steps ?? s.stages ?? s.points ?? []
+  const list: { title: string; label?: string }[] = s.spots ?? s.steps ?? s.stages ?? []
   return list.map((p) => p.label ?? p.title)
 }
 

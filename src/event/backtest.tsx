@@ -42,7 +42,7 @@ export default function Backtest({ stages, at, setAt }: { stages: Stage[]; at: n
           <g className="model-ahead">
             <rect x={cut} y={T - 10} width={W - R - cut} height={B - T + 10} />
             <line x1={cut} x2={cut} y1={T - 10} y2={B} />
-            <text x={cut + 8} y={T + 6}>Held out, 26 weeks</text>
+            <text x={cut + 8} y={T + 6}>Hidden, 26 weeks</text>
             <text x={cut - 8} y={T + 6} textAnchor="end" className="model-train">Training</text>
           </g>
 
@@ -54,7 +54,7 @@ export default function Backtest({ stages, at, setAt }: { stages: Stage[]; at: n
 
         <table className="bt-table">
           <thead>
-            <tr><th scope="col">Model</th><th scope="col">Built with</th><th scope="col">MAPE</th><th scope="col">Bias</th></tr>
+            <tr><th scope="col">Model</th><th scope="col">What it is</th><th scope="col">Off by</th><th scope="col">Runs</th></tr>
           </thead>
           <tbody>
             {models.map((m, i) => (
@@ -62,12 +62,12 @@ export default function Backtest({ stages, at, setAt }: { stages: Stage[]; at: n
                 <th scope="row"><i className={TONES[i]} />{m.name}</th>
                 <td>{m.with}</td>
                 <td>{shown[i] ? `${scores[i].mape.toFixed(1)}%` : ''}</td>
-                <td>{scored ? `${scores[i].bias > 0 ? '+' : ''}${scores[i].bias.toFixed(1)}%` : ''}</td>
+                <td>{scored ? `${Math.abs(scores[i].bias).toFixed(1)}% ${scores[i].bias > 0 ? 'high' : 'low'}` : ''}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="model-under">Actual in black, each model forecasts the shaded weeks without seeing them</p>
+        <p className="model-under">Black is what came in, each line is a forecast made without seeing those weeks</p>
       </div>
     </div>
   )

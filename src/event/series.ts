@@ -49,11 +49,11 @@ export const bias = (f: (t: number) => number, a: number, b: number) => {
 export const CUT = HIST - 26
 const port = (t: number) => fits[2](t) * (1 + 0.006 + 0.012 * Math.sin(t * 1.7))
 export const models = [
-  { name: 'R model', with: 'STL and ARIMA with regressors', f: port },
-  { name: 'Python port', with: 'statsmodels STL and pmdarima', f: (t: number) => port(t) * (1 + 0.006 * Math.sin(t * 2.3 + 1)) },
+  { name: 'R model', with: "The team's model today", f: port },
+  { name: 'Python version', with: 'My rebuild, runs in the app', f: (t: number) => port(t) * (1 + 0.006 * Math.sin(t * 2.3 + 1)) },
   {
     name: 'Prophet',
-    with: 'Trend changepoints and Fourier terms',
+    with: "Meta's open source model",
     f: (t: number) => {
       const w = weekOf(t)
       return LEVEL * trend(t) * season(w) * (1 - (1 - holiday(w)) * 0.7) * (1 + 0.5 * (client(t) - 1)) * (0.982 + 0.015 * Math.sin(t * 0.9))

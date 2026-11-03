@@ -6,12 +6,10 @@
 //   line    one sentence under it (optional)
 //   image   a screenshot in public/event-shots/ (optional)
 //   steps   a row of numbered steps instead of an image (optional)
-//   visual  'map' draws the terminal map, 'units' the pieces and stops street,
+//   visual  'map' draws the terminal map, 'units' the pieces per stop ratio,
 //           'impact' the forecast slider, 'model' inside the forecast model,
 //           'backtest' three models scored on held out weeks,
 //           'qr' a code that opens these slides on a phone (optional)
-//   points  a short list shown on the slide itself, each opening a visual (optional)
-//   thumbs  small screenshots shown next to the points (optional)
 //   notes   talking points, shown when you click the slide
 //   spots   parts of the screenshot to zoom into (optional, see below)
 //   stages  the steps the model slide walks through, one click each (optional)
@@ -30,39 +28,17 @@ export type Spot = {
   text: string
 }
 
-// One piece of a wireframe. Positions are in the wireframe's own units.
-export type WireItem = {
-  type: 'box' | 'button' | 'input' | 'select' | 'text' | 'line' | 'mark' | 'bar'
-  x: number
-  y: number
-  w?: number
-  h?: number
-  label?: string
-  strong?: boolean
-  faint?: boolean
-  size?: 'lg'
-  align?: 'end'
-  // a placeholder chart drawn inside a box
-  chart?: 'line' | 'bars' | 'donut' | 'rows'
-}
-
-// What opens under a step or a point. Numbers in these are mock data.
+// What opens under a step. Numbers in these are mock data.
 export type Visual =
   | { kind: 'table'; columns: string[]; rows: (string | number)[][]; bars?: number; caption?: string }
   | { kind: 'lines'; alt: string; labels: string[]; series: { name: string; tone: 'muted' | 'accent'; values: number[] }[]; marks?: { at: number; text: string }[] }
   | { kind: 'flow'; alt: string; inputs: string[]; center: string; outputs: string[] }
-  | { kind: 'bars'; alt: string; labels: string[]; values: number[]; unit?: string; accent?: number[]; total?: number }
-  | { kind: 'wireframe'; alt: string; w: number; h: number; items: WireItem[] }
-  | { kind: 'image'; src: string; alt: string }
 
-// A step on the weekly cycle slide. Click it to open its title, text and visual.
+// A step on the what I built slide. Click it to open its title, text and visual.
 export type Step = { label: string; title: string; text: string; visual: Visual }
 
 // A stage on the model slide, walked through one click at a time
 export type Stage = { title: string; text: string }
-
-// A point on a slide's list. Click it to open its title, text and visual.
-export type Point = { label: string; title: string; text: string; visual: Visual }
 
 export type Slide = {
   label: string
@@ -71,25 +47,15 @@ export type Slide = {
   image?: string
   steps?: Step[]
   visual?: 'map' | 'units' | 'impact' | 'model' | 'backtest' | 'qr'
-  points?: Point[]
-  thumbs?: string[]
   notes: string[]
   spots?: Spot[]
   stages?: Stage[]
 }
 
-// The pieces and stops slide: a few addresses on one street and how many
-// parcels go to each, mock numbers
-export type Building = 'house' | 'apartments' | 'shop' | 'office'
-export const units: { stops: { kind: Building; pieces: number }[] } = {
-  stops: [
-    { kind: 'house', pieces: 1 },
-    { kind: 'apartments', pieces: 4 },
-    { kind: 'shop', pieces: 2 },
-    { kind: 'office', pieces: 6 },
-    { kind: 'house', pieces: 1 },
-  ],
-}
+// The pieces per stop slide, one terminal's day, mock numbers. A route fits
+// about 120 stops, so 1.25 pieces a stop is the same 150 pieces a route the
+// forecast slider uses
+export const units = { pieces: 4200, perRoute: 120, pps: 1.25 }
 
 // The forecast slider on the why it matters slide, mock numbers for one
 // terminal on one day
@@ -109,19 +75,20 @@ export const slides: Slide[] = [
     line: 'Every week our team works out how many parcels each of our 135 terminals will get, for pickup and delivery',
     visual: 'map',
     notes: [
-      "I'm on co-op with this team, working on the tools we use to do it",
+      "I'm on co-op with this team, this term I built the app we run the forecast in and worked on the models behind it",
       'Pick a division on the map to light up its terminals',
     ],
   },
   {
-    label: 'Two numbers',
-    title: 'Pieces and stops',
-    line: 'Everything we forecast comes down to these two, for pickup and for delivery',
+    label: 'The core number',
+    title: 'Pieces per stop',
+    line: 'A route only fits so many stops, so the more pieces each stop takes, the fewer routes the same parcels need',
     visual: 'units',
     notes: [
-      'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces',
-      'Pieces decide how much gets sorted and loaded, stops decide how many routes go out',
-      'Click either number to see it on the street',
+      'A piece is one parcel, a stop is one address, so an office tower can be one stop with a lot of pieces and a house is usually one',
+      'A stop takes about the same time whether it drops one box or six, so density is where the cost is',
+      'Online orders to homes are mostly one piece per stop, so in peak stops climb faster than pieces, which is why we forecast both',
+      'Drag it toward dense, going from 1.25 to 1.5 pieces per stop saves 4 routes at one terminal in one day',
     ],
   },
   {
@@ -136,13 +103,14 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'Our week',
-    title: 'How the forecast comes together',
+    label: 'What I built',
+    title: 'One app for the whole week',
+    line: 'The forecast used to be separate scripts run one by one, now it runs end to end in one app I built',
     steps: [
       {
-        label: "Last week's numbers come in",
-        title: 'The daily numbers',
-        text: 'Every terminal reports its pieces and stops for each day, and we pull a fresh copy at the start of every week',
+        label: 'Data comes in',
+        title: 'Getting the data ready',
+        text: "Every terminal reports its pieces and stops each day, I rebuilt the team's prep scripts as steps in the app and matched the old output row for row",
         visual: {
           kind: 'table',
           columns: ['Day', 'Delivery pieces', 'Pickup pieces', 'Stops'],
@@ -160,7 +128,7 @@ export const slides: Slide[] = [
         },
       },
       {
-        label: 'We clean them up',
+        label: 'History gets cleaned',
         title: 'Cleaning the history',
         text: 'A short holiday week gets scaled up to a full one and one-off spikes come out, so the model learns what a normal week looks like',
         visual: {
@@ -178,143 +146,82 @@ export const slides: Slide[] = [
         },
       },
       {
-        label: 'The model runs',
-        title: 'What goes into the model',
-        text: 'Our model in R learns from years of history, the holidays and our biggest client\'s own forecast, and the next slide opens it up',
+        label: 'The models run',
+        title: 'Running the models',
+        text: "One button runs the team's R model from the app, I took out its old database and Java setup so it reads straight from files",
         visual: {
           kind: 'flow',
-          alt: 'Inputs flowing into the R model and out as a forecast',
+          alt: 'Inputs going into the app and out to three models',
           inputs: ['Cleaned weekly history', 'Holidays by province', 'Big client forecast'],
-          center: 'R model',
-          outputs: ['A forecast for every terminal, every week'],
+          center: 'Forecast app',
+          outputs: ['R model', 'My Python version', 'Prophet'],
         },
       },
       {
-        label: 'We adjust it',
-        title: 'Adding what the model can\'t know',
-        text: 'Pick the weeks, type the change and why, and the app keeps a record of who made it',
-        visual: {
-          kind: 'wireframe',
-          alt: 'Wireframe of the weeks table with four weeks selected and raised by 5%',
-          w: 640,
-          h: 330,
-          items: [
-            { type: 'box', x: 4, y: 4, w: 632, h: 322 },
-            { type: 'text', x: 24, y: 40, label: 'Weeks', size: 'lg', strong: true },
-            { type: 'select', x: 24, y: 56, w: 150, h: 36, label: 'Increase by %' },
-            { type: 'input', x: 184, y: 56, w: 56, h: 36, label: '5' },
-            { type: 'input', x: 250, y: 56, w: 200, h: 36, label: 'Peak plan from ops' },
-            { type: 'button', x: 460, y: 56, w: 80, h: 36, label: 'Apply', strong: true },
-            { type: 'text', x: 616, y: 80, label: '4 weeks', align: 'end', faint: true },
-            { type: 'text', x: 24, y: 128, label: 'Week', strong: true },
-            { type: 'text', x: 250, y: 128, label: 'Last year', strong: true },
-            { type: 'text', x: 420, y: 128, label: 'Forecast', strong: true },
-            { type: 'text', x: 616, y: 128, label: 'Change', strong: true, align: 'end' },
-            { type: 'line', x: 20, y: 140, w: 600, h: 0 },
-            { type: 'mark', x: 20, y: 174, w: 600, h: 112 },
-            { type: 'text', x: 24, y: 166, label: 'W46' },
-            { type: 'text', x: 250, y: 166, label: '1,096,277' },
-            { type: 'text', x: 420, y: 166, label: '1,110,871' },
-            { type: 'text', x: 24, y: 194, label: 'W47' },
-            { type: 'text', x: 250, y: 194, label: '1,128,499' },
-            { type: 'text', x: 420, y: 194, label: '1,199,231' },
-            { type: 'text', x: 616, y: 194, label: '+5%', align: 'end', strong: true },
-            { type: 'text', x: 24, y: 222, label: 'W48' },
-            { type: 'text', x: 250, y: 222, label: '1,171,095' },
-            { type: 'text', x: 420, y: 222, label: '1,250,937' },
-            { type: 'text', x: 616, y: 222, label: '+5%', align: 'end', strong: true },
-            { type: 'text', x: 24, y: 250, label: 'W49' },
-            { type: 'text', x: 250, y: 250, label: '1,273,959' },
-            { type: 'text', x: 420, y: 250, label: '1,358,711' },
-            { type: 'text', x: 616, y: 250, label: '+5%', align: 'end', strong: true },
-            { type: 'text', x: 24, y: 278, label: 'W50' },
-            { type: 'text', x: 250, y: 278, label: '1,221,679' },
-            { type: 'text', x: 420, y: 278, label: '1,300,357' },
-            { type: 'text', x: 616, y: 278, label: '+5%', align: 'end', strong: true },
-            { type: 'text', x: 24, y: 310, label: 'W51' },
-            { type: 'text', x: 250, y: 310, label: '1,185,511' },
-            { type: 'text', x: 420, y: 310, label: '1,200,783' },
-          ],
-        },
-      },
-      {
-        label: 'It gets split into days',
-        title: 'Splitting the week',
-        text: "Each terminal's week gets split by the share each day usually gets, shown here for a week of 98,400 pieces",
-        visual: {
-          kind: 'bars',
-          alt: 'Share of the week by day',
-          labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-          values: [0.3, 20.1, 21.0, 20.4, 19.6, 18.4, 0.2],
-          unit: '%',
-          accent: [1, 2, 3, 4, 5],
-          total: 98400,
-        },
-      },
-      {
-        label: 'Ops and the hubs use it',
-        title: 'Where it goes',
-        text: 'Once we publish it, ops plans each day from it, the hubs see it in Power BI and every day gets checked against what came in',
+        label: 'It goes out',
+        title: 'Publishing it',
+        text: 'Once the team has adjusted it and split it into days, one click publishes a versioned copy that ops, the hubs and the accuracy check all use',
         visual: {
           kind: 'flow',
           alt: 'The published forecast going to ops, the hubs and the accuracy check',
           inputs: ['Weekly forecast', 'Daily split'],
-          center: 'Published forecast',
+          center: 'Published version',
           outputs: ['Ops, staffing each day', 'Hubs, in Power BI', 'Accuracy, checked every day'],
         },
       },
     ],
     notes: [
       "Last week's real numbers go in, a forecast for the rest of the year comes out",
-      'Most of the work is the cleaning and checking in between',
-      'Click any step to open it up',
+      'Before this it was scripts run one by one, now each step is a button in order',
+      'The next two slides open up the models',
     ],
   },
   {
     label: 'Machine learning',
     title: 'Inside the forecast model',
-    line: 'Every terminal gets its own time series model, trained on its own weekly history',
+    line: 'Every terminal gets its own machine learning model, trained on its own weekly history',
     visual: 'model',
     notes: [
-      'One series per terminal and per number we forecast, so the model learns each place on its own',
-      'STL splits the series into seasonality and trend, then ARIMA models what is left with holidays and the big client as regressors',
-      'Every part it learns is something you can point at, which is why ops trusts it',
+      'This is the machine learning part, the model learns each terminal from its own past',
+      "It's not a black box, every part it learns is something you can point at on the chart",
+      'If anyone asks, it uses STL to split out the yearly pattern and ARIMA with holidays and the big client as extra inputs',
     ],
     stages: [
-      { title: 'Training data', text: 'Three years of weekly pieces for one terminal, one point per week' },
-      { title: 'Cleaning', text: 'Event volume gets subtracted and outliers replaced, so the model trains on normal weeks only' },
-      { title: 'Seasonality', text: 'STL pulls out the 52 week pattern, a quiet January, the summer dip and the climb into peak' },
-      { title: 'Trend', text: 'The slow growth underneath, what is left once the season comes out' },
-      { title: 'Regressors', text: "ARIMA on the rest, with holiday flags by province and the big client's weekly forecast as inputs" },
-      { title: 'Forecast', text: 'All the parts recombined and projected to the end of next year' },
-      { title: 'At scale', text: '135 terminals times 8 numbers, about a thousand models every run' },
+      { title: 'Training data', text: 'Three years of weekly pieces for one terminal, this is what the model learns from' },
+      { title: 'Cleaning', text: 'One-off events and outages come out first, so it only learns from normal weeks' },
+      { title: 'Yearly pattern', text: 'It learns what repeats every year, a quiet January, the summer dip and the climb into peak' },
+      { title: 'Trend', text: 'Then the slow growth underneath that pattern' },
+      { title: 'Holidays and big client', text: "Then how much each holiday takes off, and how volume follows our biggest client's own forecast" },
+      { title: 'Forecast', text: 'Put the parts back together and run them forward to the end of next year' },
+      { title: 'At scale', text: 'One model per terminal and per number we forecast, about a thousand trained every run' },
     ],
   },
   {
     label: 'Machine learning',
-    title: 'Backtesting three models',
-    line: 'I rebuilt the model in Python and set Prophet up next to it, then score all three on weeks they never trained on',
+    title: "Testing on weeks it hasn't seen",
+    line: 'I rebuilt the model in Python and added Prophet, then tested all three on weeks they never trained on',
     visual: 'backtest',
     notes: [
-      'A model can look great on the weeks it trained on and still miss new ones, so the test hides the last 26 weeks',
-      'The Python port runs inside the forecast app, so we can retrain without leaving it',
-      'Numbers here are mock, the real scoring runs per terminal against what actually came in',
+      'A model can look great on the weeks it learned from and still miss new ones, so we hide the last 26 weeks and see',
+      'Numbers here are mock, the real test runs for each terminal against what actually came in',
+      'If anyone asks, the Python version uses statsmodels and pmdarima, and Prophet is open source from Meta',
     ],
     stages: [
-      { title: 'Hold out 26 weeks', text: 'Train on every week before the line, then forecast the 26 after it without seeing them' },
-      { title: 'R model', text: "The team's production model, STL with ARIMA and the holiday and client regressors" },
-      { title: 'Python port', text: 'My rebuild of it in Python with statsmodels STL and pmdarima auto ARIMA, so it runs inside the forecast app' },
-      { title: 'Prophet', text: 'Fits a trend with changepoints and Fourier terms for the year, with holidays as their own effects' },
-      { title: 'Score them', text: 'MAPE says how far off on average, bias says if a model runs high or low, which decides spare vans or late parcels' },
+      { title: 'Hide 26 weeks', text: 'Train on everything before the line, then forecast the 26 weeks after it blind' },
+      { title: 'Our R model', text: 'The model the team runs today' },
+      { title: 'My Python version', text: 'The same model rebuilt in Python, so it runs right inside the forecast app' },
+      { title: 'Prophet', text: "Meta's open source forecasting model, made for weekly business data with seasons and holidays" },
+      { title: 'Compare', text: 'How far off each one was on average, and whether it ran high or low, which means spare vans or late parcels' },
     ],
   },
   {
-    label: 'The forecast tool',
+    label: 'The forecast app',
     title: 'This year next to last year',
-    line: 'Peak season in late November is the stretch the whole year gets planned around',
+    line: 'The main screen of the app, our forecast next to what came in and last year',
     image: '/event-shots/weekly-chart.webp',
     notes: [
       'Red is this year, blue is last year, the dashed line is our forecast',
+      'My manager and I demoed the app to our VP from this screen',
     ],
     spots: [
       { x: 0.006, y: 0.197, w: 0.596, h: 0.138, title: 'The year so far', text: 'Our forecast for the rest of the year, what came in so far and how both compare to last year' },
@@ -323,7 +230,7 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'The forecast tool',
+    label: 'The forecast app',
     title: "Adding what the model can't see",
     line: 'The model gets us close, then we add what only people know',
     image: '/event-shots/weekly-grid.webp',
@@ -338,13 +245,14 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'The forecast tool',
+    label: 'The forecast app',
     title: 'Turning a week into days',
-    line: 'Staffing happens by the day, so every week gets split into days',
+    line: 'Staffing happens by the day, so I built the split that turns each week into days',
     image: '/event-shots/shape-edit.webp',
     notes: [
       "Ops works day by day, so each terminal's week gets split into days",
       'The split comes from recent normal weeks with no holidays in them',
+      'The app checks the days add back up to the week before anything is saved',
     ],
     spots: [
       { x: 0.17, y: 0.36, w: 0.65, h: 0.24, title: 'A normal week', text: 'Monday to Friday each get about 20% and Sunday gets almost nothing' },
@@ -353,7 +261,7 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'The forecast tool',
+    label: 'The forecast app',
     title: 'How close we got',
     line: 'Every day we line up what came in against what we said would',
     image: '/event-shots/accuracy.webp',
@@ -384,97 +292,12 @@ export const slides: Slide[] = [
     ],
   },
   {
-    label: 'My part',
-    title: 'What I worked on',
-    points: [
-      {
-        label: 'The web app the team runs the forecast in',
-        title: 'The forecast app',
-        text: 'One place for the whole week, from loading the data to publishing, built in Python and Flask on top of our model',
-        visual: {
-          kind: 'flow',
-          alt: 'Data going into the forecast app and what the app does with it',
-          inputs: ['Daily ops data', 'Weekly history', 'Holidays and events'],
-          center: 'Forecast app',
-          outputs: ['Runs the R model', 'Weekly changes, with reasons', 'Split into days', 'Published versions', 'Daily accuracy'],
-        },
-      },
-      {
-        label: 'The Hub Reporting dashboard in Power BI',
-        title: 'Hub Reporting',
-        text: "Two pages, one puts each hub's volume next to its forecast and the other compares any two weeks by parcel type",
-        visual: {
-          kind: 'wireframe',
-          alt: 'Wireframe of the two report pages',
-          w: 640,
-          h: 360,
-          items: [
-            { type: 'text', x: 4, y: 16, label: 'Overview', strong: true },
-            { type: 'box', x: 4, y: 26, w: 308, h: 330 },
-            { type: 'select', x: 16, y: 40, w: 52, h: 24 },
-            { type: 'select', x: 74, y: 40, w: 52, h: 24 },
-            { type: 'select', x: 132, y: 40, w: 52, h: 24 },
-            { type: 'select', x: 190, y: 40, w: 52, h: 24 },
-            { type: 'select', x: 248, y: 40, w: 52, h: 24 },
-            { type: 'box', x: 16, y: 76, w: 200, h: 120, chart: 'line' },
-            { type: 'box', x: 224, y: 76, w: 76, h: 268, chart: 'rows' },
-            { type: 'box', x: 16, y: 206, w: 96, h: 138, chart: 'donut' },
-            { type: 'box', x: 120, y: 206, w: 96, h: 138, chart: 'bars' },
-            { type: 'text', x: 328, y: 16, label: 'Two weeks compared', strong: true },
-            { type: 'box', x: 328, y: 26, w: 308, h: 330 },
-            { type: 'select', x: 340, y: 40, w: 64, h: 24 },
-            { type: 'select', x: 410, y: 40, w: 64, h: 24 },
-            { type: 'select', x: 480, y: 40, w: 64, h: 24 },
-            { type: 'select', x: 550, y: 40, w: 64, h: 24 },
-            { type: 'box', x: 340, y: 76, w: 284, h: 92, chart: 'rows' },
-            { type: 'box', x: 340, y: 176, w: 65, h: 40 },
-            { type: 'bar', x: 350, y: 193, w: 30, h: 7 },
-            { type: 'box', x: 413, y: 176, w: 65, h: 40 },
-            { type: 'bar', x: 423, y: 193, w: 37, h: 7 },
-            { type: 'box', x: 486, y: 176, w: 65, h: 40 },
-            { type: 'bar', x: 496, y: 193, w: 44, h: 7 },
-            { type: 'box', x: 559, y: 176, w: 65, h: 40 },
-            { type: 'bar', x: 569, y: 193, w: 31, h: 7 },
-            { type: 'box', x: 340, y: 226, w: 138, h: 118, chart: 'bars' },
-            { type: 'box', x: 486, y: 226, w: 138, h: 118, chart: 'bars' },
-          ],
-        },
-      },
-      {
-        label: 'Automating the manual steps in between',
-        title: 'Steps the app runs now',
-        text: 'Each of these is a button in the app now, in the order the week runs',
-        visual: {
-          kind: 'table',
-          columns: ['Step', 'In the app'],
-          rows: [
-            ['Clean the daily ops data', 'Step 1'],
-            ['Build the weekly history for the model', 'Step 2'],
-            ['Run the model', 'Run the R model'],
-            ['Split into days', 'Build daily forecast'],
-            ['Send it out', 'Publish version'],
-          ],
-        },
-      },
-      {
-        label: 'Demoing the app to our VP with my manager',
-        title: 'The demo',
-        text: 'My manager and I walked our VP through the app',
-        visual: { kind: 'image', src: '/event-shots/weekly-chart.webp', alt: 'The weekly forecast screen of the app' },
-      },
-    ],
-    thumbs: ['/event-shots/weekly-chart.webp', '/event-shots/hub-reporting.webp'],
-    notes: [
-      'Click a line to open it up',
-      'Happy to show any of these properly after',
-    ],
-  },
-  {
     label: 'Thanks',
     title: 'Thanks for listening',
     line: 'Scan to open these slides on your phone and click through anything I skipped',
     visual: 'qr',
     notes: [
+      'Next we are looking at outside signals like weather and events as model inputs, and planning couriers per terminal from the forecast',
       'Happy to take questions',
     ],
   },
