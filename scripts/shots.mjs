@@ -58,6 +58,7 @@ const FOCUS = {
   graph: '.jobs',
   showtime: '.pchart.st',
   copybook: '.cb-grid',
+  netmap: '.nm-map',
   screen3270: '.t3-frame',
   generator: '.gen-grid',
   bridge: '.br-grid',
@@ -97,7 +98,9 @@ for (const line of readFileSync('src/details.ts', 'utf8').split('\n')) {
 }
 
 
-const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
+// WebGL in headless Chromium for the map
+const args = ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist']
+const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM, args } : { args })
 for (const theme of ['light', 'dark']) {
   const ctx = await browser.newContext({ viewport: { width: 1000, height: 1400 }, colorScheme: theme, deviceScaleFactor: 2, reducedMotion: 'reduce' })
   // ONLY=planner,sdk reshoots just those
@@ -107,8 +110,8 @@ for (const theme of ['light', 'dark']) {
     await p.locator('.demo').first().waitFor()
     await p.waitForTimeout(400)
     await SETUP[t.kind]?.(p)
-    // let the drawer finish sliding in before measuring
-    await p.waitForTimeout(1200)
+    // let the drawer finish sliding in before measuring, and the map draw its tiles
+    await p.waitForTimeout(t.kind === 'netmap' ? 8000 : 1200)
     const demo = await p.locator('.demo').first().boundingBox()
     const focus = FOCUS[t.kind] && (await p.locator(FOCUS[t.kind]).first().boundingBox())
     const pad = 12

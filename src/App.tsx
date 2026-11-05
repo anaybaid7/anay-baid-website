@@ -1054,7 +1054,7 @@ export default function App() {
                 <dl className="facts colophon">
                   <div>
                     <dt>Built with</dt>
-                    <dd>React, TypeScript, Vite and plain CSS, prerendered at build time</dd>
+                    <dd>React, TypeScript, Vite and plain CSS, prerendered at build time, with Netlify Functions for the live data</dd>
                   </div>
                   <div>
                     <dt>Content</dt>
