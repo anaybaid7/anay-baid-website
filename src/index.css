@@ -1326,8 +1326,14 @@ dialog::backdrop {
 }
 .lately ol {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 24px;
+}
+.project-links .pushed {
+  align-self: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.project-links .pushed:empty {
+  display: none;
 }
 .lately small,
 .lately-wait {
@@ -7971,12 +7977,13 @@ button:focus-visible > .shot {
   gap: 10px;
   font-size: 18px;
 }
-.about-grid > [data-part="education"] {
-  grid-row: span 3;
+.about-col {
+  display: grid;
+  gap: 34px;
+  align-content: start;
 }
-.about-grid > [data-part="colophon"],
-.about-grid > .lately {
-  grid-column: 2;
+.about-col > [data-part="colophon"],
+.about-col > .lately {
   padding-top: 22px;
   border-top: 1.5px solid var(--line);
 }
@@ -7993,11 +8000,6 @@ button:focus-visible > .shot {
 @media (max-width: 760px) {
   .about-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .about-grid > [data-part="education"],
-  .about-grid > [data-part="colophon"] {
-    grid-row: auto;
-    grid-column: auto;
   }
 }
 @media print {
