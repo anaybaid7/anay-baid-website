@@ -323,9 +323,9 @@ describe('App', () => {
     render(<App />)
     const drawer = await findDrawer()
     expect(drawer.querySelector('.code figcaption')).toHaveTextContent('pipeline.ts')
-    expect(drawer.querySelector('.code pre')).toHaveTextContent('export function runPipeline')
+    expect(drawer.querySelector('.code')).toHaveTextContent('export function runPipeline')
     fireEvent.click(screen.getByRole('tab', { name: 'allocate.ts', hidden: true }))
-    expect(drawer.querySelector('.code pre')).toHaveTextContent('export function allocate')
+    expect(drawer.querySelector('.code')).toHaveTextContent('export function allocate')
   })
 
   it('opens a terminal that drives the page', async () => {

@@ -52,3 +52,26 @@ export function repoOf(url?: string) {
   const m = url?.match(/github\.com\/([^/]+)\/([^/#?]+)/)
   return m ? { user: m[1], repo: m[2].replace(/\.git$/, '') } : null
 }
+
+export interface Change {
+  number: number
+  title: string
+  url: string
+  merged: string
+}
+
+let changes: Promise<Change[]> | null = null
+
+// the most recently merged pull requests on a repo
+export function merged(user: string, repo: string, n = 6) {
+  changes ??= json(`${API}/repos/${user}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=30`)
+    .then((all: { number: number; title: string; html_url: string; merged_at: string | null }[]) =>
+      all
+        .filter((p) => p.merged_at)
+        .sort((a, b) => Date.parse(b.merged_at!) - Date.parse(a.merged_at!))
+        .slice(0, n)
+        .map((p) => ({ number: p.number, title: p.title, url: p.html_url, merged: p.merged_at! })),
+    )
+    .catch(() => [])
+  return changes
+}
