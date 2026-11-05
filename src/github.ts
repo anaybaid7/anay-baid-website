@@ -24,8 +24,12 @@ const commits = new Map<string, Promise<Commit | null>>()
 
 const json = (url: string) => fetch(url, { headers: { Accept: 'application/vnd.github+json' } }).then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
 
+// The site's own cached proxy first (netlify/functions/github.mts), then
+// GitHub directly, which is what a local build without functions gets.
+const viaSite = (route: string, direct: string) => json(`/api/github/${route}`).catch(() => json(direct))
+
 export function repos(user: string) {
-  list ??= json(`${API}/users/${user}/repos?sort=pushed&per_page=30`).catch(() => [])
+  list ??= viaSite('repos', `${API}/users/${user}/repos?sort=pushed&per_page=30`).catch(() => [])
   return list
 }
 
@@ -64,7 +68,7 @@ let changes: Promise<Change[]> | null = null
 
 // the most recently merged pull requests on a repo
 export function merged(user: string, repo: string, n = 6) {
-  changes ??= json(`${API}/repos/${user}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=30`)
+  changes ??= viaSite('pulls', `${API}/repos/${user}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=30`)
     .then((all: { number: number; title: string; html_url: string; merged_at: string | null }[]) =>
       all
         .filter((p) => p.merged_at)

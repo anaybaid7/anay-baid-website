@@ -2,6 +2,7 @@ import callbridge from './callbridge.ts?raw'
 import pipeline from './pipeline.ts?raw'
 import planner from './planner.ts?raw'
 import allocate from './allocate.ts?raw'
+import statcan from '../../../netlify/lib/statcan.ts?raw'
 import sales from './sales.ts?raw'
 import compareSchemas from './compareSchemas.ts?raw'
 import score from './score.ts?raw'
@@ -36,6 +37,7 @@ export const SOURCES: Partial<Record<DemoKind, Source>> = {
   planner: { file: 'planner.ts', source: planner },
   allocation: { file: 'allocate.ts', source: allocate },
   netmap: { file: 'allocate.ts', source: allocate },
+  ecommerce: { file: 'netlify/lib/statcan.ts', source: statcan },
   stream: { file: 'sales.ts', source: sales },
   dataval: { file: 'compareSchemas.ts', source: compareSchemas },
   fraud: { file: 'score.ts', source: score },

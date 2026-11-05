@@ -56,6 +56,7 @@ export type DemoKind =
   | 'planner'
   | 'allocation'
   | 'netmap'
+  | 'ecommerce'
   | 'sdk'
   | 'release'
   | 'provision'
@@ -267,6 +268,7 @@ export const DETAILS: Record<string, Detail> = {
       { kind: 'planner', name: 'Plan a week' },
       { kind: 'allocation', name: 'Allocate volume' },
       { kind: 'netmap', name: 'Route the overflow' },
+      { kind: 'ecommerce', name: 'Forecast real data' },
     ],
   },
 
@@ -1274,4 +1276,4 @@ export function tabsFor(id: string): Tab[] {
 }
 
 // demos whose logic lives in its own module and shows in the Code tab
-export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'netmap', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'screen3270', 'generator', 'bridge', 'payments', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']
+export const CODE_KINDS: DemoKind[] = ['sdk', 'pipeline', 'planner', 'allocation', 'netmap', 'ecommerce', 'stream', 'dataval', 'fraud', 'scorer', 'extension', 'battleship', 'build', 'copybook', 'screen3270', 'generator', 'bridge', 'payments', 'router', 'evaluate', 'heatmap', 'graph', 'observer', 'drift', 'showtime', 'sequence', 'terraform']

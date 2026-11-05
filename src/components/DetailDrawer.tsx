@@ -14,6 +14,7 @@ import PipelineRun from './demos/PipelineRun'
 import Planner from './demos/Planner'
 import Allocation from './demos/Allocation'
 import NetworkMap from './demos/NetworkMap'
+import EcomForecast from './demos/EcomForecast'
 import SdkRun from './demos/SdkRun'
 import ReleaseRun from './demos/ReleaseRun'
 import Provision from './demos/Provision'
@@ -46,6 +47,7 @@ const DEMOS: Record<DemoKind, () => React.JSX.Element> = {
   planner: Planner,
   allocation: Allocation,
   netmap: NetworkMap,
+  ecommerce: EcomForecast,
   sdk: SdkRun,
   release: ReleaseRun,
   provision: Provision,
@@ -97,7 +99,7 @@ export function TryIt({ demos, first }: { demos: { kind: DemoKind; name: string 
             ))}
           </div>
         )}
-        <span className="sample">Sample data</span>
+        <span className="sample">{demos[i].kind === 'ecommerce' ? 'Live data from Statistics Canada' : 'Sample data'}</span>
         <SpeedPicker />
       </div>
       <Demo key={demos[i].kind} />
