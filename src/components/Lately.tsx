@@ -1,24 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { repos as notes } from '../data'
+import { ago, repos, type Repo } from '../github'
 
-interface Repo {
-  name: string
-  html_url: string
-  description: string | null
-  language: string | null
-  pushed_at: string
-  fork: boolean
-}
+// the profile README repo and this site's own repo aren't news
+const SKIP = (user: string) => new Set([user.toLowerCase(), 'anay-baid-website'])
 
-const ago = (iso: string, now = Date.now()) => {
-  const mins = Math.max(1, Math.round((now - Date.parse(iso)) / 60000))
-  const [n, unit] = mins < 60 ? [mins, 'minute'] : mins < 1440 ? [Math.round(mins / 60), 'hour'] : mins < 43200 ? [Math.round(mins / 1440), 'day'] : [Math.round(mins / 43200), 'month']
-  return `${n} ${unit}${n === 1 ? '' : 's'} ago`
-}
-
-// What I've pushed to lately, read live from GitHub's public API once the
-// block scrolls near. Private work doesn't show, and if the API is down or
-// rate limited the block just isn't there.
+// What I've pushed to lately, read live from GitHub once the block scrolls
+// near. Private work doesn't show, and if
+// the API is down or rate limited the block just isn't there.
 export default function Lately({ user }: { user: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const [list, setList] = useState<Repo[] | null>(null)
@@ -26,19 +15,22 @@ export default function Lately({ user }: { user: string }) {
   useEffect(() => {
     const el = ref.current
     if (!el || typeof IntersectionObserver !== 'function') return
-    const ctrl = new AbortController()
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return
-      io.disconnect()
-      fetch(`https://api.github.com/users/${user}/repos?sort=pushed&per_page=8`, { signal: ctrl.signal })
-        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-        .then((all: Repo[]) => setList(all.filter((r) => !r.fork).slice(0, 4)))
-        .catch(() => setList([]))
-    }, { rootMargin: '400px' })
+    let live = true
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return
+        io.disconnect()
+        const skip = SKIP(user)
+        repos(user)
+          .then((all) => all.filter((r) => !r.fork && !skip.has(r.name.toLowerCase())).slice(0, 4))
+          .then((rows) => live && setList(rows))
+      },
+      { rootMargin: '400px' },
+    )
     io.observe(el)
     return () => {
+      live = false
       io.disconnect()
-      ctrl.abort()
     }
   }, [user])
 

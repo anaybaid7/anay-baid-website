@@ -17,6 +17,7 @@ import { DETAILS, tabsFor, type DemoKind, type Tab } from './details'
 import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
 import Lately from './components/Lately'
+import Pushed from './components/Pushed'
 import { NOTES } from './decisions'
 import { caseFromUrl, casePath, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
@@ -454,6 +455,7 @@ function ProjectLinks({ p }: { p: (typeof projects)[number] }) {
       {live && <a href={live} target="_blank" rel="noreferrer">Play it live</a>}
       {github && <a href={github} target="_blank" rel="noreferrer">Source</a>}
       {devpost && <a href={devpost} target="_blank" rel="noreferrer">Devpost</a>}
+      {github && <Pushed url={github} />}
     </span>
   )
 }
@@ -1018,50 +1020,54 @@ export default function App() {
         <section className="section about" aria-labelledby="about" data-part="about">
           <h2 id="about">About</h2>
           <div className="section-body about-grid">
-            <div className="about-block" data-part="education">
-              <h3 id="education">Education</h3>
-              <p className="about-lead">
-                <img src={education.logo} alt="" width={24} height={24} />
-                <b>{education.school}</b>
-              </p>
-              <p>{education.degree}, {education.gradDate.replace('Expected ', 'graduating ')}</p>
-              <p className="stack">{education.specializations}</p>
-              <Bullets items={education.highlights} />
-              {education.letter && (
-                <figure className="letter">
-                  <blockquote>“{education.letter.quote}”</blockquote>
-                  <figcaption>
-                    {education.letter.by}, {education.letter.role}.{' '}
-                    <a href={education.letter.href} target="_blank" rel="noreferrer">Read the {education.letter.course} reference letter</a>
-                  </figcaption>
-                </figure>
-              )}
+            <div className="about-col">
+              <div className="about-block" data-part="education">
+                <h3 id="education">Education</h3>
+                <p className="about-lead">
+                  <img src={education.logo} alt="" width={24} height={24} />
+                  <b>{education.school}</b>
+                </p>
+                <p>{education.degree}, {education.gradDate.replace('Expected ', 'graduating ')}</p>
+                <p className="stack">{education.specializations}</p>
+                <Bullets items={education.highlights} />
+                {education.letter && (
+                  <figure className="letter">
+                    <blockquote>“{education.letter.quote}”</blockquote>
+                    <figcaption>
+                      {education.letter.by}, {education.letter.role}.{' '}
+                      <a href={education.letter.href} target="_blank" rel="noreferrer">Read the {education.letter.course} reference letter</a>
+                    </figcaption>
+                  </figure>
+                )}
+              </div>
+
+              <Lately user={profile.links.github.split('/').pop()!} />
             </div>
 
-            <Skills onFilter={applyFilter} />
+            <div className="about-col">
+              <Skills onFilter={applyFilter} />
 
-            <div className="about-block" data-part="colophon">
-              <h3 id="colophon">This site</h3>
-              <dl className="facts colophon">
-                <div>
-                  <dt>Built with</dt>
-                  <dd>React, TypeScript, Vite and plain CSS, prerendered at build time</dd>
-                </div>
-                <div>
-                  <dt>Content</dt>
-                  <dd>One data file builds the page, the <a href={FILES.text}>plain text resume</a> and the <a href={FILES.json}>JSON Resume</a></dd>
-                </div>
-                <div>
-                  <dt>Source</dt>
-                  <dd>
-                    <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">anay-baid-website</a>, and the rest on{' '}
-                    <a href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
-                  </dd>
-                </div>
-              </dl>
+              <div className="about-block" data-part="colophon">
+                <h3 id="colophon">This site</h3>
+                <dl className="facts colophon">
+                  <div>
+                    <dt>Built with</dt>
+                    <dd>React, TypeScript, Vite and plain CSS, prerendered at build time</dd>
+                  </div>
+                  <div>
+                    <dt>Content</dt>
+                    <dd>One data file builds the page, the <a href={FILES.text}>plain text resume</a> and the <a href={FILES.json}>JSON Resume</a></dd>
+                  </div>
+                  <div>
+                    <dt>Source</dt>
+                    <dd>
+                      <a href={`${profile.links.github}/anay-baid-website`} target="_blank" rel="noreferrer">anay-baid-website</a>, and the rest on{' '}
+                      <a href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
-
-            <Lately user={profile.links.github.split('/').pop()!} />
           </div>
         </section>
       </main>
