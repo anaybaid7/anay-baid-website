@@ -35,6 +35,7 @@ export const SOURCES: Partial<Record<DemoKind, Source>> = {
   pipeline: { file: 'pipeline.ts', source: pipeline },
   planner: { file: 'planner.ts', source: planner },
   allocation: { file: 'allocate.ts', source: allocate },
+  netmap: { file: 'allocate.ts', source: allocate },
   stream: { file: 'sales.ts', source: sales },
   dataval: { file: 'compareSchemas.ts', source: compareSchemas },
   fraud: { file: 'score.ts', source: score },
