@@ -18,6 +18,8 @@ import { FEATURED } from './showcase'
 import { Clip, Shot } from './components/Media'
 import Lately from './components/Lately'
 import Pushed from './components/Pushed'
+import Vitals from './components/Vitals'
+import Changes from './components/Changes'
 import { NOTES } from './decisions'
 import { caseFromUrl, casePath, hasCase } from './cases'
 import type { Opened } from './components/DetailDrawer'
@@ -1065,6 +1067,13 @@ export default function App() {
                       <a href={profile.links.github} target="_blank" rel="noreferrer">GitHub</a>
                     </dd>
                   </div>
+                  <div className="wide">
+                    <dt>This visit</dt>
+                    <dd>
+                      <Vitals />
+                    </dd>
+                  </div>
+                  <Changes user={profile.links.github.split('/').pop()!} repo="anay-baid-website" />
                 </dl>
               </div>
             </div>

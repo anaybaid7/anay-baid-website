@@ -3164,6 +3164,73 @@ label {
 .code figcaption code {
   font: 600 13.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+.code figcaption {
+  gap: 10px;
+}
+.code figcaption > span {
+  margin-right: auto;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.code figcaption button {
+  white-space: nowrap;
+}
+.code figcaption button[aria-pressed="true"] {
+  border-color: var(--ink);
+}
+/* notes beside code: the file's own comments as prose on the left, the
+   code they explain on the right */
+.literate {
+  max-height: 70vh;
+  overflow: auto;
+}
+.lit-block {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  border-bottom: 1px solid var(--line);
+}
+.lit-note {
+  /* stays in view while its code scrolls past */
+  position: sticky;
+  top: 0;
+  align-self: start;
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.lit-note p {
+  margin: 0 0 8px;
+}
+.literate pre {
+  max-height: none;
+  padding: 12px 0;
+  border-left: 1px solid var(--line);
+}
+.code .literate .ln::before {
+  counter-increment: none;
+  content: attr(data-n);
+}
+@media (max-width: 760px) {
+  .lit-block {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lit-note {
+    position: static;
+  }
+  .code figcaption > span {
+    display: none;
+  }
+  .code figcaption code {
+    margin-right: auto;
+  }
+  .literate pre {
+    border-left: 0;
+  }
+  .lit-note:empty {
+    display: none;
+  }
+}
 .code figcaption button {
   min-height: 28px;
   padding: 3px 10px;
@@ -8822,6 +8889,59 @@ dialog.case[open] {
   .about .colophon {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+.about .colophon .wide {
+  grid-column: 1 / -1;
+}
+.vitals table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.vitals th,
+.vitals td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 450;
+}
+.vitals td {
+  font-variant-numeric: tabular-nums;
+}
+.vitals td:last-child {
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.vitals .g-good {
+  color: var(--cobalt);
+}
+.vitals .g-needs-work,
+.vitals .g-poor {
+  color: var(--bad);
+}
+.vitals p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.changes ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+}
+.changes li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.changes a {
+  font: 600 13px var(--mono);
+}
+.changes small {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--ink-3);
 }
 /* outside links on project cards look like the buttons beside them */
 .entry-tabs .project-links {
